@@ -1,0 +1,93 @@
+@model App.Domain.Cadaster
+
+@{
+    ViewData["Title"] = "Delete";
+}
+
+<h1>Delete</h1>
+
+<h3>Are you sure you want to delete this?</h3>
+<div>
+    <h4>Cadaster</h4>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.CadastralNumber)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.CadastralNumber)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.ForestArea)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.ForestArea)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.ArableArea)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.ArableArea)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.GrasslandArea)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.GrasslandArea)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.YardArea)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.YardArea)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.BuildingFootprintArea)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.BuildingFootprintArea)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.UnderwaterArea)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.UnderwaterArea)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.OtherArea)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.OtherArea)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.SoilQualityIndex)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.SoilQualityIndex)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.CalculatedVolume)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.CalculatedVolume)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.VolumeGrowth)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.VolumeGrowth)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.LandPropertyId)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.LandPropertyId)
+        </dd>
+    </dl>
+    
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="Id" />
+        <input type="submit" value="Delete" class="btn btn-danger" /> |
+        <a asp-action="Index">Back to List</a>
+    </form>
+</div>
