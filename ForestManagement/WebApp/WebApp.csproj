@@ -8,15 +8,53 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Update="app.db" CopyToOutputDirectory="PreserveNewest" ExcludeFromSingleFile="true"/>
-    </ItemGroup>
-
-    <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.3"/>
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.3"/>
         <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="10.0.3"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.3">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.3"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.3" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.3"/>
+        <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="10.0.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\App.DAL.EF\App.DAL.EF.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Data\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Views\ActivityTypes\Create.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\ActivityTypes\Delete.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\ActivityTypes\Details.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\ActivityTypes\Edit.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\ActivityTypes\Index.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Cadasters\Create.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Cadasters\Delete.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Cadasters\Details.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Cadasters\Edit.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Cadasters\Index.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Companies\Create.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Companies\Delete.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Companies\Details.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Companies\Edit.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Companies\Index.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\ForestStands\Create.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\ForestStands\Delete.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\ForestStands\Details.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\ForestStands\Edit.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\ForestStands\Index.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\LandProperties\Create.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\LandProperties\Delete.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\LandProperties\Details.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\LandProperties\Edit.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\LandProperties\Index.cshtml" />
     </ItemGroup>
 
 </Project>

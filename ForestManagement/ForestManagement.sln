@@ -2,6 +2,17 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApp", "WebApp\WebApp.csproj", "{6DC5FC96-74FE-4822-8090-F8AAB5979FF5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "App.Domain", "App.Domain\App.Domain.csproj", "{53FBF139-172C-450C-8209-B9A73157410D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "App.DAL.EF", "App.DAL.EF\App.DAL.EF.csproj", "{4F49CFFF-74A2-4BFE-AB10-F847635F4EBA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Base.Domain", "Base.Domain\Base.Domain.csproj", "{72BA9E8B-4462-4BFD-A517-621BDEB80749}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "!SolutionItems", "!SolutionItems", "{B30E8B72-03B7-4C56-AF40-9C39FA91635A}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\final\property-management-system\README.md = ..\..\..\final\property-management-system\README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +23,17 @@ Global
 		{6DC5FC96-74FE-4822-8090-F8AAB5979FF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6DC5FC96-74FE-4822-8090-F8AAB5979FF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6DC5FC96-74FE-4822-8090-F8AAB5979FF5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53FBF139-172C-450C-8209-B9A73157410D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53FBF139-172C-450C-8209-B9A73157410D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53FBF139-172C-450C-8209-B9A73157410D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53FBF139-172C-450C-8209-B9A73157410D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F49CFFF-74A2-4BFE-AB10-F847635F4EBA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F49CFFF-74A2-4BFE-AB10-F847635F4EBA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F49CFFF-74A2-4BFE-AB10-F847635F4EBA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F49CFFF-74A2-4BFE-AB10-F847635F4EBA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{72BA9E8B-4462-4BFD-A517-621BDEB80749}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{72BA9E8B-4462-4BFD-A517-621BDEB80749}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{72BA9E8B-4462-4BFD-A517-621BDEB80749}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{72BA9E8B-4462-4BFD-A517-621BDEB80749}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
