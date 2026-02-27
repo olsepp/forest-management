@@ -11,7 +11,12 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "!SolutionItems", "!SolutionItems", "{B30E8B72-03B7-4C56-AF40-9C39FA91635A}"
 	ProjectSection(SolutionItems) = preProject
 		..\..\..\final\property-management-system\README.md = ..\..\..\final\property-management-system\README.md
+		Directory.Build.props = Directory.Build.props
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "App.DTO", "App.DTO\App.DTO.csproj", "{4E4E53F0-C661-4922-9D43-BBA271C4B03D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "App.DAL", "App.DAL\App.DAL.csproj", "{AB595F14-53C8-4CD4-B9A3-1371AC7B809C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,5 +40,13 @@ Global
 		{72BA9E8B-4462-4BFD-A517-621BDEB80749}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{72BA9E8B-4462-4BFD-A517-621BDEB80749}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{72BA9E8B-4462-4BFD-A517-621BDEB80749}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E4E53F0-C661-4922-9D43-BBA271C4B03D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E4E53F0-C661-4922-9D43-BBA271C4B03D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E4E53F0-C661-4922-9D43-BBA271C4B03D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E4E53F0-C661-4922-9D43-BBA271C4B03D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB595F14-53C8-4CD4-B9A3-1371AC7B809C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB595F14-53C8-4CD4-B9A3-1371AC7B809C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AB595F14-53C8-4CD4-B9A3-1371AC7B809C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB595F14-53C8-4CD4-B9A3-1371AC7B809C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

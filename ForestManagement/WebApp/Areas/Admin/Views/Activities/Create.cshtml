@@ -65,7 +65,7 @@
             
             <div class="form-group">
                 <label asp-for="ApplicationStatus" class="control-label"></label>
-                <select asp-for="ApplicationStatus" class="form-control" asp-items="Html.GetEnumSelectList<App.Domain.EApplicationStatus>()">
+                <select asp-for="ApplicationStatus" class="form-control" asp-items="@Html.GetEnumSelectList<App.Domain.EApplicationStatus>()">
                     <option value="">-- N/A --</option>
                 </select>
                 <span asp-validation-for="ApplicationStatus" class="text-danger"></span>
