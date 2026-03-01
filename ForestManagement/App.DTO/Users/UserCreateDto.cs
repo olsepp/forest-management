@@ -17,8 +17,6 @@ public class UserCreateDto
     [Required]
     public string Role { get; set; } = string.Empty; // "Admin" or "Employee"
 
-    public Guid? CompanyId { get; set; }
-
     [Required]
     [MinLength(6)]
     public string TemporaryPassword { get; set; } = string.Empty;

@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using App.Domain;
+using App.Contracts.Enums;
 
 namespace App.DTO.LandProperty;
 

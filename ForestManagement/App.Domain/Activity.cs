@@ -1,4 +1,5 @@
-﻿using App.Domain.Identity;
+﻿using App.Contracts.Enums;
+using App.Domain.Identity;
 using Base.Domain;
 
 

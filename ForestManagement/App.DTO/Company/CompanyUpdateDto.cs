@@ -1,12 +1,19 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace App.DTO.Company;
 
 /// <summary>
-/// Full company details response DTO
+/// Request DTO for updating an existing company
 /// </summary>
-public class CompanyDto
+public class CompanyUpdateDto
 {
+    [Required]
     public Guid Id { get; set; }
+
+    [Required]
+    [MaxLength(255)]
     public string Name { get; set; } = string.Empty;
+
+    [Required]
     public int RegistrationNumber { get; set; }
-    public int PropertyCount { get; set; }
 }
