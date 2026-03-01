@@ -4,8 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using App.DAL.EF;
+using App.DAL.UnitOfWork;
 using App.Domain;
 using WebApp.Models;
 
@@ -14,18 +13,18 @@ namespace WebApp.Areas.Admin.Controllers
     [Area("Admin")]
     public class LandPropertiesController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public LandPropertiesController(AppDbContext context)
+        public LandPropertiesController(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         // GET: LandProperties
         public async Task<IActionResult> Index()
         {
-            var appDbContext = _context.LandProperties.Include(l => l.Company);
-            return View(await appDbContext.ToListAsync());
+            var landProperties = await _unitOfWork.LandProperties.GetAllWithCompanyAsync();
+            return View(landProperties);
         }
 
         // GET: LandProperties/Details/5
@@ -36,9 +35,7 @@ namespace WebApp.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            var landProperty = await _context.LandProperties
-                .Include(l => l.Company)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var landProperty = await _unitOfWork.LandProperties.GetWithCompanyAsync(id.Value);
             if (landProperty == null)
             {
                 return NotFound();
@@ -48,9 +45,10 @@ namespace WebApp.Areas.Admin.Controllers
         }
 
         // GET: LandProperties/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            ViewData["CompanyId"] = new SelectList(_context.Companies, "Id", "Name");
+            var companies = await _unitOfWork.Companies.GetAllAsync();
+            ViewData["CompanyId"] = new SelectList(companies, "Id", "Name");
             return View(new LandPropertyCreateEditViewModel());
         }
 
@@ -77,11 +75,12 @@ namespace WebApp.Areas.Admin.Controllers
                     CompanyId = model.CompanyId
                 };
 
-                _context.Add(landProperty);
-                await _context.SaveChangesAsync();
+                await _unitOfWork.LandProperties.AddAsync(landProperty);
+                await _unitOfWork.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CompanyId"] = new SelectList(_context.Companies, "Id", "Name", model.CompanyId);
+            var companies = await _unitOfWork.Companies.GetAllAsync();
+            ViewData["CompanyId"] = new SelectList(companies, "Id", "Name", model.CompanyId);
             return View(model);
         }
 
@@ -93,7 +92,7 @@ namespace WebApp.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            var landProperty = await _context.LandProperties.FindAsync(id);
+            var landProperty = await _unitOfWork.LandProperties.GetByIdAsync(id.Value);
             if (landProperty == null)
             {
                 return NotFound();
@@ -113,7 +112,8 @@ namespace WebApp.Areas.Admin.Controllers
                 CompanyId = landProperty.CompanyId
             };
 
-            ViewData["CompanyId"] = new SelectList(_context.Companies, "Id", "Name", model.CompanyId);
+            var companies = await _unitOfWork.Companies.GetAllAsync();
+            ViewData["CompanyId"] = new SelectList(companies, "Id", "Name", model.CompanyId);
             return View(model);
         }
 
@@ -133,7 +133,7 @@ namespace WebApp.Areas.Admin.Controllers
             {
                 try
                 {
-                    var landProperty = await _context.LandProperties.FindAsync(id);
+                    var landProperty = await _unitOfWork.LandProperties.GetByIdAsync(id);
                     if (landProperty == null)
                     {
                         return NotFound();
@@ -149,12 +149,12 @@ namespace WebApp.Areas.Admin.Controllers
                     landProperty.Status = model.Status;
                     landProperty.CompanyId = model.CompanyId;
 
-                    _context.Update(landProperty);
-                    await _context.SaveChangesAsync();
+                    await _unitOfWork.LandProperties.UpdateAsync(landProperty);
+                    await _unitOfWork.SaveChangesAsync();
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (Exception)
                 {
-                    if (!LandPropertyExists(model.Id))
+                    if (!await LandPropertyExists(model.Id))
                     {
                         return NotFound();
                     }
@@ -165,7 +165,8 @@ namespace WebApp.Areas.Admin.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CompanyId"] = new SelectList(_context.Companies, "Id", "Name", model.CompanyId);
+            var companies = await _unitOfWork.Companies.GetAllAsync();
+            ViewData["CompanyId"] = new SelectList(companies, "Id", "Name", model.CompanyId);
             return View(model);
         }
 
@@ -177,9 +178,7 @@ namespace WebApp.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            var landProperty = await _context.LandProperties
-                .Include(l => l.Company)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var landProperty = await _unitOfWork.LandProperties.GetWithCompanyAsync(id.Value);
             if (landProperty == null)
             {
                 return NotFound();
@@ -193,19 +192,14 @@ namespace WebApp.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            var landProperty = await _context.LandProperties.FindAsync(id);
-            if (landProperty != null)
-            {
-                _context.LandProperties.Remove(landProperty);
-            }
-
-            await _context.SaveChangesAsync();
+            await _unitOfWork.LandProperties.DeleteAsync(id);
+            await _unitOfWork.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool LandPropertyExists(Guid id)
+        private async Task<bool> LandPropertyExists(Guid id)
         {
-            return _context.LandProperties.Any(e => e.Id == id);
+            return await _unitOfWork.LandProperties.ExistsAsync(id);
         }
     }
 }

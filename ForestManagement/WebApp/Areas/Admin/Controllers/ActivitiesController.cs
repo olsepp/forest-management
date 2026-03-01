@@ -5,9 +5,8 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
-using App.DAL.EF;
+using App.DAL.UnitOfWork;
 using App.Domain;
 using App.Domain.Identity;
 using WebApp.Models;
@@ -17,24 +16,20 @@ namespace WebApp.Areas.Admin.Controllers
     [Area("Admin")]
     public class ActivitiesController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<AppUser> _userManager;
 
-        public ActivitiesController(AppDbContext context, UserManager<AppUser> userManager)
+        public ActivitiesController(IUnitOfWork unitOfWork, UserManager<AppUser> userManager)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
             _userManager = userManager;
         }
 
         // GET: Activities
         public async Task<IActionResult> Index()
         {
-            var appDbContext = _context.Activities
-                .Include(a => a.ActivityType)
-                .Include(a => a.Cadaster)
-                .Include(a => a.ForestStand)
-                .Include(a => a.User);
-            return View(await appDbContext.ToListAsync());
+            var activities = await _unitOfWork.Activities.GetAllAsync();
+            return View(activities);
         }
 
         // GET: Activities/Details/5
@@ -45,12 +40,7 @@ namespace WebApp.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            var activity = await _context.Activities
-                .Include(a => a.ActivityType)
-                .Include(a => a.Cadaster)
-                .Include(a => a.ForestStand)
-                .Include(a => a.User)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var activity = await _unitOfWork.Activities.GetByIdAsync(id.Value);
             if (activity == null)
             {
                 return NotFound();
@@ -60,40 +50,20 @@ namespace WebApp.Areas.Admin.Controllers
         }
 
         // GET: Activities/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            // Get ForestStands filtered by Active status properties through Cadaster -> LandProperty
-            var forestStands = _context.ForestStands
-                .Include(f => f.Cadaster)
-                    .ThenInclude(c => c!.LandProperty)
-                .Where(f => f.Cadaster != null && 
-                           f.Cadaster.LandProperty != null && 
-                           f.Cadaster.LandProperty.Status == EPropertyStatus.Active)
-                .ToList() // Force client evaluation to avoid EF Core translation issues
-                .Select(f => new 
-                {
-                    Id = f.Id,
-                    DisplayName = $"#{f.Number} - {f.Cadaster!.CadastralNumber} - {f.Cadaster.LandProperty!.Name}"
-                })
-                .OrderBy(f => f.DisplayName)
-                .ToList();
+            // Get all activity types
+            var activityTypes = await _unitOfWork.ActivityTypes.GetAllAsync();
+            
+            // Get all forest stands
+            var forestStands = await _unitOfWork.ForestStands.GetAllAsync();
+            
+            // Get all cadasters
+            var cadasters = await _unitOfWork.Cadasters.GetAllAsync();
 
-            // Get Cadasters filtered by Active status properties
-            var cadasters = _context.Cadasters
-                .Include(c => c.LandProperty)
-                .Where(c => c.LandProperty != null && c.LandProperty.Status == EPropertyStatus.Active)
-                .ToList() // Force client evaluation to avoid EF Core translation issues
-                .Select(c => new
-                {
-                    Id = c.Id,
-                    DisplayName = $"{c.CadastralNumber} - {c.LandProperty!.Name}"
-                })
-                .OrderBy(c => c.DisplayName)
-                .ToList();
-
-            ViewData["ActivityTypeId"] = new SelectList(_context.ActivityTypes, "Id", "ActivityTypeName");
-            ViewData["ForestStandId"] = new SelectList(forestStands, "Id", "DisplayName");
-            ViewData["CadasterId"] = new SelectList(cadasters, "Id", "DisplayName");
+            ViewData["ActivityTypeId"] = new SelectList(activityTypes, "Id", "ActivityTypeName");
+            ViewData["ForestStandId"] = new SelectList(forestStands, "Id", "Number");
+            ViewData["CadasterId"] = new SelectList(cadasters, "Id", "CadastralNumber");
             
             return View(new ActivityCreateEditViewModel { Date = DateTime.UtcNow });
         }
@@ -140,42 +110,19 @@ namespace WebApp.Areas.Admin.Controllers
                     ApplicationStatus = model.ApplicationStatus
                 };
 
-                _context.Add(activity);
-                await _context.SaveChangesAsync();
+                await _unitOfWork.Activities.AddAsync(activity);
+                await _unitOfWork.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
 
             // Repopulate dropdowns on validation failure
-            var forestStands = _context.ForestStands
-                .Include(f => f.Cadaster)
-                    .ThenInclude(c => c!.LandProperty)
-                .Where(f => f.Cadaster != null && 
-                           f.Cadaster.LandProperty != null && 
-                           f.Cadaster.LandProperty.Status == EPropertyStatus.Active)
-                .ToList() // Force client evaluation to avoid EF Core translation issues
-                .Select(f => new 
-                {
-                    Id = f.Id,
-                    DisplayName = $"#{f.Number} - {f.Cadaster!.CadastralNumber} - {f.Cadaster.LandProperty!.Name}"
-                })
-                .OrderBy(f => f.DisplayName)
-                .ToList();
+            var activityTypes = await _unitOfWork.ActivityTypes.GetAllAsync();
+            var forestStands = await _unitOfWork.ForestStands.GetAllAsync();
+            var cadasters = await _unitOfWork.Cadasters.GetAllAsync();
 
-            var cadasters = _context.Cadasters
-                .Include(c => c.LandProperty)
-                .Where(c => c.LandProperty != null && c.LandProperty.Status == EPropertyStatus.Active)
-                .ToList() // Force client evaluation to avoid EF Core translation issues
-                .Select(c => new
-                {
-                    Id = c.Id,
-                    DisplayName = $"{c.CadastralNumber} - {c.LandProperty!.Name}"
-                })
-                .OrderBy(c => c.DisplayName)
-                .ToList();
-
-            ViewData["ActivityTypeId"] = new SelectList(_context.ActivityTypes, "Id", "ActivityTypeName", model.ActivityTypeId);
-            ViewData["ForestStandId"] = new SelectList(forestStands, "Id", "DisplayName", model.ForestStandId);
-            ViewData["CadasterId"] = new SelectList(cadasters, "Id", "DisplayName", model.CadasterId);
+            ViewData["ActivityTypeId"] = new SelectList(activityTypes, "Id", "ActivityTypeName", model.ActivityTypeId);
+            ViewData["ForestStandId"] = new SelectList(forestStands, "Id", "Number", model.ForestStandId);
+            ViewData["CadasterId"] = new SelectList(cadasters, "Id", "CadastralNumber", model.CadasterId);
             
             return View(model);
         }
@@ -188,7 +135,7 @@ namespace WebApp.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            var activity = await _context.Activities.FindAsync(id);
+            var activity = await _unitOfWork.Activities.GetByIdAsync(id.Value);
             if (activity == null)
             {
                 return NotFound();
@@ -210,36 +157,13 @@ namespace WebApp.Areas.Admin.Controllers
             };
 
             // Repopulate dropdowns
-            var forestStands = _context.ForestStands
-                .Include(f => f.Cadaster)
-                    .ThenInclude(c => c!.LandProperty)
-                .Where(f => f.Cadaster != null && 
-                           f.Cadaster.LandProperty != null && 
-                           f.Cadaster.LandProperty.Status == EPropertyStatus.Active)
-                .ToList() // Force client evaluation to avoid EF Core translation issues
-                .Select(f => new 
-                {
-                    Id = f.Id,
-                    DisplayName = $"#{f.Number} - {f.Cadaster!.CadastralNumber} - {f.Cadaster.LandProperty!.Name}"
-                })
-                .OrderBy(f => f.DisplayName)
-                .ToList();
+            var activityTypes = await _unitOfWork.ActivityTypes.GetAllAsync();
+            var forestStands = await _unitOfWork.ForestStands.GetAllAsync();
+            var cadasters = await _unitOfWork.Cadasters.GetAllAsync();
 
-            var cadasters = _context.Cadasters
-                .Include(c => c.LandProperty)
-                .Where(c => c.LandProperty != null && c.LandProperty.Status == EPropertyStatus.Active)
-                .ToList() // Force client evaluation to avoid EF Core translation issues
-                .Select(c => new
-                {
-                    Id = c.Id,
-                    DisplayName = $"{c.CadastralNumber} - {c.LandProperty!.Name}"
-                })
-                .OrderBy(c => c.DisplayName)
-                .ToList();
-
-            ViewData["ActivityTypeId"] = new SelectList(_context.ActivityTypes, "Id", "ActivityTypeName", activity.ActivityTypeId);
-            ViewData["ForestStandId"] = new SelectList(forestStands, "Id", "DisplayName", activity.ForestStandId);
-            ViewData["CadasterId"] = new SelectList(cadasters, "Id", "DisplayName", activity.CadasterId);
+            ViewData["ActivityTypeId"] = new SelectList(activityTypes, "Id", "ActivityTypeName", activity.ActivityTypeId);
+            ViewData["ForestStandId"] = new SelectList(forestStands, "Id", "Number", activity.ForestStandId);
+            ViewData["CadasterId"] = new SelectList(cadasters, "Id", "CadastralNumber", activity.CadasterId);
             
             return View(model);
         }
@@ -268,7 +192,7 @@ namespace WebApp.Areas.Admin.Controllers
             {
                 try
                 {
-                    var activity = await _context.Activities.FindAsync(id);
+                    var activity = await _unitOfWork.Activities.GetByIdAsync(id);
                     if (activity == null)
                     {
                         return NotFound();
@@ -284,12 +208,12 @@ namespace WebApp.Areas.Admin.Controllers
                     activity.CadasterId = model.CadasterId;
                     activity.ApplicationStatus = model.ApplicationStatus;
 
-                    _context.Update(activity);
-                    await _context.SaveChangesAsync();
+                    await _unitOfWork.Activities.UpdateAsync(activity);
+                    await _unitOfWork.SaveChangesAsync();
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (Exception)
                 {
-                    if (!ActivityExists(model.Id))
+                    if (!await ActivityExists(model.Id))
                     {
                         return NotFound();
                     }
@@ -302,36 +226,13 @@ namespace WebApp.Areas.Admin.Controllers
             }
 
             // Repopulate dropdowns on validation failure
-            var forestStands = _context.ForestStands
-                .Include(f => f.Cadaster)
-                    .ThenInclude(c => c!.LandProperty)
-                .Where(f => f.Cadaster != null && 
-                           f.Cadaster.LandProperty != null && 
-                           f.Cadaster.LandProperty.Status == EPropertyStatus.Active)
-                .ToList() // Force client evaluation to avoid EF Core translation issues
-                .Select(f => new 
-                {
-                    Id = f.Id,
-                    DisplayName = $"#{f.Number} - {f.Cadaster!.CadastralNumber} - {f.Cadaster.LandProperty!.Name}"
-                })
-                .OrderBy(f => f.DisplayName)
-                .ToList();
+            var activityTypes = await _unitOfWork.ActivityTypes.GetAllAsync();
+            var forestStands = await _unitOfWork.ForestStands.GetAllAsync();
+            var cadasters = await _unitOfWork.Cadasters.GetAllAsync();
 
-            var cadasters = _context.Cadasters
-                .Include(c => c.LandProperty)
-                .Where(c => c.LandProperty != null && c.LandProperty.Status == EPropertyStatus.Active)
-                .ToList() // Force client evaluation to avoid EF Core translation issues
-                .Select(c => new
-                {
-                    Id = c.Id,
-                    DisplayName = $"{c.CadastralNumber} - {c.LandProperty!.Name}"
-                })
-                .OrderBy(c => c.DisplayName)
-                .ToList();
-
-            ViewData["ActivityTypeId"] = new SelectList(_context.ActivityTypes, "Id", "ActivityTypeName", model.ActivityTypeId);
-            ViewData["ForestStandId"] = new SelectList(forestStands, "Id", "DisplayName", model.ForestStandId);
-            ViewData["CadasterId"] = new SelectList(cadasters, "Id", "DisplayName", model.CadasterId);
+            ViewData["ActivityTypeId"] = new SelectList(activityTypes, "Id", "ActivityTypeName", model.ActivityTypeId);
+            ViewData["ForestStandId"] = new SelectList(forestStands, "Id", "Number", model.ForestStandId);
+            ViewData["CadasterId"] = new SelectList(cadasters, "Id", "CadastralNumber", model.CadasterId);
             
             return View(model);
         }
@@ -344,12 +245,7 @@ namespace WebApp.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            var activity = await _context.Activities
-                .Include(a => a.ActivityType)
-                .Include(a => a.Cadaster)
-                .Include(a => a.ForestStand)
-                .Include(a => a.User)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var activity = await _unitOfWork.Activities.GetByIdAsync(id.Value);
             if (activity == null)
             {
                 return NotFound();
@@ -363,19 +259,14 @@ namespace WebApp.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            var activity = await _context.Activities.FindAsync(id);
-            if (activity != null)
-            {
-                _context.Activities.Remove(activity);
-            }
-
-            await _context.SaveChangesAsync();
+            await _unitOfWork.Activities.DeleteAsync(id);
+            await _unitOfWork.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ActivityExists(Guid id)
+        private async Task<bool> ActivityExists(Guid id)
         {
-            return _context.Activities.Any(e => e.Id == id);
+            return await _unitOfWork.Activities.ExistsAsync(id);
         }
     }
 }

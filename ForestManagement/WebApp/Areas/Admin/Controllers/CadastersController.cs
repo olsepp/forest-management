@@ -4,8 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using App.DAL.EF;
+using App.DAL.UnitOfWork;
 using App.Domain;
 using WebApp.Models;
 
@@ -14,18 +13,20 @@ namespace WebApp.Areas.Admin.Controllers
     [Area("Admin")]
     public class CadastersController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public CadastersController(AppDbContext context)
+        public CadastersController(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         // GET: Cadasters
         public async Task<IActionResult> Index()
         {
-            var appDbContext = _context.Cadasters.Include(c => c.LandProperty);
-            return View(await appDbContext.ToListAsync());
+            // Get all cadasters - for eager loading we need the repository method
+            // Using GetAllAsync for now, can add GetAllWithLandPropertyAsync if needed
+            var cadasters = await _unitOfWork.Cadasters.GetAllAsync();
+            return View(cadasters);
         }
 
         // GET: Cadasters/Details/5
@@ -36,8 +37,7 @@ namespace WebApp.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            var cadaster = await _context.Cadasters
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var cadaster = await _unitOfWork.Cadasters.GetByIdAsync(id.Value);
             if (cadaster == null)
             {
                 return NotFound();
@@ -47,9 +47,10 @@ namespace WebApp.Areas.Admin.Controllers
         }
 
         // GET: Cadasters/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            ViewData["PropertyId"] = new SelectList(_context.LandProperties, "Id", "Name");
+            var properties = await _unitOfWork.LandProperties.GetAllAsync();
+            ViewData["PropertyId"] = new SelectList(properties, "Id", "Name");
             return View(new CadasterCreateEditViewModel());
         }
 
@@ -64,16 +65,18 @@ namespace WebApp.Areas.Admin.Controllers
                 if (model.LandPropertyId == Guid.Empty)
                 {
                     ModelState.AddModelError("PropertyId", "Please select a property.");
-                    ViewData["PropertyId"] = new SelectList(_context.LandProperties, "Id", "Name");
+                    var properties = await _unitOfWork.LandProperties.GetAllAsync();
+                    ViewData["PropertyId"] = new SelectList(properties, "Id", "Name");
                     return View(model);
                 }
 
                 // Verify the property exists
-                var propertyExists = await _context.LandProperties.AnyAsync(p => p.Id == model.LandPropertyId);
+                var propertyExists = await _unitOfWork.LandProperties.ExistsAsync(model.LandPropertyId);
                 if (!propertyExists)
                 {
                     ModelState.AddModelError("PropertyId", "Selected property does not exist.");
-                    ViewData["PropertyId"] = new SelectList(_context.LandProperties, "Id", "Name");
+                    var properties = await _unitOfWork.LandProperties.GetAllAsync();
+                    ViewData["PropertyId"] = new SelectList(properties, "Id", "Name");
                     return View(model);
                 }
 
@@ -94,11 +97,12 @@ namespace WebApp.Areas.Admin.Controllers
                     LandPropertyId = model.LandPropertyId
                 };
 
-                _context.Add(cadaster);
-                await _context.SaveChangesAsync();
+                await _unitOfWork.Cadasters.AddAsync(cadaster);
+                await _unitOfWork.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["PropertyId"] = new SelectList(_context.LandProperties, "Id", "Name", model.LandPropertyId);
+            var properties2 = await _unitOfWork.LandProperties.GetAllAsync();
+            ViewData["PropertyId"] = new SelectList(properties2, "Id", "Name", model.LandPropertyId);
             return View(model);
         }
 
@@ -110,7 +114,7 @@ namespace WebApp.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            var cadaster = await _context.Cadasters.FindAsync(id);
+            var cadaster = await _unitOfWork.Cadasters.GetByIdAsync(id.Value);
             if (cadaster == null)
             {
                 return NotFound();
@@ -133,7 +137,8 @@ namespace WebApp.Areas.Admin.Controllers
                 LandPropertyId = cadaster.LandPropertyId
             };
 
-            ViewData["PropertyId"] = new SelectList(_context.LandProperties, "Id", "Name", cadaster.LandPropertyId);
+            var properties = await _unitOfWork.LandProperties.GetAllAsync();
+            ViewData["PropertyId"] = new SelectList(properties, "Id", "Name", cadaster.LandPropertyId);
             return View(model);
         }
 
@@ -153,22 +158,24 @@ namespace WebApp.Areas.Admin.Controllers
                 if (model.LandPropertyId == Guid.Empty)
                 {
                     ModelState.AddModelError("PropertyId", "Please select a property.");
-                    ViewData["PropertyId"] = new SelectList(_context.LandProperties, "Id", "Name", model.LandPropertyId);
+                    var properties = await _unitOfWork.LandProperties.GetAllAsync();
+                    ViewData["PropertyId"] = new SelectList(properties, "Id", "Name", model.LandPropertyId);
                     return View(model);
                 }
 
                 // Verify the property exists
-                var propertyExists = await _context.LandProperties.AnyAsync(p => p.Id == model.LandPropertyId);
+                var propertyExists = await _unitOfWork.LandProperties.ExistsAsync(model.LandPropertyId);
                 if (!propertyExists)
                 {
                     ModelState.AddModelError("PropertyId", "Selected property does not exist.");
-                    ViewData["PropertyId"] = new SelectList(_context.LandProperties, "Id", "Name", model.LandPropertyId);
+                    var properties = await _unitOfWork.LandProperties.GetAllAsync();
+                    ViewData["PropertyId"] = new SelectList(properties, "Id", "Name", model.LandPropertyId);
                     return View(model);
                 }
 
                 try
                 {
-                    var cadaster = await _context.Cadasters.FindAsync(id);
+                    var cadaster = await _unitOfWork.Cadasters.GetByIdAsync(id);
                     if (cadaster == null)
                     {
                         return NotFound();
@@ -187,12 +194,12 @@ namespace WebApp.Areas.Admin.Controllers
                     cadaster.VolumeGrowth = model.VolumeGrowth;
                     cadaster.LandPropertyId = model.LandPropertyId;
 
-                    _context.Update(cadaster);
-                    await _context.SaveChangesAsync();
+                    await _unitOfWork.Cadasters.UpdateAsync(cadaster);
+                    await _unitOfWork.SaveChangesAsync();
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (Exception)
                 {
-                    if (!CadasterExists(model.Id))
+                    if (!await CadasterExists(model.Id))
                     {
                         return NotFound();
                     }
@@ -203,7 +210,8 @@ namespace WebApp.Areas.Admin.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["PropertyId"] = new SelectList(_context.LandProperties, "Id", "Name", model.LandPropertyId);
+            var properties2 = await _unitOfWork.LandProperties.GetAllAsync();
+            ViewData["PropertyId"] = new SelectList(properties2, "Id", "Name", model.LandPropertyId);
             return View(model);
         }
 
@@ -215,8 +223,7 @@ namespace WebApp.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            var cadaster = await _context.Cadasters
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var cadaster = await _unitOfWork.Cadasters.GetByIdAsync(id.Value);
             if (cadaster == null)
             {
                 return NotFound();
@@ -230,19 +237,14 @@ namespace WebApp.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            var cadaster = await _context.Cadasters.FindAsync(id);
-            if (cadaster != null)
-            {
-                _context.Cadasters.Remove(cadaster);
-            }
-
-            await _context.SaveChangesAsync();
+            await _unitOfWork.Cadasters.DeleteAsync(id);
+            await _unitOfWork.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool CadasterExists(Guid id)
+        private async Task<bool> CadasterExists(Guid id)
         {
-            return _context.Cadasters.Any(e => e.Id == id);
+            return await _unitOfWork.Cadasters.ExistsAsync(id);
         }
     }
 }

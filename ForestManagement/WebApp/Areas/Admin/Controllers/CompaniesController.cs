@@ -4,8 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using App.DAL.EF;
+using App.BLL.Services.Interfaces;
+using App.DTO.Company;
 using App.Domain;
 
 namespace WebApp.Areas.Admin.Controllers
@@ -13,17 +13,17 @@ namespace WebApp.Areas.Admin.Controllers
     [Area("Admin")]
     public class CompaniesController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly ICompanyService _companyService;
 
-        public CompaniesController(AppDbContext context)
+        public CompaniesController(ICompanyService companyService)
         {
-            _context = context;
+            _companyService = companyService;
         }
 
         // GET: Companies
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Companies.ToListAsync());
+            return View(await _companyService.GetAllAsync());
         }
 
         // GET: Companies/Details/5
@@ -34,8 +34,7 @@ namespace WebApp.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            var company = await _context.Companies
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var company = await _companyService.GetByIdAsync(id.Value);
             if (company == null)
             {
                 return NotFound();
@@ -55,13 +54,11 @@ namespace WebApp.Areas.Admin.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Name,RegistrationNumber,Id")] Company company)
+        public async Task<IActionResult> Create([Bind("Name,RegistrationNumber")] CompanyCreateDto company)
         {
             if (ModelState.IsValid)
             {
-                company.Id = Guid.NewGuid();
-                _context.Add(company);
-                await _context.SaveChangesAsync();
+                await _companyService.CreateAsync(company);
                 return RedirectToAction(nameof(Index));
             }
             return View(company);
@@ -75,12 +72,19 @@ namespace WebApp.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            var company = await _context.Companies.FindAsync(id);
+            var company = await _companyService.GetByIdAsync(id.Value);
             if (company == null)
             {
                 return NotFound();
             }
-            return View(company);
+            
+            var updateDto = new CompanyUpdateDto
+            {
+                Id = company.Id,
+                Name = company.Name,
+                RegistrationNumber = company.RegistrationNumber
+            };
+            return View(updateDto);
         }
 
         // POST: Companies/Edit/5
@@ -88,7 +92,7 @@ namespace WebApp.Areas.Admin.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Name,RegistrationNumber,Id")] Company company)
+        public async Task<IActionResult> Edit(Guid id, [Bind("Name,RegistrationNumber,Id")] CompanyUpdateDto company)
         {
             if (id != company.Id)
             {
@@ -99,12 +103,11 @@ namespace WebApp.Areas.Admin.Controllers
             {
                 try
                 {
-                    _context.Update(company);
-                    await _context.SaveChangesAsync();
+                    await _companyService.UpdateAsync(id, company);
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (Exception)
                 {
-                    if (!CompanyExists(company.Id))
+                    if (!await _companyService.ExistsAsync(company.Id))
                     {
                         return NotFound();
                     }
@@ -126,8 +129,7 @@ namespace WebApp.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            var company = await _context.Companies
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var company = await _companyService.GetByIdAsync(id.Value);
             if (company == null)
             {
                 return NotFound();
@@ -141,19 +143,8 @@ namespace WebApp.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            var company = await _context.Companies.FindAsync(id);
-            if (company != null)
-            {
-                _context.Companies.Remove(company);
-            }
-
-            await _context.SaveChangesAsync();
+            await _companyService.DeleteAsync(id);
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool CompanyExists(Guid id)
-        {
-            return _context.Companies.Any(e => e.Id == id);
         }
     }
 }

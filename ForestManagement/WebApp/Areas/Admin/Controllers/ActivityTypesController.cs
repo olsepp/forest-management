@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using App.DAL.EF;
+using App.DAL.UnitOfWork;
 using App.Domain;
 
 namespace WebApp.Areas.Admin.Controllers
@@ -13,17 +11,17 @@ namespace WebApp.Areas.Admin.Controllers
     [Area("Admin")]
     public class ActivityTypesController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public ActivityTypesController(AppDbContext context)
+        public ActivityTypesController(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         // GET: ActivityTypes
         public async Task<IActionResult> Index()
         {
-            return View(await _context.ActivityTypes.ToListAsync());
+            return View(await _unitOfWork.ActivityTypes.GetAllAsync());
         }
 
         // GET: ActivityTypes/Details/5
@@ -34,8 +32,7 @@ namespace WebApp.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            var activityType = await _context.ActivityTypes
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var activityType = await _unitOfWork.ActivityTypes.GetByIdAsync(id.Value);
             if (activityType == null)
             {
                 return NotFound();
@@ -51,8 +48,6 @@ namespace WebApp.Areas.Admin.Controllers
         }
 
         // POST: ActivityTypes/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("ActivityTypeName,Id")] ActivityType activityType)
@@ -60,8 +55,8 @@ namespace WebApp.Areas.Admin.Controllers
             if (ModelState.IsValid)
             {
                 activityType.Id = Guid.NewGuid();
-                _context.Add(activityType);
-                await _context.SaveChangesAsync();
+                await _unitOfWork.ActivityTypes.AddAsync(activityType);
+                await _unitOfWork.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
             return View(activityType);
@@ -75,7 +70,7 @@ namespace WebApp.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            var activityType = await _context.ActivityTypes.FindAsync(id);
+            var activityType = await _unitOfWork.ActivityTypes.GetByIdAsync(id.Value);
             if (activityType == null)
             {
                 return NotFound();
@@ -84,8 +79,6 @@ namespace WebApp.Areas.Admin.Controllers
         }
 
         // POST: ActivityTypes/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(Guid id, [Bind("ActivityTypeName,Id")] ActivityType activityType)
@@ -99,12 +92,12 @@ namespace WebApp.Areas.Admin.Controllers
             {
                 try
                 {
-                    _context.Update(activityType);
-                    await _context.SaveChangesAsync();
+                    await _unitOfWork.ActivityTypes.UpdateAsync(activityType);
+                    await _unitOfWork.SaveChangesAsync();
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (Exception)
                 {
-                    if (!ActivityTypeExists(activityType.Id))
+                    if (!await ActivityTypeExists(activityType.Id))
                     {
                         return NotFound();
                     }
@@ -126,8 +119,7 @@ namespace WebApp.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            var activityType = await _context.ActivityTypes
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var activityType = await _unitOfWork.ActivityTypes.GetByIdAsync(id.Value);
             if (activityType == null)
             {
                 return NotFound();
@@ -141,19 +133,14 @@ namespace WebApp.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            var activityType = await _context.ActivityTypes.FindAsync(id);
-            if (activityType != null)
-            {
-                _context.ActivityTypes.Remove(activityType);
-            }
-
-            await _context.SaveChangesAsync();
+            await _unitOfWork.ActivityTypes.DeleteAsync(id);
+            await _unitOfWork.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ActivityTypeExists(Guid id)
+        private async Task<bool> ActivityTypeExists(Guid id)
         {
-            return _context.ActivityTypes.Any(e => e.Id == id);
+            return await _unitOfWork.ActivityTypes.ExistsAsync(id);
         }
     }
 }

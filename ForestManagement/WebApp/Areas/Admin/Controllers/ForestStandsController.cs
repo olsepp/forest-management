@@ -4,8 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using App.DAL.EF;
+using App.DAL.UnitOfWork;
 using App.Domain;
 using WebApp.Models;
 
@@ -14,18 +13,18 @@ namespace WebApp.Areas.Admin.Controllers
     [Area("Admin")]
     public class ForestStandsController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public ForestStandsController(AppDbContext context)
+        public ForestStandsController(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         // GET: ForestStands
         public async Task<IActionResult> Index()
         {
-            var appDbContext = _context.ForestStands.Include(f => f.Cadaster);
-            return View(await appDbContext.ToListAsync());
+            var forestStands = await _unitOfWork.ForestStands.GetAllAsync();
+            return View(forestStands);
         }
 
         // GET: ForestStands/Details/5
@@ -36,9 +35,7 @@ namespace WebApp.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            var forestStand = await _context.ForestStands
-                .Include(f => f.Cadaster)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var forestStand = await _unitOfWork.ForestStands.GetByIdAsync(id.Value);
             if (forestStand == null)
             {
                 return NotFound();
@@ -48,9 +45,10 @@ namespace WebApp.Areas.Admin.Controllers
         }
 
         // GET: ForestStands/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            ViewData["CadasterId"] = new SelectList(_context.Cadasters, "Id", "CadastralNumber");
+            var cadasters = await _unitOfWork.Cadasters.GetAllAsync();
+            ViewData["CadasterId"] = new SelectList(cadasters, "Id", "CadastralNumber");
             return View(new ForestStandCreateEditViewModel());
         }
 
@@ -65,16 +63,18 @@ namespace WebApp.Areas.Admin.Controllers
                 if (model.CadasterId == Guid.Empty)
                 {
                     ModelState.AddModelError("CadasterId", "Please select a cadaster.");
-                    ViewData["CadasterId"] = new SelectList(_context.Cadasters, "Id", "CadastralNumber");
+                    var cadasters = await _unitOfWork.Cadasters.GetAllAsync();
+                    ViewData["CadasterId"] = new SelectList(cadasters, "Id", "CadastralNumber");
                     return View(model);
                 }
 
                 // Verify the cadaster exists
-                var cadasterExists = await _context.Cadasters.AnyAsync(c => c.Id == model.CadasterId);
+                var cadasterExists = await _unitOfWork.Cadasters.ExistsAsync(model.CadasterId);
                 if (!cadasterExists)
                 {
                     ModelState.AddModelError("CadasterId", "Selected cadaster does not exist.");
-                    ViewData["CadasterId"] = new SelectList(_context.Cadasters, "Id", "CadastralNumber");
+                    var cadasters = await _unitOfWork.Cadasters.GetAllAsync();
+                    ViewData["CadasterId"] = new SelectList(cadasters, "Id", "CadastralNumber");
                     return View(model);
                 }
 
@@ -90,11 +90,12 @@ namespace WebApp.Areas.Admin.Controllers
                     CadasterId = model.CadasterId
                 };
 
-                _context.Add(forestStand);
-                await _context.SaveChangesAsync();
+                await _unitOfWork.ForestStands.AddAsync(forestStand);
+                await _unitOfWork.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CadasterId"] = new SelectList(_context.Cadasters, "Id", "CadastralNumber", model.CadasterId);
+            var cadasters2 = await _unitOfWork.Cadasters.GetAllAsync();
+            ViewData["CadasterId"] = new SelectList(cadasters2, "Id", "CadastralNumber", model.CadasterId);
             return View(model);
         }
 
@@ -106,7 +107,7 @@ namespace WebApp.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            var forestStand = await _context.ForestStands.FindAsync(id);
+            var forestStand = await _unitOfWork.ForestStands.GetByIdAsync(id.Value);
             if (forestStand == null)
             {
                 return NotFound();
@@ -124,7 +125,8 @@ namespace WebApp.Areas.Admin.Controllers
                 CadasterId = forestStand.CadasterId
             };
 
-            ViewData["CadasterId"] = new SelectList(_context.Cadasters, "Id", "CadastralNumber", forestStand.CadasterId);
+            var cadasters = await _unitOfWork.Cadasters.GetAllAsync();
+            ViewData["CadasterId"] = new SelectList(cadasters, "Id", "CadastralNumber", forestStand.CadasterId);
             return View(model);
         }
 
@@ -144,22 +146,24 @@ namespace WebApp.Areas.Admin.Controllers
                 if (model.CadasterId == Guid.Empty)
                 {
                     ModelState.AddModelError("CadasterId", "Please select a cadaster.");
-                    ViewData["CadasterId"] = new SelectList(_context.Cadasters, "Id", "CadastralNumber", model.CadasterId);
+                    var cadasters = await _unitOfWork.Cadasters.GetAllAsync();
+                    ViewData["CadasterId"] = new SelectList(cadasters, "Id", "CadastralNumber", model.CadasterId);
                     return View(model);
                 }
 
                 // Verify the cadaster exists
-                var cadasterExists = await _context.Cadasters.AnyAsync(c => c.Id == model.CadasterId);
+                var cadasterExists = await _unitOfWork.Cadasters.ExistsAsync(model.CadasterId);
                 if (!cadasterExists)
                 {
                     ModelState.AddModelError("CadasterId", "Selected cadaster does not exist.");
-                    ViewData["CadasterId"] = new SelectList(_context.Cadasters, "Id", "CadastralNumber", model.CadasterId);
+                    var cadasters = await _unitOfWork.Cadasters.GetAllAsync();
+                    ViewData["CadasterId"] = new SelectList(cadasters, "Id", "CadastralNumber", model.CadasterId);
                     return View(model);
                 }
 
                 try
                 {
-                    var forestStand = await _context.ForestStands.FindAsync(id);
+                    var forestStand = await _unitOfWork.ForestStands.GetByIdAsync(id);
                     if (forestStand == null)
                     {
                         return NotFound();
@@ -173,12 +177,12 @@ namespace WebApp.Areas.Admin.Controllers
                     forestStand.ValidTo = model.ValidTo;
                     forestStand.CadasterId = model.CadasterId;
 
-                    _context.Update(forestStand);
-                    await _context.SaveChangesAsync();
+                    await _unitOfWork.ForestStands.UpdateAsync(forestStand);
+                    await _unitOfWork.SaveChangesAsync();
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (Exception)
                 {
-                    if (!ForestStandExists(model.Id))
+                    if (!await ForestStandExists(model.Id))
                     {
                         return NotFound();
                     }
@@ -189,7 +193,8 @@ namespace WebApp.Areas.Admin.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CadasterId"] = new SelectList(_context.Cadasters, "Id", "CadastralNumber", model.CadasterId);
+            var cadasters2 = await _unitOfWork.Cadasters.GetAllAsync();
+            ViewData["CadasterId"] = new SelectList(cadasters2, "Id", "CadastralNumber", model.CadasterId);
             return View(model);
         }
 
@@ -201,9 +206,7 @@ namespace WebApp.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            var forestStand = await _context.ForestStands
-                .Include(f => f.Cadaster)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var forestStand = await _unitOfWork.ForestStands.GetByIdAsync(id.Value);
             if (forestStand == null)
             {
                 return NotFound();
@@ -217,19 +220,14 @@ namespace WebApp.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            var forestStand = await _context.ForestStands.FindAsync(id);
-            if (forestStand != null)
-            {
-                _context.ForestStands.Remove(forestStand);
-            }
-
-            await _context.SaveChangesAsync();
+            await _unitOfWork.ForestStands.DeleteAsync(id);
+            await _unitOfWork.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ForestStandExists(Guid id)
+        private async Task<bool> ForestStandExists(Guid id)
         {
-            return _context.ForestStands.Any(e => e.Id == id);
+            return await _unitOfWork.ForestStands.ExistsAsync(id);
         }
     }
 }
