@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using App.Contracts.Enums;
 using App.Domain;
 
 namespace WebApp.Models;
@@ -10,7 +11,7 @@ public class LandPropertyCreateEditViewModel
     [Required]
     [MaxLength(255)]
     public string Name { get; set; } = string.Empty;
-
+    
     [Range(0, int.MaxValue)]
     public int RegistrationNumber { get; set; }
 

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using App.Contracts.Enums;
 using App.Domain;
 
 namespace WebApp.Models;
