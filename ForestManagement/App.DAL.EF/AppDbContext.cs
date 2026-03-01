@@ -13,4 +13,5 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<Company> Companies { get; set; }
     public DbSet<ForestStand> ForestStands { get; set; }
     public DbSet<LandProperty> LandProperties { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 }
