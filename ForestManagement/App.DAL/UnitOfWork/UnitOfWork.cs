@@ -16,6 +16,7 @@ public class UnitOfWork : IUnitOfWork
     private IForestStandRepository? _forestStands;
     private IActivityRepository? _activities;
     private IActivityTypeRepository? _activityTypes;
+    private IRefreshTokenRepository? _refreshTokens;
 
     public UnitOfWork(AppDbContext context)
     {
@@ -39,6 +40,9 @@ public class UnitOfWork : IUnitOfWork
 
     public IActivityTypeRepository ActivityTypes =>
         _activityTypes ??= new ActivityTypeRepository(_context);
+
+    public IRefreshTokenRepository RefreshTokens =>
+        _refreshTokens ??= new RefreshTokenRepository(_context);
 
     public async Task SaveChangesAsync()
     {

@@ -10,6 +10,7 @@ public interface IUnitOfWork : IDisposable
     IForestStandRepository ForestStands { get; }
     IActivityRepository Activities { get; }
     IActivityTypeRepository ActivityTypes { get; }
+    IRefreshTokenRepository RefreshTokens { get; }
 
     /// <summary>
     /// Save all changes
