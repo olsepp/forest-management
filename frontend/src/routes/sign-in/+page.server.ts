@@ -1,7 +1,7 @@
 /**
  * Sign-in page server module.
  *
- * Login is handled entirely client-side via authService.login() so that JWT
- * tokens are never serialised into the server-rendered HTML response.
- * No server actions are needed here.
+ * Login is handled entirely client-side via authService.login() so JWT
+ * tokens are never serialized into server-rendered HTML.
+ * No server load/actions are required for this route.
  */

@@ -1,23 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { authService, AuthServiceError } from '$lib/services/auth';
-	import type { PageData } from './$types';
-
-	interface Props {
-		data: PageData;
-	}
-
-	let { data }: Props = $props();
+	import { authService, AuthServiceError, getDefaultRouteForRole } from '$lib/services/auth';
 
 	// Local state for form handling
 	let isLoading = $state(false);
 	let username = $state('');
 	let password = $state('');
 	let error = $state('');
-
-	// Get redirectTo from page data (set by layout server load, already sanitized).
-	// Use $derived so it stays in sync if data changes (e.g. navigation).
-	const redirectTo = $derived(data?.redirectTo ?? '/');
 
 	/**
 	 * Handle login form submission entirely client-side.
@@ -30,8 +19,9 @@
 		error = '';
 
 		try {
-			await authService.login({ username, password });
-			goto(redirectTo, { replaceState: true });
+			const loginResponse = await authService.login({ username, password });
+			const targetRoute = getDefaultRouteForRole(loginResponse.role);
+			goto(targetRoute, { replaceState: true });
 		} catch (err) {
 			error = err instanceof AuthServiceError ? err.message : 'Login failed. Please try again.';
 		} finally {

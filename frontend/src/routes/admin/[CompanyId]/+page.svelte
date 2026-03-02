@@ -1,0 +1,1 @@
+// Company home page, admin can see different buttons to pages like, dashboard/, landproperty/, activity/.

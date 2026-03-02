@@ -1,0 +1,1 @@
+// Page for a specific feorst stand details

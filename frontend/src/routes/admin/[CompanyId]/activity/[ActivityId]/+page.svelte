@@ -1,0 +1,1 @@
+// Page for a specific activity details

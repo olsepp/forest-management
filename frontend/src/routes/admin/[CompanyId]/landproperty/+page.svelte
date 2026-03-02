@@ -1,0 +1,1 @@
+// On this page list all propeties that the selected company owns.

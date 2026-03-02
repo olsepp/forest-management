@@ -5,6 +5,18 @@ import type { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, Re
 const API_BASE_URL = PUBLIC_API_URL || 'http://localhost:5000';
 
 /**
+ * Resolve the default post-auth route for a user role.
+ */
+export function getDefaultRouteForRole(role: string | null | undefined): string {
+	const normalizedRole = role?.trim().toLowerCase();
+
+	if (normalizedRole === 'admin') return '/admin';
+	if (normalizedRole === 'employee') return '/employee';
+
+	return '/';
+}
+
+/**
  * Custom error class for auth errors
  */
 export class AuthServiceError extends Error {

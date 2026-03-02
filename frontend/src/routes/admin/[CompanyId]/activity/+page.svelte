@@ -1,0 +1,1 @@
+// List all activities done on company's properties
