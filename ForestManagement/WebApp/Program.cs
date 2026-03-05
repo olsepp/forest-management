@@ -2,6 +2,7 @@ using App.BLL;
 using App.BLL.Services.Interfaces;
 using App.BLL.Services.Implementations;
 using App.DAL.EF;
+using App.DAL.EF.DataSeeding;
 using App.DAL.UnitOfWork;
 using App.Domain.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -158,7 +159,7 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     try
     {
-        await SeedDataAsync(services);
+        await DataSeeder.SeedAsync(services);
     }
     catch (Exception ex)
     {
@@ -211,58 +212,3 @@ app.MapRazorPages()
     .WithStaticAssets();
 
 app.Run();
-
-// -----------------------------------------------------------------------
-// Data Seeding
-// -----------------------------------------------------------------------
-static async Task SeedDataAsync(IServiceProvider services)
-{
-    var roleManager = services.GetRequiredService<RoleManager<AppRole>>();
-    var userManager = services.GetRequiredService<UserManager<AppUser>>();
-    var logger = services.GetRequiredService<ILogger<Program>>();
-
-    // Seed roles
-    string[] roles = ["Admin", "Employee"];
-    foreach (var roleName in roles)
-    {
-        if (!await roleManager.RoleExistsAsync(roleName))
-        {
-            var result = await roleManager.CreateAsync(new AppRole { Name = roleName });
-            if (result.Succeeded)
-            {
-                logger.LogInformation("Created role: {Role}", roleName);
-            }
-        }
-    }
-
-    // Seed default admin user
-    const string adminEmail = "admin@forestmanagement.ee";
-    const string adminUsername = "admin";
-    const string adminPassword = "Admin123!";
-
-    var adminUser = await userManager.FindByEmailAsync(adminEmail);
-    if (adminUser == null)
-    {
-        adminUser = new AppUser
-        {
-            Id = Guid.NewGuid(),
-            UserName = adminUsername,
-            Email = adminEmail,
-            FirstName = "Admin",
-            LastName = "User",
-            EmailConfirmed = true
-        };
-
-        var result = await userManager.CreateAsync(adminUser, adminPassword);
-        if (result.Succeeded)
-        {
-            await userManager.AddToRoleAsync(adminUser, "Admin");
-            logger.LogInformation("Seeded admin user: {Email}", adminEmail);
-        }
-        else
-        {
-            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-            logger.LogWarning("Failed to seed admin user: {Errors}", errors);
-        }
-    }
-}
