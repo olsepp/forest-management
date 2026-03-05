@@ -1,10 +1,16 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import type { CompanyListDto } from '$lib/types/company';
+	import { onMount } from 'svelte';
+	import { PUBLIC_API_URL } from '$env/static/public';
+	import { authService } from '$lib/services/auth';
 
 	type MenuItem = {
 		label: string;
 		href: string;
 	};
+
+	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
 	const adminRootItems: MenuItem[] = [
 		{ label: 'Company selection', href: '/admin' },
@@ -29,6 +35,33 @@
 		return candidate;
 	});
 
+	let companies = $state<CompanyListDto[]>([]);
+
+	onMount(async () => {
+		try {
+			const token = await authService.ensureValidToken();
+			const response = await fetch(`${apiBaseUrl}/api/companies`, {
+				headers: {
+					Authorization: `Bearer ${token}`
+				}
+			});
+
+			if (!response.ok) {
+				companies = [];
+				return;
+			}
+
+			companies = await response.json();
+		} catch {
+			companies = [];
+		}
+	});
+
+	const companyName = $derived.by(() => {
+		if (!companyId) return null;
+		return companies.find((company) => company.id === companyId)?.name ?? companyId;
+	});
+
 	const menuItems = $derived(companyId ? getCompanyItems(companyId) : adminRootItems);
 
 	function isActive(pathname: string, href: string): boolean {
@@ -47,7 +80,7 @@
 		<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Admin panel</p>
 		<p class="mt-1 text-sm text-slate-700">
 			{#if companyId}
-				Company scope: {companyId}
+				Company scope: {companyName}
 			{:else}
 				Global scope
 			{/if}

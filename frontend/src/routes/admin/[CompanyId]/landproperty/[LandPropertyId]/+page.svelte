@@ -37,6 +37,7 @@
 
 	let isLoading = $state(true);
 	let isSaving = $state(false);
+	let isEditMode = $state(false);
 	let errorMessage = $state('');
 	let successMessage = $state('');
 	let property = $state<LandPropertyDto | null>(null);
@@ -145,7 +146,7 @@
 
 	async function saveProperty(event: SubmitEvent) {
 		event.preventDefault();
-		if (!property) return;
+		if (!property || !isEditMode) return;
 
 		const registrationNumber = Number(form.registrationNumber);
 		if (!Number.isFinite(registrationNumber)) {
@@ -194,6 +195,7 @@
 			const updated = (await response.json()) as LandPropertyDto;
 			property = updated;
 			fillForm(updated);
+			isEditMode = false;
 			successMessage = 'Land property updated successfully.';
 		} catch {
 			errorMessage = 'Failed to save changes.';
@@ -222,34 +224,40 @@
 		<p><strong>Company:</strong> {property.companyName}</p>
 
 		<form onsubmit={saveProperty} class="form-grid">
+			<div class="actions edit-actions">
+				<button type="button" onclick={() => (isEditMode = !isEditMode)} disabled={isSaving}>
+					{isEditMode ? 'Stop editing' : 'Enable editing'}
+				</button>
+			</div>
+
 			<label>
 				<span>Name</span>
-				<input type="text" bind:value={form.name} required />
+				<input type="text" bind:value={form.name} required readonly={!isEditMode} />
 			</label>
 
 			<label>
 				<span>Registration number</span>
-				<input type="number" bind:value={form.registrationNumber} required />
+				<input type="number" bind:value={form.registrationNumber} required readonly={!isEditMode} />
 			</label>
 
 			<label>
 				<span>County</span>
-				<input type="text" bind:value={form.county} required />
+				<input type="text" bind:value={form.county} required readonly={!isEditMode} />
 			</label>
 
 			<label>
 				<span>Parish</span>
-				<input type="text" bind:value={form.parish} />
+				<input type="text" bind:value={form.parish} readonly={!isEditMode} />
 			</label>
 
 			<label>
 				<span>Village</span>
-				<input type="text" bind:value={form.village} />
+				<input type="text" bind:value={form.village} readonly={!isEditMode} />
 			</label>
 
 			<label>
 				<span>Status</span>
-				<select bind:value={form.status}>
+				<select bind:value={form.status} disabled={!isEditMode}>
 					<option value="Active">Active</option>
 					<option value="Inactive">Inactive</option>
 					<option value="Sold">Sold</option>
@@ -258,16 +266,18 @@
 
 			<label>
 				<span>Bought date</span>
-				<input type="date" bind:value={form.boughtDate} />
+				<input type="date" bind:value={form.boughtDate} readonly={!isEditMode} />
 			</label>
 
 			<label>
 				<span>Sold date</span>
-				<input type="date" bind:value={form.soldDate} />
+				<input type="date" bind:value={form.soldDate} readonly={!isEditMode} />
 			</label>
 
 			<div class="actions">
-				<button type="submit" disabled={isSaving}>{isSaving ? 'Saving...' : 'Save changes'}</button>
+				<button type="submit" disabled={isSaving || !isEditMode}>
+					{isSaving ? 'Saving...' : 'Save changes'}
+				</button>
 			</div>
 		</form>
 
@@ -327,6 +337,10 @@
 		grid-column: 1 / -1;
 		display: flex;
 		justify-content: flex-end;
+	}
+
+	.edit-actions {
+		justify-content: flex-start;
 	}
 
 	button {

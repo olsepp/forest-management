@@ -13,6 +13,11 @@
 		cadastralNumbers: string[];
 	};
 
+	type PropertyCadasterLinkDto = {
+		id: string;
+		cadastralNumber: string;
+	};
+
 	type LandPropertyDto = {
 		id: string;
 		name: string;
@@ -42,7 +47,7 @@
 	let propertyDetailsById = $state<Record<string, LandPropertyDto>>({});
 	let loadingDetailsById = $state<Record<string, boolean>>({});
 	let detailsErrorById = $state<Record<string, string>>({});
-	let cadastralNumbersByPropertyId = $state<Record<string, string[]>>({});
+	let cadastersByPropertyId = $state<Record<string, PropertyCadasterLinkDto[]>>({});
 
 	function normalizeStatus(status: LandPropertyListDto['status'] | number | string | null | undefined): string {
 		if (typeof status === 'string') {
@@ -78,48 +83,45 @@
 		return date.toLocaleDateString();
 	}
 
-	function tableCadastralNumbers(property: LandPropertyListDto): string {
-		const direct = Array.isArray(property.cadastralNumbers) ? property.cadastralNumbers : [];
-		const fallback = cadastralNumbersByPropertyId[property.id] ?? [];
-		const numbers = direct.length > 0 ? direct : fallback;
-		return numbers.length > 0 ? numbers.join(', ') : '—';
+	function tableCadasters(propertyId: string): PropertyCadasterLinkDto[] {
+		return cadastersByPropertyId[propertyId] ?? [];
 	}
 
-	async function loadMissingCadastralNumbers(list: LandPropertyListDto[]) {
-		const missing = list.filter(
-			(item) => !Array.isArray(item.cadastralNumbers) || item.cadastralNumbers.length === 0
-		);
+	async function loadCadastersForProperty(
+		propertyId: string,
+		token: string
+	): Promise<PropertyCadasterLinkDto[]> {
+		const response = await fetch(`${apiBaseUrl}/api/cadasters/by-land-property/${propertyId}`, {
+			headers: {
+				Authorization: `Bearer ${token}`
+			}
+		});
 
-		if (missing.length === 0) return;
+		if (!response.ok) return [];
+
+		const data = (await response.json()) as PropertyCadasterLinkDto[];
+		return Array.isArray(data)
+			? data.filter((item) => Boolean(item?.id) && Boolean(item?.cadastralNumber))
+			: [];
+	}
+
+	async function preloadPropertyCadasters(list: LandPropertyListDto[]) {
+		if (list.length === 0) return;
 
 		const token = await authService.ensureValidToken();
-
 		const results = await Promise.all(
-			missing.map(async (item) => {
-				const response = await fetch(`${apiBaseUrl}/api/cadasters/by-land-property/${item.id}`, {
-					headers: {
-						Authorization: `Bearer ${token}`
-					}
-				});
-
-				if (!response.ok) {
-					return { propertyId: item.id, numbers: [] as string[] };
-				}
-
-				const cadasters = (await response.json()) as { cadastralNumber?: string }[];
-				const numbers = Array.isArray(cadasters)
-					? cadasters.map((c) => c.cadastralNumber).filter((n): n is string => Boolean(n))
-					: [];
-
-				return { propertyId: item.id, numbers };
+			list.map(async (item) => {
+				const cadasters = await loadCadastersForProperty(item.id, token);
+				return { propertyId: item.id, cadasters };
 			})
 		);
 
-		const nextMap = { ...cadastralNumbersByPropertyId };
+		const nextMap: Record<string, PropertyCadasterLinkDto[]> = { ...cadastersByPropertyId };
 		for (const item of results) {
-			nextMap[item.propertyId] = item.numbers;
+			nextMap[item.propertyId] = item.cadasters;
 		}
-		cadastralNumbersByPropertyId = nextMap;
+
+		cadastersByPropertyId = nextMap;
 	}
 
 	async function loadPropertyDetails(propertyId: string) {
@@ -167,12 +169,15 @@
 			}
 
 			propertyDetailsById = { ...propertyDetailsById, [propertyId]: detail };
-			cadastralNumbersByPropertyId = {
-				...cadastralNumbersByPropertyId,
+			cadastersByPropertyId = {
+				...cadastersByPropertyId,
 				[propertyId]: Array.isArray(detail.cadasters)
 					? detail.cadasters
-							.map((cadaster) => cadaster.cadastralNumber)
-							.filter((n): n is string => Boolean(n))
+							.filter((cadaster) => Boolean(cadaster.id) && Boolean(cadaster.cadastralNumber))
+							.map((cadaster) => ({
+								id: cadaster.id,
+								cadastralNumber: cadaster.cadastralNumber
+							}))
 					: []
 			};
 		} catch {
@@ -224,7 +229,7 @@
 				}))
 				: [];
 
-			await loadMissingCadastralNumbers(properties);
+			await preloadPropertyCadasters(properties);
 		} catch {
 			errorMessage = 'Failed to load land properties';
 		} finally {
@@ -257,7 +262,7 @@
 			<tbody>
 				{#each properties as property}
 					<tr>
-						<td>{property.name}</td>
+						<td><a href="{`/admin/${$page.params.CompanyId}/landproperty/${property.id}`}">{property.name}</a></td>
 						<td>{property.registrationNumber}</td>
 						<td>{property.county}</td>
 						<td>
@@ -265,13 +270,32 @@
 								property.status
 							)}</span>
 						</td>
-						<td>{tableCadastralNumbers(property)}</td>
-						<td class="actions">
-							<button type="button" onclick={() => toggleExpand(property.id)}>
-								{isExpanded(property.id) ? 'Hide' : 'View'}
-							</button>
+						<td>
+							{#if tableCadasters(property.id).length === 0}
+								—
+							{:else}
+								<div class="cadaster-links">
+									{#each tableCadasters(property.id) as cadaster}
+										<a href={`/admin/${$page.params.CompanyId}/cadaster/${cadaster.id}`}
+											>{cadaster.cadastralNumber}</a
+										>
+									{/each}
+								</div>
+							{/if}
 						</td>
-					</tr>
+					<td class="actions">
+						<button
+							type="button"
+							class="expand-toggle"
+							onclick={() => toggleExpand(property.id)}
+							aria-label={isExpanded(property.id) ? 'Collapse details' : 'Expand details'}
+						>
+							<span class={`arrow ${isExpanded(property.id) ? 'open' : ''}`} aria-hidden="true"
+								>▾</span
+							>
+						</button>
+					</td>
+				</tr>
 
 					{#if isExpanded(property.id)}
 						<tr class="details-row">
@@ -302,7 +326,11 @@
 									{:else}
 										<ul>
 											{#each detail.cadasters as cadaster}
-												<li>{cadaster.cadastralNumber}</li>
+												<li>
+													<a href={`/admin/${$page.params.CompanyId}/cadaster/${cadaster.id}`}
+														>{cadaster.cadastralNumber}</a
+													>
+												</li>
 											{/each}
 										</ul>
 									{/if}
@@ -351,6 +379,26 @@
 
 	button:hover {
 		background: #f9fafb;
+	}
+
+	.expand-toggle {
+		width: 2rem;
+		height: 2rem;
+		padding: 0;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.arrow {
+		display: inline-block;
+		font-size: 1rem;
+		line-height: 1;
+		transition: transform 0.2s ease;
+	}
+
+	.arrow.open {
+		transform: rotate(180deg);
 	}
 
 	.status {
@@ -405,6 +453,21 @@
 
 	.details-actions a:hover {
 		background: #f9fafb;
+	}
+
+	.cadaster-links a {
+		display: block;
+		margin-bottom: 0.2rem;
+		color: #0f766e;
+		text-decoration: none;
+	}
+
+	.cadaster-links a:last-child {
+		margin-bottom: 0;
+	}
+
+	.cadaster-links a:hover {
+		text-decoration: underline;
 	}
 
 	ul {
