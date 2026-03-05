@@ -32,6 +32,10 @@
 	const menuItems = $derived(companyId ? getCompanyItems(companyId) : adminRootItems);
 
 	function isActive(pathname: string, href: string): boolean {
+		if (href === '/admin') {
+			return pathname === '/admin';
+		}
+
 		return pathname === href || pathname.startsWith(`${href}/`);
 	}
 </script>
@@ -51,6 +55,17 @@
 	</div>
 
 	<nav class="space-y-1">
+		<a
+			href="/admin"
+			class={`mb-3 block rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+				$page.url.pathname === '/admin'
+					? 'border-slate-400 bg-slate-100 text-slate-800'
+					: 'border-slate-200 text-slate-700 hover:bg-slate-100'
+			}`}
+		>
+			Home
+		</a>
+
 		{#each menuItems as item}
 			<a
 				href={item.href}

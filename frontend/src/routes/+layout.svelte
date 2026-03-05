@@ -21,9 +21,6 @@
 		if (!$isAuthenticated && !isPublicRoute) {
 			// Not authenticated — redirect to sign-in
 			goto('/sign-in');
-		} else if ($isAuthenticated && isPublicRoute) {
-			// Already authenticated — no need to be on an auth page
-			goto(getDefaultRouteForRole($user?.role));
 		}
 	});
 </script>
