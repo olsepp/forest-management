@@ -29,7 +29,9 @@ public class UserService : IUserService
                 Id = user.Id,
                 Username = user.UserName ?? string.Empty,
                 Email = user.Email ?? string.Empty,
-                Role = roles.FirstOrDefault() ?? string.Empty
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Role = roles.FirstOrDefault() ?? string.Empty,
             });
         }
         return result;
@@ -55,6 +57,8 @@ public class UserService : IUserService
             Id = user.Id,
             Username = user.UserName ?? string.Empty,
             Email = user.Email ?? string.Empty,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
             Role = roles.FirstOrDefault() ?? string.Empty
         };
     }
@@ -66,8 +70,8 @@ public class UserService : IUserService
             Id = Guid.NewGuid(),
             UserName = dto.Username,
             Email = dto.Email,
-            FirstName = string.Empty,
-            LastName = string.Empty
+            FirstName = dto.FirstName,
+            LastName = dto.LastName
         };
 
         var result = await _userManager.CreateAsync(user, dto.TemporaryPassword);
@@ -94,6 +98,8 @@ public class UserService : IUserService
 
         user.UserName = dto.Username;
         user.Email = dto.Email;
+        user.FirstName = dto.FirstName;
+        user.LastName = dto.LastName;
 
         var result = await _userManager.UpdateAsync(user);
 
@@ -124,6 +130,8 @@ public class UserService : IUserService
         Id = u.Id,
         Username = u.UserName ?? string.Empty,
         Email = u.Email ?? string.Empty,
+        FirstName = u.FirstName,
+        LastName = u.LastName,
         Role = role
     };
 }

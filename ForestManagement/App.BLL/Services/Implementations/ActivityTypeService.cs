@@ -19,7 +19,7 @@ public class ActivityTypeService : IActivityTypeService
 
     public async Task<ActivityTypeDto?> GetByIdAsync(Guid id)
     {
-        var type = await _uow.ActivityTypes.GetByIdAsync(id);
+        var type = await _uow.ActivityTypes.GetWithActivitiesAsync(id);
         return type == null ? null : MapToDto(type);
     }
 
@@ -62,6 +62,7 @@ public class ActivityTypeService : IActivityTypeService
     {
         Id = at.Id,
         ActivityTypeName = at.ActivityTypeName,
+        ActivityCount = at.Activities?.Count ?? 0
     };
 
     private static ActivityTypeListDto MapToListDto(ActivityType at) => new()
