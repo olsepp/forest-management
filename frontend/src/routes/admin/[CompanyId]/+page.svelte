@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
+	import { goto } from '$app/navigation';
 	import type { CompanyDto } from '$lib/types/company';
 	import { onMount } from 'svelte';
 
@@ -40,15 +41,80 @@
 			isLoading = false;
 		}
 	});
+
+	function openSection(path: string) {
+		goto(path);
+	}
+
+	const companyActions = $derived.by(() => {
+		if (!company) return [] as { label: string; path: string }[];
+
+		return [
+			{ label: 'Open dashboard', path: `/admin/${company.id}/dashboard` },
+			{ label: 'Open land properties', path: `/admin/${company.id}/landproperty` },
+			{ label: 'Open activities', path: `/admin/${company.id}/activity` }
+		];
+	});
 </script>
 
-<h1>Admin company page</h1>
+<h1>Company workspace</h1>
 
 {#if isLoading}
 	<p>Loading company...</p>
 {:else if errorMessage}
-	<p>{errorMessage}</p>
+	<p class="error">{errorMessage}</p>
 {:else if company}
-	<p>Company ID: {company.id}</p>
-	<p>Selected company: {company.name}</p>
+	<section class="card">
+		<p class="meta">Selected company</p>
+		<h2>{company.name}</h2>
+		<p><strong>Company ID:</strong> {company.id}</p>
+
+		<div class="actions">
+			{#each companyActions as action}
+				<button type="button" onclick={() => openSection(action.path)}>{action.label}</button>
+			{/each}
+		</div>
+	</section>
 {/if}
+
+<style>
+	.card {
+		padding: 1.1rem;
+		border: 1px solid #e5e7eb;
+		border-radius: 0.75rem;
+		background: #fff;
+	}
+
+	.meta {
+		margin: 0;
+		font-size: 0.78rem;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		font-weight: 700;
+	}
+
+	h2 {
+		margin: 0.35rem 0 0.85rem;
+		font-size: 1.2rem;
+	}
+
+	.actions {
+		margin-top: 1rem;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.6rem;
+	}
+
+	button {
+		border: 1px solid #d1d5db;
+		border-radius: 0.5rem;
+		background: #fff;
+		padding: 0.5rem 0.9rem;
+		font: inherit;
+		cursor: pointer;
+	}
+
+	.error {
+		color: #b91c1c;
+	}
+</style>

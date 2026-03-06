@@ -14,7 +14,8 @@
 
 	const adminRootItems: MenuItem[] = [
 		{ label: 'Company selection', href: '/admin' },
-		{ label: 'Users', href: '/admin/user' }
+		{ label: 'Users', href: '/admin/user' },
+		{ label: 'Activity types', href: '/admin/activity-types' }
 	];
 
 	function getCompanyItems(companyId: string): MenuItem[] {
@@ -30,7 +31,7 @@
 		if (!match) return null;
 
 		const candidate = match[1];
-		if (candidate === 'user') return null;
+		if (candidate === 'user' || candidate === 'activity-types') return null;
 
 		return candidate;
 	});
@@ -73,9 +74,7 @@
 	}
 </script>
 
-<aside
-	class="sticky top-4 h-[calc(100vh-2rem)] w-64 shrink-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
->
+<aside class="admin-sidebar sticky top-4 h-[calc(100vh-2rem)] w-64 shrink-0 p-4">
 	<div class="mb-6">
 		<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Admin panel</p>
 		<p class="mt-1 text-sm text-slate-700">
@@ -90,9 +89,9 @@
 	<nav class="space-y-1">
 		<a
 			href="/admin"
-			class={`mb-3 block rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+			class={`home-link nav-item mb-3 block rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
 				$page.url.pathname === '/admin'
-					? 'border-slate-400 bg-slate-100 text-slate-800'
+					? 'nav-item-active border-slate-400 bg-slate-100 text-slate-800'
 					: 'border-slate-200 text-slate-700 hover:bg-slate-100'
 			}`}
 		>
@@ -102,9 +101,9 @@
 		{#each menuItems as item}
 			<a
 				href={item.href}
-				class={`block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+				class={`nav-item block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
 					isActive($page.url.pathname, item.href)
-						? 'bg-emerald-50 text-emerald-700'
+						? 'nav-item-active bg-emerald-50 text-emerald-700'
 						: 'text-slate-700 hover:bg-slate-100'
 				}`}
 			>

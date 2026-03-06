@@ -1,4 +1,5 @@
 <script lang="ts">
+	import '$lib/styles/admin-theme.css';
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
 	import AdminContentArea from '$lib/components/admin/AdminContentArea.svelte';
@@ -24,14 +25,14 @@
 	}
 </script>
 
-<div class="mx-auto flex w-full max-w-7xl gap-4 p-4">
+<div class="admin-theme mx-auto flex w-full max-w-[1600px] gap-5 p-4">
 	<AdminSidebar />
 	<AdminContentArea>
 		<div class="mb-4 flex justify-end">
 			<button
 				type="button"
 				onclick={handleSignOut}
-				class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+				class="admin-signout"
 			>
 				Sign out
 			</button>

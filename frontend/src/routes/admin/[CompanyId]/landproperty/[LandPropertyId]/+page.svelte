@@ -207,162 +207,252 @@
 	onMount(loadProperty);
 </script>
 
-<h1>Land property details</h1>
-
-<p class="breadcrumb">
-	<a href={`/admin/${$page.params.CompanyId}/landproperty`}>← Back to properties</a>
-</p>
-
 {#if isLoading}
 	<p>Loading property details...</p>
 {:else if errorMessage && !property}
-	<p class="error">{errorMessage}</p>
+	<p class="message error">{errorMessage}</p>
 {:else if property}
-	<section class="card">
-		<h2>{property.name}</h2>
-		<p><strong>ID:</strong> {property.id}</p>
-		<p><strong>Company:</strong> {property.companyName}</p>
+	<div class="detail-page">
+		<p class="breadcrumb">
+			<a href={`/admin/${$page.params.CompanyId}/landproperty`}>← Back to properties</a>
+		</p>
 
-		<form onsubmit={saveProperty} class="form-grid">
-			<div class="actions edit-actions">
-				<button type="button" onclick={() => (isEditMode = !isEditMode)} disabled={isSaving}>
-					{isEditMode ? 'Stop editing' : 'Enable editing'}
-				</button>
+		<header class="page-head">
+			<div>
+				<p class="eyebrow">Land property</p>
+				<h1>{property.name}</h1>
+				<p class="subtitle">Professional record and status management for this land asset.</p>
 			</div>
+			<button type="button" class="mode-btn" onclick={() => (isEditMode = !isEditMode)} disabled={isSaving}>
+				{isEditMode ? 'Cancel editing' : 'Enable editing'}
+			</button>
+		</header>
 
-			<label>
-				<span>Name</span>
-				<input type="text" bind:value={form.name} required readonly={!isEditMode} />
-			</label>
+		<section class="meta-grid">
+			<article class="meta-card">
+				<p class="meta-label">Property ID</p>
+				<p class="meta-value mono">{property.id}</p>
+			</article>
+			<article class="meta-card">
+				<p class="meta-label">Company</p>
+				<p class="meta-value">{property.companyName}</p>
+			</article>
+			<article class="meta-card">
+				<p class="meta-label">Current status</p>
+				<p class="meta-value">{form.status}</p>
+			</article>
+		</section>
 
-			<label>
-				<span>Registration number</span>
-				<input type="number" bind:value={form.registrationNumber} required readonly={!isEditMode} />
-			</label>
+		<form id="property-form" onsubmit={saveProperty} class="detail-form">
+			<section class="form-section">
+				<h2>Core information</h2>
+				<div class="form-grid">
+					<label>
+						<span>Name</span>
+						<input type="text" bind:value={form.name} required readonly={!isEditMode} />
+					</label>
+					<label>
+						<span>Registration number</span>
+						<input type="number" bind:value={form.registrationNumber} required readonly={!isEditMode} />
+					</label>
+					<label>
+						<span>Status</span>
+						<select bind:value={form.status} disabled={!isEditMode}>
+							<option value="Active">Active</option>
+							<option value="Inactive">Inactive</option>
+							<option value="Sold">Sold</option>
+						</select>
+					</label>
+				</div>
+			</section>
 
-			<label>
-				<span>County</span>
-				<input type="text" bind:value={form.county} required readonly={!isEditMode} />
-			</label>
+			<section class="form-section">
+				<h2>Location and timeline</h2>
+				<div class="form-grid">
+					<label>
+						<span>County</span>
+						<input type="text" bind:value={form.county} required readonly={!isEditMode} />
+					</label>
+					<label>
+						<span>Parish</span>
+						<input type="text" bind:value={form.parish} readonly={!isEditMode} />
+					</label>
+					<label>
+						<span>Village</span>
+						<input type="text" bind:value={form.village} readonly={!isEditMode} />
+					</label>
+					<label>
+						<span>Bought date</span>
+						<input type="date" bind:value={form.boughtDate} readonly={!isEditMode} />
+					</label>
+					<label>
+						<span>Sold date</span>
+						<input type="date" bind:value={form.soldDate} readonly={!isEditMode} />
+					</label>
+				</div>
+			</section>
 
-			<label>
-				<span>Parish</span>
-				<input type="text" bind:value={form.parish} readonly={!isEditMode} />
-			</label>
-
-			<label>
-				<span>Village</span>
-				<input type="text" bind:value={form.village} readonly={!isEditMode} />
-			</label>
-
-			<label>
-				<span>Status</span>
-				<select bind:value={form.status} disabled={!isEditMode}>
-					<option value="Active">Active</option>
-					<option value="Inactive">Inactive</option>
-					<option value="Sold">Sold</option>
-				</select>
-			</label>
-
-			<label>
-				<span>Bought date</span>
-				<input type="date" bind:value={form.boughtDate} readonly={!isEditMode} />
-			</label>
-
-			<label>
-				<span>Sold date</span>
-				<input type="date" bind:value={form.soldDate} readonly={!isEditMode} />
-			</label>
-
-			<div class="actions">
-				<button type="submit" disabled={isSaving || !isEditMode}>
+			<div class="form-actions">
+				<button class="btn-save" type="submit" disabled={isSaving || !isEditMode}>
 					{isSaving ? 'Saving...' : 'Save changes'}
 				</button>
 			</div>
 		</form>
 
 		{#if errorMessage}
-			<p class="error">{errorMessage}</p>
+			<p class="message error">{errorMessage}</p>
 		{/if}
 
 		{#if successMessage}
-			<p class="success">{successMessage}</p>
+			<p class="message success">{successMessage}</p>
 		{/if}
-	</section>
+	</div>
 {/if}
 
 <style>
+	.detail-page {
+		display: grid;
+		gap: 1rem;
+		padding: 0.9rem;
+		border: 1px solid #d7e3dc;
+		border-radius: 1rem;
+		background: #eef5f1;
+	}
+
 	.breadcrumb {
-		margin-top: -0.25rem;
-		margin-bottom: 1rem;
+		margin: 0;
 	}
 
-	.breadcrumb a {
-		color: #0f766e;
-		text-decoration: none;
+	.page-head {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		gap: 1rem;
 	}
 
-	.breadcrumb a:hover {
-		text-decoration: underline;
+	.eyebrow {
+		margin: 0;
+		font-size: 0.78rem;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		font-weight: 700;
 	}
 
-	.card {
-		padding: 1rem;
-		border: 1px solid #e5e7eb;
+	h1 {
+		margin: 0.2rem 0 0.35rem;
+		font-size: 1.6rem;
+	}
+
+	.subtitle {
+		margin: 0;
+	}
+
+	.mode-btn {
+		white-space: nowrap;
+		padding: 0.58rem 1rem;
+		background: #2f5f49;
+		color: #f6fbf8;
+		border: 1px solid #264735;
+		border-radius: 0.65rem;
+		box-shadow: 0 6px 14px rgba(29, 61, 46, 0.2);
+	}
+
+	.mode-btn:hover {
+		background: #274f3d;
+	}
+
+	.meta-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+		gap: 0.8rem;
+	}
+
+	.meta-card {
+		padding: 0.9rem;
+		border: 1px solid #c9dace;
 		border-radius: 0.75rem;
-		background: #fff;
+		background: #f4faf6;
+	}
+
+	.meta-label {
+		margin: 0;
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+	}
+
+	.meta-value {
+		margin: 0.35rem 0 0;
+		font-size: 1rem;
+		font-weight: 600;
+	}
+
+	.mono {
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+		font-size: 0.88rem;
+	}
+
+	.detail-form {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.form-section {
+		padding: 1rem;
+		border: 1px solid #cadbcf;
+		border-radius: 0.85rem;
+		background: #f9fcfa;
+		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+	}
+
+	h2 {
+		margin: 0 0 0.8rem;
+		font-size: 1.03rem;
 	}
 
 	.form-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 		gap: 0.75rem 1rem;
-		margin-top: 1rem;
 	}
 
 	label {
 		display: flex;
 		flex-direction: column;
-		gap: 0.3rem;
+		gap: 0.35rem;
 	}
 
-	input,
-	select {
-		padding: 0.5rem 0.6rem;
-		border: 1px solid #d1d5db;
-		border-radius: 0.5rem;
-	}
-
-	.actions {
-		grid-column: 1 / -1;
+	.form-actions {
 		display: flex;
 		justify-content: flex-end;
 	}
 
-	.edit-actions {
-		justify-content: flex-start;
+	.btn-save {
+		padding: 0.62rem 1.1rem;
+		background: #1f5a42;
+		color: #f8fdfb;
+		border: 1px solid #184835;
+		font-weight: 700;
+		padding-inline: 1.05rem;
+		border-radius: 0.65rem;
+		box-shadow: 0 8px 16px rgba(31, 90, 66, 0.24);
 	}
 
-	button {
-		border: 1px solid #d1d5db;
-		background: #fff;
-		border-radius: 0.5rem;
-		padding: 0.45rem 0.9rem;
-		cursor: pointer;
+	.btn-save:hover {
+		background: #174a35;
 	}
 
-	button:disabled {
-		opacity: 0.65;
-		cursor: not-allowed;
+	.message {
+		margin: 0;
+		padding: 0.7rem 0.9rem;
+		border-radius: 0.65rem;
 	}
 
 	.error {
-		margin-top: 0.75rem;
-		color: #b91c1c;
+		background: #fdebec;
 	}
 
 	.success {
-		margin-top: 0.75rem;
-		color: #166534;
+		background: #e6f7ea;
 	}
 </style>

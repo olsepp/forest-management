@@ -15,6 +15,18 @@
 		cadastralNumber: string;
 	};
 
+	type ActivityListDto = {
+		id: string;
+		date: string;
+	};
+
+	type ActivityChartPoint = {
+		label: string;
+		count: number;
+		x: number;
+		y: number;
+	};
+
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
 	let company = $state<CompanyDto | null>(null);
@@ -24,6 +36,75 @@
 	let totalProperties = $state(0);
 	let totalActiveProperties = $state(0);
 	let totalCadasters = $state(0);
+	let activityChartPoints = $state<ActivityChartPoint[]>([]);
+	let maxDailyActivityCount = $state(0);
+
+	const chartWidth = 880;
+	const chartHeight = 240;
+	const chartPadding = { top: 16, right: 16, bottom: 28, left: 16 };
+
+	function dayKey(date: Date): string {
+		const year = date.getFullYear();
+		const month = String(date.getMonth() + 1).padStart(2, '0');
+		const day = String(date.getDate()).padStart(2, '0');
+		return `${year}-${month}-${day}`;
+	}
+
+	function last30DayKeys(): string[] {
+		const keys: string[] = [];
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+
+		for (let offset = 29; offset >= 0; offset -= 1) {
+			const d = new Date(today);
+			d.setDate(today.getDate() - offset);
+			keys.push(dayKey(d));
+		}
+
+		return keys;
+	}
+
+	function shortLabel(isoDate: string): string {
+		const d = new Date(`${isoDate}T00:00:00`);
+		return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+	}
+
+	function buildActivityChartPoints(activities: ActivityListDto[]): ActivityChartPoint[] {
+		const keys = last30DayKeys();
+		const countsByDay: Record<string, number> = {};
+
+		for (const key of keys) countsByDay[key] = 0;
+
+		for (const activity of activities) {
+			const date = new Date(activity.date);
+			if (Number.isNaN(date.getTime())) continue;
+			const key = dayKey(date);
+			if (key in countsByDay) countsByDay[key] += 1;
+		}
+
+		const maxCount = Math.max(...keys.map((key) => countsByDay[key]), 0);
+		maxDailyActivityCount = maxCount;
+
+		const effectiveMax = Math.max(maxCount, 1);
+		const innerWidth = chartWidth - chartPadding.left - chartPadding.right;
+		const innerHeight = chartHeight - chartPadding.top - chartPadding.bottom;
+
+		return keys.map((key, index) => {
+			const count = countsByDay[key];
+			const x = chartPadding.left + (index / (keys.length - 1)) * innerWidth;
+			const y = chartPadding.top + (1 - count / effectiveMax) * innerHeight;
+			return {
+				label: shortLabel(key),
+				count,
+				x,
+				y
+			};
+		});
+	}
+
+	const activityPolylinePoints = $derived.by(() =>
+		activityChartPoints.map((point) => `${point.x},${point.y}`).join(' ')
+	);
 
 	function normalizeStatus(status: LandPropertyListDto['status'] | null | undefined): string {
 		if (typeof status === 'string') {
@@ -70,13 +151,18 @@
 
 			const token = await authService.ensureValidToken();
 
-			const [companyResponse, propertiesResponse] = await Promise.all([
+			const [companyResponse, propertiesResponse, activitiesResponse] = await Promise.all([
 				fetch(`${apiBaseUrl}/api/companies/${companyId}`, {
 					headers: {
 						Authorization: `Bearer ${token}`
 					}
 				}),
 				fetch(`${apiBaseUrl}/api/landproperties/search?companyId=${companyId}`, {
+					headers: {
+						Authorization: `Bearer ${token}`
+					}
+				}),
+				fetch(`${apiBaseUrl}/api/activities`, {
 					headers: {
 						Authorization: `Bearer ${token}`
 					}
@@ -99,6 +185,14 @@
 				return;
 			}
 
+			if (!activitiesResponse.ok) {
+				errorMessage =
+					activitiesResponse.status === 401
+						? 'Unauthorized. Please sign in again.'
+						: 'Failed to load dashboard data';
+				return;
+			}
+
 			company = await companyResponse.json();
 			const properties = (await propertiesResponse.json()) as LandPropertyListDto[];
 
@@ -110,6 +204,9 @@
 			);
 
 			totalCadasters = cadasterResults.reduce((sum, cadasters) => sum + cadasters.length, 0);
+
+			const activities = (await activitiesResponse.json()) as ActivityListDto[];
+			activityChartPoints = buildActivityChartPoints(Array.isArray(activities) ? activities : []);
 		} catch {
 			errorMessage = 'Failed to load dashboard data';
 		} finally {
@@ -148,4 +245,64 @@
 			<p class="mt-2 text-3xl font-bold text-blue-800">{totalCadasters}</p>
 		</div>
 	</div>
+
+	<section class="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+		<div class="mb-4 flex items-center justify-between">
+			<h2 class="text-lg font-semibold text-slate-900">Activity trend (last 30 days)</h2>
+			<p class="text-xs text-slate-500">Max/day: {maxDailyActivityCount}</p>
+		</div>
+
+		{#if activityChartPoints.length === 0}
+			<p class="text-sm text-slate-600">No activity data available.</p>
+		{:else}
+			<div class="chart-wrap">
+				<svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} class="activity-chart" role="img" aria-label="Activity trend line chart">
+					<line
+						x1={chartPadding.left}
+						y1={chartHeight - chartPadding.bottom}
+						x2={chartWidth - chartPadding.right}
+						y2={chartHeight - chartPadding.bottom}
+						stroke="#e2e8f0"
+					/>
+					<polyline
+						points={activityPolylinePoints}
+						fill="none"
+						stroke="#0f766e"
+						stroke-width="2.5"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					/>
+					{#each activityChartPoints as point, index}
+						<circle cx={point.x} cy={point.y} r="2.75" fill="#0f766e">
+							<title>{point.label}: {point.count} activities</title>
+						</circle>
+						{#if index % 5 === 0 || index === activityChartPoints.length - 1}
+							<text
+								x={point.x}
+								y={chartHeight - 8}
+								text-anchor="middle"
+								font-size="10"
+								fill="#64748b"
+							>
+								{point.label}
+							</text>
+						{/if}
+					{/each}
+				</svg>
+			</div>
+		{/if}
+	</section>
 {/if}
+
+<style>
+	.chart-wrap {
+		overflow-x: auto;
+	}
+
+	.activity-chart {
+		width: 100%;
+		min-width: 760px;
+		height: auto;
+		display: block;
+	}
+</style>

@@ -132,10 +132,22 @@
 							<button
 								type="button"
 								onclick={() => toggleExpand(user.id)}
-								class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-100"
+								class="expand-toggle"
 								aria-label={isExpanded(user.id) ? 'Collapse user details' : 'Expand user details'}
+								aria-expanded={isExpanded(user.id)}
 							>
-								<span class={`text-sm transition-transform ${isExpanded(user.id) ? 'rotate-180' : ''}`}>⌄</span>
+								<svg
+									class={`expand-icon ${isExpanded(user.id) ? 'open' : ''}`}
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2.75"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									aria-hidden="true"
+								>
+									<path d="M6 9l6 6 6-6" />
+								</svg>
 							</button>
 						</td>
 					</tr>
