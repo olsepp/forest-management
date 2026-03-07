@@ -8,13 +8,14 @@ using Microsoft.AspNetCore.Mvc;
 namespace WebApp.Controllers.Api;
 
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public class UsersController : ApiControllerBase
 {
     private readonly IUserService _service;
 
     public UsersController(IUserService service) => _service = service;
 
+    [Authorize(Roles = "Admin")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<UserListDto>>> GetAll()
     {
@@ -22,6 +23,7 @@ public class UsersController : ApiControllerBase
         return Ok(items);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<UserDto>> GetById(Guid id)
     {
@@ -43,6 +45,7 @@ public class UsersController : ApiControllerBase
         return Ok(profile);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<ActionResult<UserDto>> Create([FromBody] UserCreateDto dto)
     {
@@ -50,6 +53,7 @@ public class UsersController : ApiControllerBase
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<UserDto>> Update(Guid id, [FromBody] UserUpdateDto dto)
     {
@@ -60,6 +64,7 @@ public class UsersController : ApiControllerBase
         return Ok(updated);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {

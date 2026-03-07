@@ -37,4 +37,16 @@ public class CadasterRepository : Repository<Cadaster>, ICadasterRepository
             .Where(c => c.LandPropertyId == landPropertyId)
             .ToListAsync();
     }
+
+    public async Task<Cadaster?> GetWithAllAsync(Guid id)
+    {
+        return await _dbSet
+            .Include(c => c.LandProperty)
+            .Include(c => c.ForestStands)
+            .Include(c => c.Activities)
+                .ThenInclude(a => a.ActivityType)
+            .Include(c => c.Activities)
+                .ThenInclude(a => a.User)
+            .FirstOrDefaultAsync(c => c.Id == id);
+    }
 }

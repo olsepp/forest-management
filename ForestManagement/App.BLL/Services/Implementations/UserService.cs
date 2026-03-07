@@ -74,7 +74,7 @@ public class UserService : IUserService
             LastName = dto.LastName
         };
 
-        var result = await _userManager.CreateAsync(user, dto.TemporaryPassword);
+        var result = await _userManager.CreateAsync(user, dto.Password);
 
         if (!result.Succeeded)
         {

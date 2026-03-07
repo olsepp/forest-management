@@ -25,5 +25,5 @@ public class UserCreateDto
 
     [Required]
     [MinLength(6)]
-    public string TemporaryPassword { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
 }

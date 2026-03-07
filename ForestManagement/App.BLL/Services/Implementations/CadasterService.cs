@@ -20,7 +20,7 @@ public class CadasterService : ICadasterService
 
     public async Task<CadasterDto?> GetByIdAsync(Guid id)
     {
-        var cadaster = await _uow.Cadasters.GetWithLandPropertyAsync(id);
+        var cadaster = await _uow.Cadasters.GetWithAllAsync(id);
         return cadaster == null ? null : MapToDto(cadaster);
     }
 

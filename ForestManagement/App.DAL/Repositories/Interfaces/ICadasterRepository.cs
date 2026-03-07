@@ -23,4 +23,9 @@ public interface ICadasterRepository : IRepository<Cadaster>
     /// Get cadasters by land property ID
     /// </summary>
     Task<IEnumerable<Cadaster>> GetByLandPropertyIdAsync(Guid landPropertyId);
+
+    /// <summary>
+    /// Get cadaster with all related data (LandProperty, ForestStands, Activities with ActivityType and User)
+    /// </summary>
+    Task<Cadaster?> GetWithAllAsync(Guid id);
 }
