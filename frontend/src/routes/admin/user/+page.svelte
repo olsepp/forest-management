@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { resolve } from '$app/paths';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
 
@@ -103,7 +104,15 @@
 	});
 </script>
 
-<h1 class="mb-4 text-2xl font-semibold text-slate-900">Users</h1>
+<div class="mb-4 flex items-center justify-between gap-3">
+	<h1 class="text-2xl font-semibold text-slate-900">Users</h1>
+	<a
+		href={resolve('/admin/user/new')}
+		class="inline-flex items-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+	>
+		Create user
+	</a>
+</div>
 
 {#if isLoading}
 	<p>Loading users...</p>
@@ -123,7 +132,7 @@
 				</tr>
 			</thead>
 			<tbody class="divide-y divide-slate-100">
-				{#each users as user}
+				{#each users as user (user.id)}
 					<tr class="hover:bg-slate-50">
 						<td class="px-4 py-3 text-slate-900">{getFirstName(userDetailsById[user.id] ?? user)}</td>
 						<td class="px-4 py-3 text-slate-900">{getLastName(userDetailsById[user.id] ?? user)}</td>
@@ -157,7 +166,7 @@
 								<div class="rounded-lg border border-slate-200 bg-white p-3">
 									<p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">All available user fields</p>
 									<dl class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-										{#each detailEntries(userDetailsById[user.id] ?? user) as [key, value]}
+										{#each detailEntries(userDetailsById[user.id] ?? user) as [key, value] (key)}
 											<div class="rounded border border-slate-200 bg-slate-50 p-2">
 												<dt class="text-xs font-semibold text-slate-600">{key}</dt>
 												<dd class="mt-0.5 break-all font-mono text-xs text-slate-800">{typeof value === 'string' ? value : JSON.stringify(value)}</dd>

@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
+	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 
 	type LandPropertyListDto = {
@@ -48,6 +49,25 @@
 	let loadingDetailsById = $state<Record<string, boolean>>({});
 	let detailsErrorById = $state<Record<string, string>>({});
 	let cadastersByPropertyId = $state<Record<string, PropertyCadasterLinkDto[]>>({});
+	let searchQuery = $state('');
+	let selectedCounty = $state('');
+	let normalizedSearchQuery = $derived(searchQuery.trim().toLowerCase());
+	let availableCounties = $derived.by(() => {
+		const counties = properties
+			.map((property) => property.county?.trim())
+			.filter((county): county is string => Boolean(county));
+
+		return [...new Set(counties)].sort((a, b) => a.localeCompare(b));
+	});
+	let filteredProperties = $derived.by(() => {
+		return properties.filter((property) => {
+			const matchesSearch =
+				!normalizedSearchQuery || propertyMatchesSearch(property, normalizedSearchQuery);
+			const matchesCounty = !selectedCounty || property.county === selectedCounty;
+
+			return matchesSearch && matchesCounty;
+		});
+	});
 
 	function normalizeStatus(status: LandPropertyListDto['status'] | number | string | null | undefined): string {
 		if (typeof status === 'string') {
@@ -85,6 +105,26 @@
 
 	function tableCadasters(propertyId: string): PropertyCadasterLinkDto[] {
 		return cadastersByPropertyId[propertyId] ?? [];
+	}
+
+	function propertySearchableCadastralNumbers(property: LandPropertyListDto): string[] {
+		const fromTableMap = tableCadasters(property.id).map((item) => item.cadastralNumber);
+		const fromListDto = Array.isArray(property.cadastralNumbers) ? property.cadastralNumbers : [];
+
+		return [...new Set([...fromTableMap, ...fromListDto])];
+	}
+
+	function propertyMatchesSearch(property: LandPropertyListDto, query: string): boolean {
+		if (!query) return true;
+
+		const propertyName = property.name?.toLowerCase() ?? '';
+		const registrationNumber = String(property.registrationNumber ?? '').toLowerCase();
+		const cadastralNumbers = propertySearchableCadastralNumbers(property);
+
+		if (propertyName.includes(query)) return true;
+		if (registrationNumber.includes(query)) return true;
+
+		return cadastralNumbers.some((number) => number.toLowerCase().includes(query));
 	}
 
 	async function loadCadastersForProperty(
@@ -247,6 +287,37 @@
 {:else if properties.length === 0}
 	<p>No land properties found for this company.</p>
 {:else}
+	<div class="search-row">
+		<label class="search-input">
+			<span class="sr-only">Search properties</span>
+			<input
+				type="search"
+				bind:value={searchQuery}
+				placeholder="Search by property name, registration number, or cadastral number"
+			/>
+		</label>
+		<label class="county-filter">
+			<span class="sr-only">Filter by county</span>
+			<select bind:value={selectedCounty}>
+				<option value="">All counties</option>
+				{#each availableCounties as county (county)}
+					<option value={county}>{county}</option>
+				{/each}
+			</select>
+		</label>
+		{#if searchQuery.trim()}
+			<button type="button" class="clear-search" onclick={() => (searchQuery = '')}>Clear search</button>
+		{/if}
+		{#if selectedCounty}
+			<button type="button" class="clear-search" onclick={() => (selectedCounty = '')}
+				>Clear county</button
+			>
+		{/if}
+	</div>
+
+	{#if filteredProperties.length === 0}
+		<p>No properties match the current search.</p>
+	{:else}
 	<div class="table-wrapper">
 		<table>
 			<thead>
@@ -260,9 +331,16 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each properties as property}
+				{#each filteredProperties as property (property.id)}
 					<tr>
-						<td><a href="{`/admin/${$page.params.CompanyId}/landproperty/${property.id}`}">{property.name}</a></td>
+						<td>
+							<a
+								href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
+									CompanyId: $page.params.CompanyId,
+									LandPropertyId: property.id
+								})}>{property.name}</a
+							>
+						</td>
 						<td>{property.registrationNumber}</td>
 						<td>{property.county}</td>
 						<td>
@@ -275,8 +353,12 @@
 								—
 							{:else}
 								<div class="cadaster-links">
-									{#each tableCadasters(property.id) as cadaster}
-										<a href={`/admin/${$page.params.CompanyId}/cadaster/${cadaster.id}`}
+									{#each tableCadasters(property.id) as cadaster (cadaster.id)}
+										<a
+											href={resolve('/admin/[CompanyId]/cadaster/[CadasterId]', {
+												CompanyId: $page.params.CompanyId,
+												CadasterId: cadaster.id
+											})}
 											>{cadaster.cadastralNumber}</a
 										>
 									{/each}
@@ -317,9 +399,13 @@
 								{:else if propertyDetailsById[property.id]}
 									{@const detail = propertyDetailsById[property.id]}
 									<div class="details-actions">
-										<a href={`/admin/${$page.params.CompanyId}/landproperty/${property.id}`}
-											>Open property page</a
-										>
+									<a
+										href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
+											CompanyId: $page.params.CompanyId,
+											LandPropertyId: property.id
+										})}
+										>Open property page</a
+									>
 									</div>
 									<div class="details-grid">
 										<p><strong>ID:</strong> {detail.id}</p>
@@ -335,9 +421,13 @@
 										<p>No cadasters found.</p>
 									{:else}
 										<ul>
-											{#each detail.cadasters as cadaster}
+											{#each detail.cadasters as cadaster (cadaster.id)}
 												<li>
-													<a href={`/admin/${$page.params.CompanyId}/cadaster/${cadaster.id}`}
+													<a
+														href={resolve('/admin/[CompanyId]/cadaster/[CadasterId]', {
+															CompanyId: $page.params.CompanyId,
+															CadasterId: cadaster.id
+														})}
 														>{cadaster.cadastralNumber}</a
 													>
 												</li>
@@ -352,11 +442,63 @@
 			</tbody>
 		</table>
 	</div>
+	{/if}
 {/if}
 
 <style>
 	.table-wrapper {
 		overflow-x: auto;
+	}
+
+	.search-row {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+		margin-bottom: 0.75rem;
+	}
+
+	.search-input {
+		flex: 1;
+	}
+
+	.county-filter select {
+		padding: 0.5rem 0.75rem;
+		border: 1px solid #d1d5db;
+		border-radius: 0.5rem;
+		background: #fff;
+	}
+
+	.county-filter select:focus {
+		outline: 2px solid #99f6e4;
+		outline-offset: 1px;
+	}
+
+	.search-input input {
+		width: 100%;
+		padding: 0.5rem 0.75rem;
+		border: 1px solid #d1d5db;
+		border-radius: 0.5rem;
+	}
+
+	.search-input input:focus {
+		outline: 2px solid #99f6e4;
+		outline-offset: 1px;
+	}
+
+	.clear-search {
+		white-space: nowrap;
+	}
+
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
 	}
 
 	table {

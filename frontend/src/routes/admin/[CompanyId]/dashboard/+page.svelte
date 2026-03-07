@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { resolve } from '$app/paths';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
 	import type { CompanyDto } from '$lib/types/company';
@@ -15,9 +16,16 @@
 		cadastralNumber: string;
 	};
 
+	type ForestStandListDto = {
+		id: string;
+	};
+
 	type ActivityListDto = {
 		id: string;
 		date: string;
+		description?: string;
+		activityTypeName?: string;
+		userName?: string;
 	};
 
 	type ActivityChartPoint = {
@@ -38,6 +46,7 @@
 	let totalCadasters = $state(0);
 	let activityChartPoints = $state<ActivityChartPoint[]>([]);
 	let maxDailyActivityCount = $state(0);
+	let recentActivities = $state<ActivityListDto[]>([]);
 
 	const chartWidth = 880;
 	const chartHeight = 240;
@@ -52,12 +61,16 @@
 
 	function last30DayKeys(): string[] {
 		const keys: string[] = [];
-		const today = new Date();
-		today.setHours(0, 0, 0, 0);
+		const millisecondsPerDay = 24 * 60 * 60 * 1000;
+		const now = new Date();
+		const todayStartTimestamp = new Date(
+			now.getFullYear(),
+			now.getMonth(),
+			now.getDate()
+		).getTime();
 
 		for (let offset = 29; offset >= 0; offset -= 1) {
-			const d = new Date(today);
-			d.setDate(today.getDate() - offset);
+			const d = new Date(todayStartTimestamp - offset * millisecondsPerDay);
 			keys.push(dayKey(d));
 		}
 
@@ -67,6 +80,12 @@
 	function shortLabel(isoDate: string): string {
 		const d = new Date(`${isoDate}T00:00:00`);
 		return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+	}
+
+	function formatDateTime(value: string): string {
+		const date = new Date(value);
+		if (Number.isNaN(date.getTime())) return '—';
+		return date.toLocaleString();
 	}
 
 	function buildActivityChartPoints(activities: ActivityListDto[]): ActivityChartPoint[] {
@@ -138,6 +157,54 @@
 			: [];
 	}
 
+	async function loadActivitiesForCadaster(
+		cadasterId: string,
+		token: string
+	): Promise<ActivityListDto[]> {
+		const response = await fetch(`${apiBaseUrl}/api/activities/by-cadaster/${cadasterId}`, {
+			headers: {
+				Authorization: `Bearer ${token}`
+			}
+		});
+
+		if (!response.ok) return [];
+
+		const data = (await response.json()) as ActivityListDto[];
+		return Array.isArray(data) ? data.filter((item) => Boolean(item?.id)) : [];
+	}
+
+	async function loadForestStandsForCadaster(
+		cadasterId: string,
+		token: string
+	): Promise<ForestStandListDto[]> {
+		const response = await fetch(`${apiBaseUrl}/api/foreststands/by-cadaster/${cadasterId}`, {
+			headers: {
+				Authorization: `Bearer ${token}`
+			}
+		});
+
+		if (!response.ok) return [];
+
+		const data = (await response.json()) as ForestStandListDto[];
+		return Array.isArray(data) ? data.filter((item) => Boolean(item?.id)) : [];
+	}
+
+	async function loadActivitiesForForestStand(
+		forestStandId: string,
+		token: string
+	): Promise<ActivityListDto[]> {
+		const response = await fetch(`${apiBaseUrl}/api/activities/by-foreststand/${forestStandId}`, {
+			headers: {
+				Authorization: `Bearer ${token}`
+			}
+		});
+
+		if (!response.ok) return [];
+
+		const data = (await response.json()) as ActivityListDto[];
+		return Array.isArray(data) ? data.filter((item) => Boolean(item?.id)) : [];
+	}
+
 	onMount(async () => {
 		try {
 			errorMessage = '';
@@ -151,18 +218,13 @@
 
 			const token = await authService.ensureValidToken();
 
-			const [companyResponse, propertiesResponse, activitiesResponse] = await Promise.all([
+			const [companyResponse, propertiesResponse] = await Promise.all([
 				fetch(`${apiBaseUrl}/api/companies/${companyId}`, {
 					headers: {
 						Authorization: `Bearer ${token}`
 					}
 				}),
 				fetch(`${apiBaseUrl}/api/landproperties/search?companyId=${companyId}`, {
-					headers: {
-						Authorization: `Bearer ${token}`
-					}
-				}),
-				fetch(`${apiBaseUrl}/api/activities`, {
 					headers: {
 						Authorization: `Bearer ${token}`
 					}
@@ -185,14 +247,6 @@
 				return;
 			}
 
-			if (!activitiesResponse.ok) {
-				errorMessage =
-					activitiesResponse.status === 401
-						? 'Unauthorized. Please sign in again.'
-						: 'Failed to load dashboard data';
-				return;
-			}
-
 			company = await companyResponse.json();
 			const properties = (await propertiesResponse.json()) as LandPropertyListDto[];
 
@@ -205,8 +259,49 @@
 
 			totalCadasters = cadasterResults.reduce((sum, cadasters) => sum + cadasters.length, 0);
 
-			const activities = (await activitiesResponse.json()) as ActivityListDto[];
-			activityChartPoints = buildActivityChartPoints(Array.isArray(activities) ? activities : []);
+			const cadasterIds = cadasterResults
+				.flat()
+				.map((cadaster) => cadaster.id)
+				.filter((id) => Boolean(id));
+
+			const activitiesByCadaster = await Promise.all(
+				cadasterIds.map((cadasterId) => loadActivitiesForCadaster(cadasterId, token))
+			);
+
+			const forestStandsByCadaster = await Promise.all(
+				cadasterIds.map((cadasterId) => loadForestStandsForCadaster(cadasterId, token))
+			);
+
+			const forestStandIds = forestStandsByCadaster
+				.flat()
+				.map((forestStand) => forestStand.id)
+				.filter((id) => Boolean(id));
+
+			const activitiesByForestStand = await Promise.all(
+				forestStandIds.map((forestStandId) => loadActivitiesForForestStand(forestStandId, token))
+			);
+
+			const activityById: Record<string, ActivityListDto> = {};
+			for (const activities of [...activitiesByCadaster, ...activitiesByForestStand]) {
+				for (const activity of activities) {
+					if (!activity?.id) continue;
+					activityById[activity.id] = activity;
+				}
+			}
+
+			const allActivities = Object.values(activityById);
+
+			activityChartPoints = buildActivityChartPoints(allActivities);
+			recentActivities = [...allActivities]
+				.filter((item) => Boolean(item?.id))
+				.sort((a, b) => {
+					const aTime = new Date(a.date).getTime();
+					const bTime = new Date(b.date).getTime();
+					const safeA = Number.isNaN(aTime) ? 0 : aTime;
+					const safeB = Number.isNaN(bTime) ? 0 : bTime;
+					return safeB - safeA;
+				})
+				.slice(0, 5);
 		} catch {
 			errorMessage = 'Failed to load dashboard data';
 		} finally {
@@ -229,6 +324,7 @@
 {:else if errorMessage}
 	<div class="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{errorMessage}</div>
 {:else}
+
 	<div class="grid gap-4 md:grid-cols-3">
 		<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
 			<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total properties</p>
@@ -272,7 +368,7 @@
 						stroke-linecap="round"
 						stroke-linejoin="round"
 					/>
-					{#each activityChartPoints as point, index}
+					{#each activityChartPoints as point, index (point.label)}
 						<circle cx={point.x} cy={point.y} r="2.75" fill="#0f766e">
 							<title>{point.label}: {point.count} activities</title>
 						</circle>
@@ -289,6 +385,54 @@
 						{/if}
 					{/each}
 				</svg>
+			</div>
+		{/if}
+	</section>
+
+	<section class="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+		<div class="mb-4 flex items-center justify-between gap-3">
+			<h2 class="text-lg font-semibold text-slate-900">Most recent activities</h2>
+			<a
+				class="text-sm font-medium text-teal-700 hover:text-teal-800"
+				href={resolve('/admin/[CompanyId]/activity', { CompanyId: $page.params.CompanyId })}
+				>Open all activities →</a
+			>
+		</div>
+
+		{#if recentActivities.length === 0}
+			<p class="text-sm text-slate-600">No activities available.</p>
+		{:else}
+			<div class="overflow-x-auto">
+				<table class="min-w-full text-sm">
+					<thead>
+						<tr class="border-b border-slate-200 text-left text-slate-500">
+							<th class="py-2 pr-3">Date</th>
+							<th class="py-2 pr-3">Type</th>
+							<th class="py-2 pr-3">Description</th>
+							<th class="py-2 pr-3">User</th>
+							<th class="py-2 text-right">Open</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each recentActivities as activity (activity.id)}
+							<tr class="border-b border-slate-100 text-slate-700">
+								<td class="py-2 pr-3">{formatDateTime(activity.date)}</td>
+								<td class="py-2 pr-3">{activity.activityTypeName ?? '—'}</td>
+								<td class="py-2 pr-3">{activity.description ?? '—'}</td>
+								<td class="py-2 pr-3">{activity.userName ?? '—'}</td>
+								<td class="py-2 text-right">
+									<a
+										class="font-medium text-teal-700 hover:text-teal-800"
+										href={resolve('/admin/[CompanyId]/activity/[ActivityId]', {
+											CompanyId: $page.params.CompanyId,
+											ActivityId: activity.id
+										})}>Open</a
+									>
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
 			</div>
 		{/if}
 	</section>

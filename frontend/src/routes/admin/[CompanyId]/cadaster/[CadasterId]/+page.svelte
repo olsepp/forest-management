@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { resolve } from '$app/paths';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
+	import CadastralMap from '$lib/components/shared/CadastralMap.svelte';
 	import { onMount } from 'svelte';
 
 	type ForestStandListDto = {
@@ -80,6 +82,10 @@
 		return Number.isFinite(parsed) ? parsed : 0;
 	}
 
+	function sortForestStandsByNumber(items: ForestStandListDto[]): ForestStandListDto[] {
+		return [...items].sort((a, b) => a.number - b.number);
+	}
+
 	function fillForm(detail: CadasterDto): void {
 		form = {
 			cadastralNumber: detail.cadastralNumber ?? '',
@@ -127,7 +133,9 @@
 
 			const detail = (await response.json()) as CadasterDto;
 			cadaster = detail;
-			forestStands = Array.isArray(detail.forestStands) ? detail.forestStands : [];
+			forestStands = Array.isArray(detail.forestStands)
+				? sortForestStandsByNumber(detail.forestStands)
+				: [];
 			fillForm(detail);
 		} catch {
 			errorMessage = 'Failed to load cadaster.';
@@ -183,7 +191,9 @@
 
 			const updated = (await response.json()) as CadasterDto;
 			cadaster = updated;
-			forestStands = Array.isArray(updated.forestStands) ? updated.forestStands : [];
+			forestStands = Array.isArray(updated.forestStands)
+				? sortForestStandsByNumber(updated.forestStands)
+				: [];
 			fillForm(updated);
 			isEditMode = false;
 			successMessage = 'Cadaster updated successfully.';
@@ -204,7 +214,9 @@
 {:else if cadaster}
 	<div class="detail-page">
 		<p class="breadcrumb">
-			<a href={`/admin/${$page.params.CompanyId}/landproperty`}>← Back to properties</a>
+			<a href={resolve('/admin/[CompanyId]/landproperty', { CompanyId: $page.params.CompanyId })}
+				>← Back to properties</a
+			>
 		</p>
 
 		<header class="page-head">
@@ -214,7 +226,13 @@
 				<p class="subtitle">Manage cadastral values and review connected forest stand records.</p>
 			</div>
 			<div class="head-actions">
-				<a class="btn-log-activity" href={`/admin/${$page.params.CompanyId}/cadaster/${cadaster.id}/activity/new`}>Log activity</a>
+				<a
+					class="btn-log-activity"
+					href={resolve('/admin/[CompanyId]/cadaster/[CadasterId]/activity/new', {
+						CompanyId: $page.params.CompanyId,
+						CadasterId: cadaster.id
+					})}>Log activity</a
+				>
 				<button type="button" class="mode-btn" onclick={() => (isEditMode = !isEditMode)} disabled={isSaving}>
 					{isEditMode ? 'Cancel editing' : 'Enable editing'}
 				</button>
@@ -228,7 +246,14 @@
 			</article>
 			<article class="meta-card">
 				<p class="meta-label">Land property</p>
-				<p class="meta-value"><a href={`/admin/${$page.params.CompanyId}/landproperty/${cadaster.landPropertyId}`}>{cadaster.landPropertyName}</a></p>
+				<p class="meta-value">
+					<a
+						href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
+							CompanyId: $page.params.CompanyId,
+							LandPropertyId: cadaster.landPropertyId
+						})}>{cadaster.landPropertyName}</a
+					>
+				</p>
 			</article>
 			<article class="meta-card">
 				<p class="meta-label">Forest stand count</p>
@@ -236,6 +261,7 @@
 			</article>
 		</section>
 
+		
 		<form id="cadaster-form" onsubmit={saveCadaster} class="detail-form">
 			<section class="form-section">
 				<h2>General values</h2>
@@ -282,13 +308,20 @@
 							</tr>
 						</thead>
 						<tbody>
-							{#each forestStands as stand}
+							{#each forestStands as stand (stand.id)}
 								<tr>
 									<td>{stand.number}</td>
 									<td>{stand.area}</td>
 									<td>{stand.totalVolume}</td>
 									<td>{stand.isActive ? 'Active' : 'Inactive'}</td>
-									<td class="actions"><a href={`/admin/${$page.params.CompanyId}/foreststand/${stand.id}`}>Open</a></td>
+									<td class="actions">
+										<a
+											href={resolve('/admin/[CompanyId]/foreststand/[ForestStandId]', {
+												CompanyId: $page.params.CompanyId,
+												ForestStandId: stand.id
+											})}>Open</a
+										>
+									</td>
 								</tr>
 							{/each}
 						</tbody>
@@ -303,6 +336,12 @@
 		{#if successMessage}
 			<p class="message success">{successMessage}</p>
 		{/if}
+
+		<section class="form-section">
+			<h2>Cadastral unit on map</h2>
+			<CadastralMap tunnus={cadaster.cadastralNumber} />
+		</section>
+
 	</div>
 {/if}
 

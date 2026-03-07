@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { goto } from '$app/navigation';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
@@ -43,7 +44,6 @@
 	let isSubmitting = $state(false);
 	let isLoadingActivityTypes = $state(true);
 	let errorMessage = $state('');
-	let successMessage = $state('');
 
 	let activityTypes = $state<ActivityTypeListDto[]>([]);
 
@@ -72,9 +72,7 @@
 			isLoadingActivityTypes = true;
 			const token = await authService.ensureValidToken();
 			const response = await fetch(`${apiBaseUrl}/api/activitytypes`, {
-				headers: {
-					Authorization: `Bearer ${token}`
-				}
+				headers: { Authorization: `Bearer ${token}` }
 			});
 
 			if (!response.ok) {
@@ -99,7 +97,6 @@
 		if (!companyId) return;
 
 		errorMessage = '';
-		successMessage = '';
 
 		if (!description.trim()) {
 			errorMessage = 'Description is required.';
@@ -157,9 +154,8 @@
 				return;
 			}
 
-			successMessage = 'Activity logged successfully.';
 			if (redirectHref) {
-				await goto(redirectHref);
+				await goto(resolve(redirectHref));
 			}
 		} catch {
 			errorMessage = 'Failed to create activity.';
@@ -171,7 +167,7 @@
 	onMount(loadActivityTypes);
 </script>
 
-<section class="card">
+<section class="employee-card activity-form-card">
 	<h2>New activity</h2>
 
 	<form class="form-grid" onsubmit={submit}>
@@ -182,7 +178,7 @@
 			{:else}
 				<select bind:value={selectedCadasterId} required>
 					<option value="" disabled>Select cadaster</option>
-					{#each cadasterOptions as option}
+					{#each cadasterOptions as option (option.id)}
 						<option value={option.id}>{option.label}</option>
 					{/each}
 				</select>
@@ -193,7 +189,7 @@
 			<span>Activity type</span>
 			<select bind:value={activityTypeId} disabled={isLoadingActivityTypes} required>
 				<option value="" disabled>{isLoadingActivityTypes ? 'Loading...' : 'Select activity type'}</option>
-				{#each activityTypes as type}
+				{#each activityTypes as type (type.id)}
 					<option value={type.id}>{type.activityTypeName}</option>
 				{/each}
 			</select>
@@ -204,7 +200,7 @@
 			<input type="datetime-local" bind:value={date} required />
 		</label>
 
-		<label>
+		<label class="full-width">
 			<span>Description</span>
 			<textarea bind:value={description} rows="3" required></textarea>
 		</label>
@@ -219,14 +215,14 @@
 			<input type="text" bind:value={unit} placeholder="e.g. m3, ha" />
 		</label>
 
-		<label class="notes">
+		<label class="full-width">
 			<span>Notes</span>
 			<textarea bind:value={notes} rows="3"></textarea>
 		</label>
 
 		<div class="actions">
 			{#if cancelHref}
-				<a class="ghost" href={cancelHref}>Cancel</a>
+				<a class="ghost" href={resolve(cancelHref)}>Cancel</a>
 			{/if}
 			<button type="submit" disabled={isSubmitting || isLoadingActivityTypes}>
 				{isSubmitting ? 'Saving...' : submitLabel}
@@ -235,27 +231,21 @@
 	</form>
 
 	{#if errorMessage}
-		<p class="error">{errorMessage}</p>
-	{/if}
-
-	{#if successMessage}
-		<p class="success">{successMessage}</p>
+		<div class="employee-state-block is-error">{errorMessage}</div>
 	{/if}
 </section>
 
 <style>
-	.card {
-		padding: 1rem;
-		border: 1px solid #e5e7eb;
-		border-radius: 0.75rem;
-		background: #fff;
+	.activity-form-card h2 {
+		margin: 0 0 0.75rem;
+		font-size: 1.05rem;
+		color: #1a3228;
 	}
 
 	.form-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-		gap: 0.75rem 1rem;
-		margin-top: 1rem;
+		grid-template-columns: 1fr;
+		gap: 0.75rem;
 	}
 
 	label {
@@ -264,35 +254,56 @@
 		gap: 0.3rem;
 	}
 
-	label.notes {
-		grid-column: 1 / -1;
+	label span {
+		font-size: 0.86rem;
+		font-weight: 700;
+		color: #30483d;
 	}
 
 	input,
 	select,
 	textarea {
-		padding: 0.5rem 0.6rem;
-		border: 1px solid #d1d5db;
-		border-radius: 0.5rem;
+		padding: 0.6rem 0.65rem;
+		border: 1px solid #d1dcd6;
+		border-radius: 0.6rem;
 		font: inherit;
+		background: #fff;
+	}
+
+	textarea {
+		resize: vertical;
 	}
 
 	.actions {
-		grid-column: 1 / -1;
 		display: flex;
 		justify-content: flex-end;
-		gap: 0.5rem;
+		gap: 0.55rem;
 	}
 
 	button,
 	.ghost {
-		border: 1px solid #d1d5db;
-		background: #fff;
-		border-radius: 0.5rem;
-		padding: 0.45rem 0.9rem;
-		cursor: pointer;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 2.5rem;
+		border-radius: 0.65rem;
+		padding: 0.5rem 0.95rem;
+		font-size: 0.9rem;
+		font-weight: 700;
 		text-decoration: none;
-		color: inherit;
+		cursor: pointer;
+	}
+
+	button {
+		border: 1px solid #1f5a42;
+		background: #1f5a42;
+		color: #f6fbf8;
+	}
+
+	.ghost {
+		border: 1px solid #cad8d1;
+		background: #fff;
+		color: #1f4f39;
 	}
 
 	button:disabled {
@@ -300,13 +311,14 @@
 		cursor: not-allowed;
 	}
 
-	.error {
-		margin-top: 0.75rem;
-		color: #b91c1c;
-	}
+	@media (min-width: 768px) {
+		.form-grid {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
 
-	.success {
-		margin-top: 0.75rem;
-		color: #166534;
+		.full-width,
+		.actions {
+			grid-column: 1 / -1;
+		}
 	}
 </style>
