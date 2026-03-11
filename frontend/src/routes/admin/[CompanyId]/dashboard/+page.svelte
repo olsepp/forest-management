@@ -139,6 +139,32 @@
 		return 'inactive';
 	}
 
+	async function mapWithConcurrency<T, R>(
+		items: T[],
+		limit: number,
+		mapper: (item: T, index: number) => Promise<R>
+	): Promise<R[]> {
+		if (items.length === 0) return [];
+
+		const results: R[] = new Array(items.length);
+		const safeLimit = Math.max(1, Math.floor(limit));
+		let nextIndex = 0;
+
+		async function worker(): Promise<void> {
+			while (true) {
+				const currentIndex = nextIndex;
+				if (currentIndex >= items.length) return;
+				nextIndex += 1;
+				results[currentIndex] = await mapper(items[currentIndex], currentIndex);
+			}
+		}
+
+		const workers = Array.from({ length: Math.min(safeLimit, items.length) }, () => worker());
+		await Promise.all(workers);
+
+		return results;
+	}
+
 	async function loadCadastersForProperty(
 		propertyId: string,
 		token: string
@@ -253,32 +279,36 @@
 			totalProperties = properties.length;
 			totalActiveProperties = properties.filter((item) => normalizeStatus(item.status) === 'active').length;
 
-			const cadasterResults = await Promise.all(
-				properties.map((property) => loadCadastersForProperty(property.id, token))
+			const cadasterResults = await mapWithConcurrency(properties, 6, (property) =>
+				loadCadastersForProperty(property.id, token)
 			);
 
 			totalCadasters = cadasterResults.reduce((sum, cadasters) => sum + cadasters.length, 0);
 
-			const cadasterIds = cadasterResults
+			const cadasterIds = [...new Set(
+				cadasterResults
 				.flat()
 				.map((cadaster) => cadaster.id)
-				.filter((id) => Boolean(id));
+				.filter((id) => Boolean(id))
+			)];
 
-			const activitiesByCadaster = await Promise.all(
-				cadasterIds.map((cadasterId) => loadActivitiesForCadaster(cadasterId, token))
+			const activitiesByCadaster = await mapWithConcurrency(cadasterIds, 8, (cadasterId) =>
+				loadActivitiesForCadaster(cadasterId, token)
 			);
 
-			const forestStandsByCadaster = await Promise.all(
-				cadasterIds.map((cadasterId) => loadForestStandsForCadaster(cadasterId, token))
+			const forestStandsByCadaster = await mapWithConcurrency(cadasterIds, 8, (cadasterId) =>
+				loadForestStandsForCadaster(cadasterId, token)
 			);
 
-			const forestStandIds = forestStandsByCadaster
+			const forestStandIds = [...new Set(
+				forestStandsByCadaster
 				.flat()
 				.map((forestStand) => forestStand.id)
-				.filter((id) => Boolean(id));
+				.filter((id) => Boolean(id))
+			)];
 
-			const activitiesByForestStand = await Promise.all(
-				forestStandIds.map((forestStandId) => loadActivitiesForForestStand(forestStandId, token))
+			const activitiesByForestStand = await mapWithConcurrency(forestStandIds, 6, (forestStandId) =>
+				loadActivitiesForForestStand(forestStandId, token)
 			);
 
 			const activityById: Record<string, ActivityListDto> = {};

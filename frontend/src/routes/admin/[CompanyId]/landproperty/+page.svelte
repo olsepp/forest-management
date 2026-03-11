@@ -10,33 +10,20 @@
 		name: string;
 		registrationNumber: number;
 		county: string;
-		status: 'Active' | 'Inactive' | 'Sold';
-		cadastralNumbers: string[];
+		parish?: string;
+		village?: string;
+		boughtDate?: string | null;
+		soldDate?: string | null;
+		status: 'Active' | 'Inactive' | 'Sold' | number | string;
+		companyId?: string;
+		companyName?: string;
+		cadastralNumbers?: string[];
+		cadasters?: PropertyCadasterLinkDto[];
 	};
 
 	type PropertyCadasterLinkDto = {
 		id: string;
 		cadastralNumber: string;
-	};
-
-	type LandPropertyDto = {
-		id: string;
-		name: string;
-		registrationNumber: number;
-		county: string;
-		parish: string;
-		village: string;
-		boughtDate: string | null;
-		soldDate: string | null;
-		status: 'Active' | 'Inactive' | 'Sold';
-		companyId: string;
-		companyName: string;
-		cadasters: {
-			id: string;
-			cadastralNumber: string;
-			forestArea: number;
-			forestStandCount: number;
-		}[];
 	};
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
@@ -45,12 +32,9 @@
 	let errorMessage = $state('');
 	let properties = $state<LandPropertyListDto[]>([]);
 	let expandedPropertyIds = $state<string[]>([]);
-	let propertyDetailsById = $state<Record<string, LandPropertyDto>>({});
-	let loadingDetailsById = $state<Record<string, boolean>>({});
-	let detailsErrorById = $state<Record<string, string>>({});
-	let cadastersByPropertyId = $state<Record<string, PropertyCadasterLinkDto[]>>({});
 	let searchQuery = $state('');
 	let selectedCounty = $state('');
+	let companyId = $derived($page.params.CompanyId ?? '');
 	let normalizedSearchQuery = $derived(searchQuery.trim().toLowerCase());
 	let availableCounties = $derived.by(() => {
 		const counties = properties
@@ -103,12 +87,22 @@
 		return date.toLocaleDateString();
 	}
 
-	function tableCadasters(propertyId: string): PropertyCadasterLinkDto[] {
-		return cadastersByPropertyId[propertyId] ?? [];
+	function tableCadasters(property: LandPropertyListDto): PropertyCadasterLinkDto[] {
+		const fromDto = Array.isArray(property.cadasters)
+			? property.cadasters.filter((item) => Boolean(item?.cadastralNumber))
+			: [];
+		if (fromDto.length > 0) {
+			return fromDto;
+		}
+
+		const fromNumbers = Array.isArray(property.cadastralNumbers) ? property.cadastralNumbers : [];
+		return fromNumbers
+			.filter(Boolean)
+			.map((cadastralNumber) => ({ id: '', cadastralNumber }));
 	}
 
 	function propertySearchableCadastralNumbers(property: LandPropertyListDto): string[] {
-		const fromTableMap = tableCadasters(property.id).map((item) => item.cadastralNumber);
+		const fromTableMap = tableCadasters(property).map((item) => item.cadastralNumber);
 		const fromListDto = Array.isArray(property.cadastralNumbers) ? property.cadastralNumbers : [];
 
 		return [...new Set([...fromTableMap, ...fromListDto])];
@@ -127,114 +121,13 @@
 		return cadastralNumbers.some((number) => number.toLowerCase().includes(query));
 	}
 
-	async function loadCadastersForProperty(
-		propertyId: string,
-		token: string
-	): Promise<PropertyCadasterLinkDto[]> {
-		const response = await fetch(`${apiBaseUrl}/api/cadasters/by-land-property/${propertyId}`, {
-			headers: {
-				Authorization: `Bearer ${token}`
-			}
-		});
-
-		if (!response.ok) return [];
-
-		const data = (await response.json()) as PropertyCadasterLinkDto[];
-		return Array.isArray(data)
-			? data.filter((item) => Boolean(item?.id) && Boolean(item?.cadastralNumber))
-			: [];
-	}
-
-	async function preloadPropertyCadasters(list: LandPropertyListDto[]) {
-		if (list.length === 0) return;
-
-		const token = await authService.ensureValidToken();
-		const results = await Promise.all(
-			list.map(async (item) => {
-				const cadasters = await loadCadastersForProperty(item.id, token);
-				return { propertyId: item.id, cadasters };
-			})
-		);
-
-		const nextMap: Record<string, PropertyCadasterLinkDto[]> = { ...cadastersByPropertyId };
-		for (const item of results) {
-			nextMap[item.propertyId] = item.cadasters;
-		}
-
-		cadastersByPropertyId = nextMap;
-	}
-
-	async function loadPropertyDetails(propertyId: string) {
-		if (propertyDetailsById[propertyId] || loadingDetailsById[propertyId]) {
-			return;
-		}
-
-		loadingDetailsById = { ...loadingDetailsById, [propertyId]: true };
-		detailsErrorById = { ...detailsErrorById, [propertyId]: '' };
-
-		try {
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/landproperties/${propertyId}`, {
-				headers: {
-					Authorization: `Bearer ${token}`
-				}
-			});
-
-			if (!response.ok) {
-				detailsErrorById = {
-					...detailsErrorById,
-					[propertyId]: 'Failed to load property details'
-				};
-				return;
-			}
-
-			const detail: LandPropertyDto = await response.json();
-
-			// Some backends return land property details without populated `cadasters`.
-			// Fallback to the dedicated endpoint to ensure cadasters are shown.
-			if (!Array.isArray(detail.cadasters) || detail.cadasters.length === 0) {
-				const cadastersResponse = await fetch(
-					`${apiBaseUrl}/api/cadasters/by-land-property/${propertyId}`,
-					{
-						headers: {
-							Authorization: `Bearer ${token}`
-						}
-					}
-				);
-
-				if (cadastersResponse.ok) {
-					const cadasters = (await cadastersResponse.json()) as LandPropertyDto['cadasters'];
-					detail.cadasters = Array.isArray(cadasters) ? cadasters : [];
-				}
-			}
-
-			propertyDetailsById = { ...propertyDetailsById, [propertyId]: detail };
-			cadastersByPropertyId = {
-				...cadastersByPropertyId,
-				[propertyId]: Array.isArray(detail.cadasters)
-					? detail.cadasters
-							.filter((cadaster) => Boolean(cadaster.id) && Boolean(cadaster.cadastralNumber))
-							.map((cadaster) => ({
-								id: cadaster.id,
-								cadastralNumber: cadaster.cadastralNumber
-							}))
-					: []
-			};
-		} catch {
-			detailsErrorById = { ...detailsErrorById, [propertyId]: 'Failed to load property details' };
-		} finally {
-			loadingDetailsById = { ...loadingDetailsById, [propertyId]: false };
-		}
-	}
-
-	async function toggleExpand(propertyId: string) {
+	function toggleExpand(propertyId: string) {
 		if (isExpanded(propertyId)) {
 			expandedPropertyIds = expandedPropertyIds.filter((id) => id !== propertyId);
 			return;
 		}
 
 		expandedPropertyIds = [...expandedPropertyIds, propertyId];
-		await loadPropertyDetails(propertyId);
 	}
 
 	onMount(async () => {
@@ -242,7 +135,6 @@
 			errorMessage = '';
 			isLoading = true;
 
-			const companyId = $page.params.CompanyId;
 			if (!companyId) {
 				errorMessage = 'Missing company id';
 				return;
@@ -265,11 +157,14 @@
 			properties = Array.isArray(data)
 				? data.map((item) => ({
 					...item,
+					cadasters: Array.isArray(item.cadasters)
+						? item.cadasters.filter(
+								(cadaster) => Boolean(cadaster?.id) && Boolean(cadaster?.cadastralNumber)
+							)
+						: [],
 					cadastralNumbers: Array.isArray(item.cadastralNumbers) ? item.cadastralNumbers : []
 				}))
 				: [];
-
-			await preloadPropertyCadasters(properties);
 		} catch {
 			errorMessage = 'Failed to load land properties';
 		} finally {
@@ -336,7 +231,7 @@
 						<td>
 							<a
 								href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
-									CompanyId: $page.params.CompanyId,
+									CompanyId: companyId,
 									LandPropertyId: property.id
 								})}>{property.name}</a
 							>
@@ -349,18 +244,22 @@
 							)}</span>
 						</td>
 						<td>
-							{#if tableCadasters(property.id).length === 0}
+							{#if tableCadasters(property).length === 0}
 								—
 							{:else}
 								<div class="cadaster-links">
-									{#each tableCadasters(property.id) as cadaster (cadaster.id)}
-										<a
-											href={resolve('/admin/[CompanyId]/cadaster/[CadasterId]', {
-												CompanyId: $page.params.CompanyId,
-												CadasterId: cadaster.id
-											})}
-											>{cadaster.cadastralNumber}</a
-										>
+									{#each tableCadasters(property) as cadaster (`${property.id}:${cadaster.id || cadaster.cadastralNumber}`)}
+										{#if cadaster.id}
+											<a
+												href={resolve('/admin/[CompanyId]/cadaster/[CadasterId]', {
+													CompanyId: companyId,
+													CadasterId: cadaster.id
+												})}
+												>{cadaster.cadastralNumber}</a
+											>
+										{:else}
+											<span>{cadaster.cadastralNumber}</span>
+										{/if}
 									{/each}
 								</div>
 							{/if}
@@ -392,48 +291,45 @@
 					{#if isExpanded(property.id)}
 						<tr class="details-row">
 							<td colspan="6">
-								{#if loadingDetailsById[property.id]}
-									<p>Loading details...</p>
-								{:else if detailsErrorById[property.id]}
-									<p>{detailsErrorById[property.id]}</p>
-								{:else if propertyDetailsById[property.id]}
-									{@const detail = propertyDetailsById[property.id]}
-									<div class="details-actions">
+								<div class="details-actions">
 									<a
 										href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
-											CompanyId: $page.params.CompanyId,
+											CompanyId: companyId,
 											LandPropertyId: property.id
 										})}
 										>Open property page</a
 									>
-									</div>
-									<div class="details-grid">
-										<p><strong>ID:</strong> {detail.id}</p>
-										<p><strong>Parish:</strong> {detail.parish || '—'}</p>
-										<p><strong>Village:</strong> {detail.village || '—'}</p>
-										<p><strong>Bought date:</strong> {formatDate(detail.boughtDate)}</p>
-										<p><strong>Sold date:</strong> {formatDate(detail.soldDate)}</p>
-										<p><strong>Company:</strong> {detail.companyName}</p>
-									</div>
+								</div>
+								<div class="details-grid">
+									<p><strong>ID:</strong> {property.id}</p>
+									<p><strong>Parish:</strong> {property.parish || '—'}</p>
+									<p><strong>Village:</strong> {property.village || '—'}</p>
+									<p><strong>Bought date:</strong> {formatDate(property.boughtDate ?? null)}</p>
+									<p><strong>Sold date:</strong> {formatDate(property.soldDate ?? null)}</p>
+									<p><strong>Company:</strong> {property.companyName || '—'}</p>
+								</div>
 
-									<h4>Cadasters</h4>
-									{#if detail.cadasters.length === 0}
-										<p>No cadasters found.</p>
-									{:else}
-										<ul>
-											{#each detail.cadasters as cadaster (cadaster.id)}
-												<li>
+								<h4>Cadasters</h4>
+								{#if tableCadasters(property).length === 0}
+									<p>No cadasters found.</p>
+								{:else}
+									<ul>
+										{#each tableCadasters(property) as cadaster (`${property.id}:${cadaster.id || cadaster.cadastralNumber}`)}
+											<li>
+												{#if cadaster.id}
 													<a
 														href={resolve('/admin/[CompanyId]/cadaster/[CadasterId]', {
-															CompanyId: $page.params.CompanyId,
+															CompanyId: companyId,
 															CadasterId: cadaster.id
 														})}
 														>{cadaster.cadastralNumber}</a
 													>
-												</li>
-											{/each}
-										</ul>
-									{/if}
+												{:else}
+													<span>{cadaster.cadastralNumber}</span>
+												{/if}
+											</li>
+										{/each}
+									</ul>
 								{/if}
 							</td>
 						</tr>

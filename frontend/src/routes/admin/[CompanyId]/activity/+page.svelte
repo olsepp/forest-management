@@ -5,137 +5,44 @@
 	import { authService } from '$lib/services/auth';
 	import { onMount } from 'svelte';
 
-	type ActivityListDto = {
+	type ActivityDto = {
 		id: string;
 		description: string;
 		quantity: number;
 		unit: string | null;
+		notes: string | null;
 		date: string;
-		activityTypeName: string;
+		userId: string;
 		userName: string;
-		cadasterCadastralNumber: string | null;
-		forestStandNumber: number;
-		applicationStatus: 'Pending' | 'Approved' | 'Rejected' | null;
-	};
-
-	type ActivityDetailsDto = {
-		id: string;
+		activityTypeId: string;
+		activityTypeName: string;
 		cadasterId: string | null;
+		cadasterCadastralNumber: string | null;
 		forestStandId: string | null;
+		forestStandNumber: number | null;
+		landPropertyId: string | null;
 		landPropertyName: string | null;
-	};
-
-	type LandPropertyListDto = {
-		id: string;
-	};
-
-	type PropertyCadasterLinkDto = {
-		id: string;
-		cadastralNumber: string;
-	};
-
-	type ForestStandListDto = {
-		id: string;
+		applicationStatus: number | null;
 	};
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
 	let isLoading = $state(true);
 	let errorMessage = $state('');
-	let activities = $state<ActivityListDto[]>([]);
+	let activities = $state<ActivityDto[]>([]);
 	let expandedActivityIds = $state<string[]>([]);
-	let activityDetailsById = $state<Record<string, ActivityDetailsDto>>({});
 
 	function isExpanded(activityId: string): boolean {
 		return expandedActivityIds.includes(activityId);
 	}
 
-	async function toggleExpand(activityId: string): Promise<void> {
+	function toggleExpand(activityId: string): void {
 		if (isExpanded(activityId)) {
 			expandedActivityIds = expandedActivityIds.filter((id) => id !== activityId);
 			return;
 		}
 
 		expandedActivityIds = [...expandedActivityIds, activityId];
-		await loadActivityDetails(activityId);
-	}
-
-	function landPropertyLabel(activityId: string): string {
-		return activityDetailsById[activityId]?.landPropertyName || '—';
-	}
-
-	async function loadActivityDetails(activityId: string): Promise<void> {
-		if (activityDetailsById[activityId]) return;
-
-		try {
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/activities/${activityId}`, {
-				headers: {
-					Authorization: `Bearer ${token}`
-				}
-			});
-
-			if (!response.ok) return;
-
-			const data = (await response.json()) as ActivityDetailsDto;
-			activityDetailsById = {
-				...activityDetailsById,
-				[activityId]: {
-					id: data.id,
-					cadasterId: data.cadasterId ?? null,
-					forestStandId: data.forestStandId ?? null,
-					landPropertyName: data.landPropertyName ?? null
-				}
-			};
-
-			if (activityDetailsById[activityId]?.landPropertyName) return;
-
-			const cadasterId = data.cadasterId ?? null;
-			const forestStandId = data.forestStandId ?? null;
-
-			if (cadasterId) {
-				const cadasterResponse = await fetch(`${apiBaseUrl}/api/cadasters/${cadasterId}`, {
-					headers: {
-						Authorization: `Bearer ${token}`
-					}
-				});
-
-				if (cadasterResponse.ok) {
-					const cadasterData = (await cadasterResponse.json()) as { landPropertyName?: string | null };
-					activityDetailsById = {
-						...activityDetailsById,
-						[activityId]: {
-							...activityDetailsById[activityId],
-							landPropertyName: cadasterData.landPropertyName ?? null
-						}
-					};
-					return;
-				}
-			}
-
-			if (forestStandId) {
-				const forestStandResponse = await fetch(`${apiBaseUrl}/api/foreststands/${forestStandId}`, {
-					headers: {
-						Authorization: `Bearer ${token}`
-					}
-				});
-
-				if (forestStandResponse.ok) {
-					const forestStandData = (await forestStandResponse.json()) as {
-						landPropertyName?: string | null;
-					};
-					activityDetailsById = {
-						...activityDetailsById,
-						[activityId]: {
-							...activityDetailsById[activityId],
-							landPropertyName: forestStandData.landPropertyName ?? null
-						}
-					};
-				}
-			}
-		} catch {
-			// keep UI functional even if details request fails
-		}
 	}
 
 	function formatDate(value: string): string {
@@ -144,117 +51,29 @@
 		return date.toLocaleString();
 	}
 
-	function formatQuantity(item: ActivityListDto): string {
+	function formatQuantity(item: ActivityDto): string {
 		const quantity = typeof item.quantity === 'number' && Number.isFinite(item.quantity) ? item.quantity : 0;
 		return item.unit ? `${quantity} ${item.unit}` : String(quantity);
 	}
 
-	function cadasterLabel(item: ActivityListDto): string {
+	function cadasterLabel(item: ActivityDto): string {
 		return item.cadasterCadastralNumber || '—';
 	}
 
-	function forestStandLabel(item: ActivityListDto): string {
-		if (Number.isFinite(item.forestStandNumber) && item.forestStandNumber > 0) {
+	function forestStandLabel(item: ActivityDto): string {
+		if (typeof item.forestStandNumber === 'number' && Number.isFinite(item.forestStandNumber) && item.forestStandNumber > 0) {
 			return String(item.forestStandNumber);
 		}
 
 		return '—';
 	}
 
-	async function loadCadastersForProperty(
-		propertyId: string,
-		token: string
-	): Promise<PropertyCadasterLinkDto[]> {
-		const response = await fetch(`${apiBaseUrl}/api/cadasters/by-land-property/${propertyId}`, {
-			headers: {
-				Authorization: `Bearer ${token}`
-			}
-		});
-
-		if (!response.ok) return [];
-
-		const data = (await response.json()) as PropertyCadasterLinkDto[];
-		return Array.isArray(data)
-			? data.filter((item) => Boolean(item?.id) && Boolean(item?.cadastralNumber))
-			: [];
-	}
-
-	async function loadActivitiesForCadaster(
-		cadasterId: string,
-		token: string
-	): Promise<ActivityListDto[]> {
-		const response = await fetch(`${apiBaseUrl}/api/activities/by-cadaster/${cadasterId}`, {
-			headers: {
-				Authorization: `Bearer ${token}`
-			}
-		});
-
-		if (!response.ok) return [];
-
-		const data = (await response.json()) as ActivityListDto[];
-		return Array.isArray(data) ? data.filter((item) => Boolean(item?.id)) : [];
-	}
-
-	async function loadForestStandsForCadaster(
-		cadasterId: string,
-		token: string
-	): Promise<ForestStandListDto[]> {
-		const response = await fetch(`${apiBaseUrl}/api/foreststands/by-cadaster/${cadasterId}`, {
-			headers: {
-				Authorization: `Bearer ${token}`
-			}
-		});
-
-		if (!response.ok) return [];
-
-		const data = (await response.json()) as ForestStandListDto[];
-		return Array.isArray(data) ? data.filter((item) => Boolean(item?.id)) : [];
-	}
-
-	async function loadActivitiesForForestStand(
-		forestStandId: string,
-		token: string
-	): Promise<ActivityListDto[]> {
-		const response = await fetch(`${apiBaseUrl}/api/activities/by-foreststand/${forestStandId}`, {
-			headers: {
-				Authorization: `Bearer ${token}`
-			}
-		});
-
-		if (!response.ok) return [];
-
-		const data = (await response.json()) as ActivityListDto[];
-		return Array.isArray(data) ? data.filter((item) => Boolean(item?.id)) : [];
-	}
-
-	async function loadActivityLocationById(
-		activityId: string,
-		token: string
-	): Promise<Pick<ActivityListDto, 'id' | 'cadasterCadastralNumber' | 'forestStandNumber'> | null> {
-		const response = await fetch(`${apiBaseUrl}/api/activities/${activityId}`, {
-			headers: {
-				Authorization: `Bearer ${token}`
-			}
-		});
-
-		if (!response.ok) return null;
-
-		const data = (await response.json()) as {
-			id?: string;
-			cadasterCadastralNumber?: string | null;
-			forestStandNumber?: number;
-		};
-
-		if (!data?.id) return null;
-
-		return {
-			id: data.id,
-			cadasterCadastralNumber: data.cadasterCadastralNumber ?? null,
-			forestStandNumber:
-				typeof data.forestStandNumber === 'number' && Number.isFinite(data.forestStandNumber)
-					? data.forestStandNumber
-					: 0
-		};
+	function applicationStatusLabel(status: number | null): string {
+		if (status === null || typeof status !== 'number') return '—';
+		if (status === 0) return 'Pending';
+		if (status === 1) return 'Approved';
+		if (status === 2) return 'Rejected';
+		return String(status);
 	}
 
 	onMount(async () => {
@@ -269,7 +88,7 @@
 			}
 
 			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/landproperties/search?companyId=${companyId}`, {
+			const response = await fetch(`${apiBaseUrl}/api/activities/by-company/${companyId}`, {
 				headers: {
 					Authorization: `Bearer ${token}`
 				}
@@ -277,103 +96,15 @@
 
 			if (!response.ok) {
 				errorMessage =
-					response.status === 401
+					response.status === 401 || response.status === 403
 						? 'Unauthorized. Please sign in again.'
 						: 'Failed to load activities.';
 				return;
 			}
 
-			const properties = (await response.json()) as LandPropertyListDto[];
-			const safeProperties = Array.isArray(properties)
-				? properties.filter((item) => Boolean(item?.id))
-				: [];
-
-			const cadasterResults = await Promise.all(
-				safeProperties.map((property) => loadCadastersForProperty(property.id, token))
-			);
-
-			const cadasterIds = cadasterResults
-				.flat()
-				.map((cadaster) => cadaster.id)
-				.filter((id) => Boolean(id));
-
-			const activitiesByCadaster = await Promise.all(
-				cadasterIds.map((cadasterId) => loadActivitiesForCadaster(cadasterId, token))
-			);
-
-			const forestStandsByCadaster = await Promise.all(
-				cadasterIds.map((cadasterId) => loadForestStandsForCadaster(cadasterId, token))
-			);
-
-			const forestStandIds = forestStandsByCadaster
-				.flat()
-				.map((forestStand) => forestStand.id)
-				.filter((id) => Boolean(id));
-
-			const activitiesByForestStand = await Promise.all(
-				forestStandIds.map((forestStandId) => loadActivitiesForForestStand(forestStandId, token))
-			);
-
-			const activityById: Record<string, ActivityListDto> = {};
-			for (const sourceActivities of [...activitiesByCadaster, ...activitiesByForestStand]) {
-				for (const item of sourceActivities) {
-					if (!item?.id) continue;
-					const existing = activityById[item.id];
-					if (!existing) {
-						activityById[item.id] = item;
-						continue;
-					}
-
-					const incomingForestStandNumber =
-						typeof item.forestStandNumber === 'number' && Number.isFinite(item.forestStandNumber)
-							? item.forestStandNumber
-							: 0;
-					const existingForestStandNumber =
-						typeof existing.forestStandNumber === 'number' && Number.isFinite(existing.forestStandNumber)
-							? existing.forestStandNumber
-							: 0;
-
-					activityById[item.id] = {
-						...existing,
-						...item,
-						cadasterCadastralNumber:
-							item.cadasterCadastralNumber ?? existing.cadasterCadastralNumber ?? null,
-						forestStandNumber:
-							incomingForestStandNumber > 0
-								? incomingForestStandNumber
-								: existingForestStandNumber
-					};
-				}
-			}
-
-			const locationLookups = await Promise.all(
-				Object.keys(activityById).map((activityId) => loadActivityLocationById(activityId, token))
-			);
-
-			for (const location of locationLookups) {
-				if (!location?.id || !activityById[location.id]) continue;
-				const existing = activityById[location.id];
-				const existingForestStandNumber =
-					typeof existing.forestStandNumber === 'number' && Number.isFinite(existing.forestStandNumber)
-						? existing.forestStandNumber
-						: 0;
-
-				activityById[location.id] = {
-					...existing,
-					cadasterCadastralNumber:
-						location.cadasterCadastralNumber ?? existing.cadasterCadastralNumber ?? null,
-					forestStandNumber:
-						location.forestStandNumber > 0 ? location.forestStandNumber : existingForestStandNumber
-				};
-			}
-
-			activities = Object.values(activityById).sort((a, b) => {
-				const aTime = new Date(a.date).getTime();
-				const bTime = new Date(b.date).getTime();
-				const safeA = Number.isNaN(aTime) ? 0 : aTime;
-				const safeB = Number.isNaN(bTime) ? 0 : bTime;
-				return safeB - safeA;
-			});
+			activities = (((await response.json()) as ActivityDto[]) ?? [])
+				.filter((item) => Boolean(item?.id))
+				.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 		} catch {
 			errorMessage = 'Failed to load activities.';
 		} finally {
@@ -412,10 +143,10 @@
 						<td>{forestStandLabel(item)}</td>
 						<td>{item.userName}</td>
 					<td class="actions">
-						<button
-							type="button"
-							class="expand-toggle"
-							onclick={() => toggleExpand(item.id)}
+								<button
+									type="button"
+									class="expand-toggle"
+									onclick={() => toggleExpand(item.id)}
 							aria-label={isExpanded(item.id) ? 'Collapse activity details' : 'Expand activity details'}
 							aria-expanded={isExpanded(item.id)}
 						>
@@ -453,12 +184,12 @@
 								<p><strong>Activity type:</strong> {item.activityTypeName}</p>
 								<p><strong>Cadaster:</strong> {cadasterLabel(item)}</p>
 									<p><strong>Forest stand:</strong> {forestStandLabel(item)}</p>
-									<p><strong>Land property:</strong> {landPropertyLabel(item.id)}</p>
+									<p><strong>Land property:</strong> {item.landPropertyName || '—'}</p>
 									<p><strong>User:</strong> {item.userName}</p>
 									<p><strong>Description:</strong> {item.description || '—'}</p>
 									<p><strong>Quantity:</strong> {formatQuantity(item)}</p>
 									<p><strong>Unit:</strong> {item.unit || '—'}</p>
-									<p><strong>Status:</strong> {item.applicationStatus ?? '—'}</p>
+									<p><strong>Status:</strong> {applicationStatusLabel(item.applicationStatus)}</p>
 								</div>
 							</td>
 						</tr>

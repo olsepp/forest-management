@@ -13,6 +13,7 @@
 		county: string;
 		status: 'Active' | 'Inactive' | 'Sold' | number | string;
 		cadastralNumbers?: string[];
+		cadasters?: PropertyCadasterLinkDto[];
 	};
 
 	type PropertyCadasterLinkDto = {
@@ -23,7 +24,6 @@
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
 	let properties = $state<LandPropertyListDto[]>([]);
-	let cadastersByPropertyId = $state<Record<string, PropertyCadasterLinkDto[]>>({});
 	let isLoading = $state(true);
 	let errorMessage = $state('');
 	let isUnauthorized = $state(false);
@@ -71,13 +71,21 @@
 		return statusLabel(status) === 'Active';
 	}
 
-	function cadastersForProperty(propertyId: string): PropertyCadasterLinkDto[] {
-		return cadastersByPropertyId[propertyId] ?? [];
+	function cadastersForProperty(property: LandPropertyListDto): PropertyCadasterLinkDto[] {
+		const fromDto = Array.isArray(property.cadasters)
+			? property.cadasters.filter((item) => Boolean(item?.cadastralNumber))
+			: [];
+		if (fromDto.length > 0) return fromDto;
+
+		const fromNumbers = Array.isArray(property.cadastralNumbers) ? property.cadastralNumbers : [];
+		return fromNumbers
+			.filter(Boolean)
+			.map((cadastralNumber) => ({ id: '', cadastralNumber }));
 	}
 
 	function propertySearchableCadastralNumbers(property: LandPropertyListDto): string[] {
 		const fromDto = Array.isArray(property.cadastralNumbers) ? property.cadastralNumbers : [];
-		const fromLookup = cadastersForProperty(property.id).map((item) => item.cadastralNumber);
+		const fromLookup = cadastersForProperty(property).map((item) => item.cadastralNumber);
 		return [...new Set([...fromDto, ...fromLookup].filter(Boolean))];
 	}
 
@@ -97,21 +105,6 @@
 		}
 	}
 
-	async function loadCadastersForProperty(propertyId: string, token: string): Promise<PropertyCadasterLinkDto[]> {
-		const response = await fetch(`${apiBaseUrl}/api/cadasters/by-land-property/${propertyId}`, {
-			headers: {
-				Authorization: `Bearer ${token}`
-			}
-		});
-
-		if (!response.ok) return [];
-
-		const data = (await response.json()) as PropertyCadasterLinkDto[];
-		return Array.isArray(data)
-			? data.filter((item) => Boolean(item?.id) && Boolean(item?.cadastralNumber))
-			: [];
-	}
-
 	async function loadData() {
 		if (!companyId) {
 			errorMessage = 'Missing company id.';
@@ -126,7 +119,7 @@
 
 			const token = await authService.ensureValidToken();
 			const response = await fetch(
-				`${apiBaseUrl}/api/landproperties/search?companyId=${encodeURIComponent(companyId)}&activeOnly=true`,
+				`${apiBaseUrl}/api/landproperties/search?companyId=${encodeURIComponent(companyId)}&status=0`,
 				{
 					headers: {
 						Authorization: `Bearer ${token}`
@@ -149,6 +142,11 @@
 			const receivedProperties = Array.isArray(data)
 				? data.map((item) => ({
 					...item,
+					cadasters: Array.isArray(item.cadasters)
+						? item.cadasters.filter(
+								(cadaster) => Boolean(cadaster?.id) && Boolean(cadaster?.cadastralNumber)
+							)
+						: [],
 					cadastralNumbers: Array.isArray(item.cadastralNumbers) ? item.cadastralNumbers : []
 				}))
 				: [];
@@ -156,19 +154,6 @@
 			// Safety filter: some backends may ignore `activeOnly=true`.
 			// Enforce employee visibility for active properties only on client side too.
 			properties = receivedProperties.filter((item) => isActiveStatus(item.status));
-
-			const cadasterResults = await Promise.all(
-				properties.map(async (property) => ({
-					propertyId: property.id,
-					cadasters: await loadCadastersForProperty(property.id, token)
-				}))
-			);
-
-			const nextMap: Record<string, PropertyCadasterLinkDto[]> = {};
-			for (const item of cadasterResults) {
-				nextMap[item.propertyId] = item.cadasters;
-			}
-			cadastersByPropertyId = nextMap;
 		} catch {
 			errorMessage = 'Failed to load properties.';
 		} finally {
@@ -225,20 +210,24 @@
 					<p><strong>Registration:</strong> {property.registrationNumber}</p>
 					<p><strong>County:</strong> {property.county || '—'}</p>
 					<p><strong>Cadasters:</strong></p>
-					{#if cadastersForProperty(property.id).length === 0}
+					{#if cadastersForProperty(property).length === 0}
 						<p class="muted">No cadasters found.</p>
 					{:else}
 						<div class="cadaster-links">
-							{#each cadastersForProperty(property.id) as cadaster (cadaster.id)}
-								<a
-									onclick={(event) => event.stopPropagation()}
-									href={resolve('/employee/[CompanyId]/cadaster/[CadasterId]', {
-										CompanyId: companyId,
-										CadasterId: cadaster.id
-									})}
-								>
-									{cadaster.cadastralNumber}
-								</a>
+							{#each cadastersForProperty(property) as cadaster (`${property.id}:${cadaster.id || cadaster.cadastralNumber}`)}
+								{#if cadaster.id}
+									<a
+										onclick={(event) => event.stopPropagation()}
+										href={resolve('/employee/[CompanyId]/cadaster/[CadasterId]', {
+											CompanyId: companyId,
+											CadasterId: cadaster.id
+										})}
+									>
+										{cadaster.cadastralNumber}
+									</a>
+								{:else}
+									<span>{cadaster.cadastralNumber}</span>
+								{/if}
 							{/each}
 						</div>
 					{/if}
@@ -281,23 +270,27 @@
 							<td>{property.registrationNumber}</td>
 							<td>{property.county || '—'}</td>
 							<td>
-								<span class={`status ${statusClass(property.status)}`}>{statusLabel(property.status)}</span>
+							<span class={`status ${statusClass(property.status)}`}>{statusLabel(property.status)}</span>
 							</td>
 							<td>
-								{#if cadastersForProperty(property.id).length === 0}
+								{#if cadastersForProperty(property).length === 0}
 									—
 								{:else}
 									<div class="cadaster-links">
-										{#each cadastersForProperty(property.id) as cadaster (cadaster.id)}
-											<a
-												onclick={(event) => event.stopPropagation()}
-												href={resolve('/employee/[CompanyId]/cadaster/[CadasterId]', {
-													CompanyId: companyId,
-													CadasterId: cadaster.id
-												})}
-											>
-												{cadaster.cadastralNumber}
-											</a>
+										{#each cadastersForProperty(property) as cadaster (`${property.id}:${cadaster.id || cadaster.cadastralNumber}`)}
+											{#if cadaster.id}
+												<a
+													onclick={(event) => event.stopPropagation()}
+													href={resolve('/employee/[CompanyId]/cadaster/[CadasterId]', {
+														CompanyId: companyId,
+														CadasterId: cadaster.id
+													})}
+												>
+													{cadaster.cadastralNumber}
+												</a>
+											{:else}
+												<span>{cadaster.cadastralNumber}</span>
+											{/if}
 										{/each}
 									</div>
 								{/if}
@@ -448,20 +441,39 @@
 
 	.cadaster-links {
 		display: flex;
-		flex-wrap: wrap;
+		flex-direction: column;
+		align-items: flex-start;
 		gap: 0.38rem;
 	}
 
 	.cadaster-links a {
 		display: inline-flex;
 		align-items: center;
-		padding: 0.26rem 0.5rem;
-		border-radius: 0.55rem;
-		border: 1px solid #cde0d6;
-		background: #f7fbf9;
+		justify-content: center;
+		min-height: 48px;
+		min-width: 48px;
+		padding: 0.5rem 1.5rem;
+		border: 2px solid #1f5a42;
+		border-radius: 0.75rem;
+		background: #1f5a42;
 		text-decoration: none;
-		font-size: 0.85rem;
-		color: #1f5a42;
+		color: #ffffff;
+		font-size: 1.1rem;
+		font-weight: 600;
+		letter-spacing: 0.02em;
+		box-shadow: 0 4px 12px rgba(31, 90, 66, 0.3);
+		cursor: pointer;
+
+		/* Touch-specific */
+		touch-action: manipulation;
+		-webkit-tap-highlight-color: transparent;
+		user-select: none;
+	}
+
+	.cadaster-links a:active {
+		background: #174d38;
+		box-shadow: 0 2px 6px rgba(31, 90, 66, 0.2);
+		transform: scale(0.97);
 	}
 
 	.desktop-table {

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { resolve } from '$app/paths';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
 	import { onMount } from 'svelte';
@@ -33,6 +34,31 @@
 		companyId: string;
 	};
 
+	type CadasterLinkDto = {
+		id: string;
+		cadastralNumber: string;
+	};
+
+	type ActivityDto = {
+		id: string;
+		description: string;
+		quantity: number;
+		unit: string | null;
+		notes: string | null;
+		date: string;
+		userId: string;
+		userName: string;
+		activityTypeId: string;
+		activityTypeName: string;
+		cadasterId: string | null;
+		cadasterCadastralNumber: string | null;
+		forestStandId: string | null;
+		forestStandNumber: number | null;
+		landPropertyId: string | null;
+		landPropertyName: string | null;
+		applicationStatus: number | null;
+	};
+
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
 	let isLoading = $state(true);
@@ -40,7 +66,11 @@
 	let isEditMode = $state(false);
 	let errorMessage = $state('');
 	let successMessage = $state('');
+	let activityErrorMessage = $state('');
+	let cadasterErrorMessage = $state('');
 	let property = $state<LandPropertyDto | null>(null);
+	let activities = $state<ActivityDto[]>([]);
+	let cadasters = $state<CadasterLinkDto[]>([]);
 
 	let form = $state({
 		name: '',
@@ -106,10 +136,43 @@
 		};
 	}
 
+	function formatDateTime(value: string): string {
+		const date = new Date(value);
+		if (Number.isNaN(date.getTime())) return '—';
+		return date.toLocaleString();
+	}
+
+	function formatActivityQuantity(item: ActivityDto): string {
+		const quantity = typeof item.quantity === 'number' && Number.isFinite(item.quantity) ? item.quantity : 0;
+		return item.unit ? `${quantity} ${item.unit}` : String(quantity);
+	}
+
+	function forestStandLabel(item: ActivityDto): string {
+		if (
+			typeof item.forestStandNumber === 'number' &&
+			Number.isFinite(item.forestStandNumber) &&
+			item.forestStandNumber > 0
+		) {
+			return String(item.forestStandNumber);
+		}
+
+		return '—';
+	}
+
+	function applicationStatusLabel(status: number | null): string {
+		if (status === null || typeof status !== 'number') return '—';
+		if (status === 0) return 'Pending';
+		if (status === 1) return 'Approved';
+		if (status === 2) return 'Rejected';
+		return String(status);
+	}
+
 	async function loadProperty() {
 		try {
 			errorMessage = '';
 			successMessage = '';
+			activityErrorMessage = '';
+			cadasterErrorMessage = '';
 			isLoading = true;
 
 			const propertyId = $page.params.LandPropertyId;
@@ -137,6 +200,42 @@
 
 			property = (await response.json()) as LandPropertyDto;
 			fillForm(property);
+
+			const cadastersResponse = await fetch(`${apiBaseUrl}/api/cadasters/by-land-property/${propertyId}`, {
+				headers: {
+					Authorization: `Bearer ${token}`
+				}
+			});
+
+			if (cadastersResponse.ok) {
+				cadasters = (((await cadastersResponse.json()) as CadasterLinkDto[]) ?? []).filter(
+					(item) => Boolean(item?.id)
+				);
+			} else {
+				cadasters = [];
+				cadasterErrorMessage =
+					cadastersResponse.status === 401 || cadastersResponse.status === 403
+						? 'Unauthorized to load cadasters.'
+						: 'Failed to load cadasters.';
+			}
+
+			const activitiesResponse = await fetch(`${apiBaseUrl}/api/activities/by-property/${propertyId}`, {
+				headers: {
+					Authorization: `Bearer ${token}`
+				}
+			});
+
+			if (activitiesResponse.ok) {
+				activities = (((await activitiesResponse.json()) as ActivityDto[]) ?? [])
+					.filter((item) => Boolean(item?.id))
+					.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+			} else {
+				activities = [];
+				activityErrorMessage =
+					activitiesResponse.status === 401 || activitiesResponse.status === 403
+						? 'Unauthorized to load property activities.'
+						: 'Failed to load property activities.';
+			}
 		} catch {
 			errorMessage = 'Failed to load land property.';
 		} finally {
@@ -214,7 +313,9 @@
 {:else if property}
 	<div class="detail-page">
 		<p class="breadcrumb">
-			<a href={`/admin/${$page.params.CompanyId}/landproperty`}>← Back to properties</a>
+			<a href={resolve('/admin/[CompanyId]/landproperty', { CompanyId: $page.params.CompanyId })}
+				>← Back to properties</a
+			>
 		</p>
 
 		<header class="page-head">
@@ -298,6 +399,66 @@
 				</button>
 			</div>
 		</form>
+
+		<section class="activity-section">
+			<h2>Cadasters for this property</h2>
+			{#if cadasterErrorMessage}
+				<p class="message error">{cadasterErrorMessage}</p>
+			{:else if cadasters.length === 0}
+				<p class="message">No cadasters connected to this property.</p>
+			{:else}
+				<div class="cadaster-links">
+					{#each cadasters as cadaster (cadaster.id)}
+						<a
+							href={resolve('/admin/[CompanyId]/cadaster/[CadasterId]', {
+								CompanyId: $page.params.CompanyId,
+								CadasterId: cadaster.id
+							})}
+						>
+							{cadaster.cadastralNumber || cadaster.id}
+						</a>
+					{/each}
+				</div>
+			{/if}
+		</section>
+
+		<section class="activity-section">
+			<h2>Activities for this property</h2>
+			{#if activityErrorMessage}
+				<p class="message error">{activityErrorMessage}</p>
+			{:else if activities.length === 0}
+				<p class="message">No activities found for this property.</p>
+			{:else}
+				<div class="table-wrapper">
+					<table>
+						<thead>
+							<tr>
+								<th>Date</th>
+								<th>Type</th>
+								<th>Cadaster</th>
+								<th>Forest stand</th>
+								<th>User</th>
+								<th>Quantity</th>
+								<th>Status</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#each activities as activity (activity.id)}
+								<tr>
+									<td>{formatDateTime(activity.date)}</td>
+									<td>{activity.activityTypeName || '—'}</td>
+									<td>{activity.cadasterCadastralNumber || '—'}</td>
+									<td>{forestStandLabel(activity)}</td>
+									<td>{activity.userName || '—'}</td>
+									<td>{formatActivityQuantity(activity)}</td>
+									<td>{applicationStatusLabel(activity.applicationStatus)}</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			{/if}
+		</section>
 
 		{#if errorMessage}
 			<p class="message error">{errorMessage}</p>
@@ -397,6 +558,46 @@
 		gap: 1rem;
 	}
 
+	.activity-section {
+		display: grid;
+		gap: 0.65rem;
+	}
+
+	.cadaster-links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.45rem;
+	}
+
+	.cadaster-links a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.9rem 2rem;
+    border: 2px solid #1f5a42;
+    border-radius: 0.75rem;
+    background: #1f5a42;
+    text-decoration: none;
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    box-shadow: 0 4px 12px rgba(31, 90, 66, 0.3);
+    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+    cursor: pointer;
+	}
+
+	.cadaster-links a:hover {
+    background: #174d38;
+    box-shadow: 0 6px 18px rgba(31, 90, 66, 0.4);
+    transform: translateY(-1px);	
+	}
+
+	.cadaster-links a:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(31, 90, 66, 0.3);
+	}
+
 	.form-section {
 		padding: 1rem;
 		border: 1px solid #cadbcf;
@@ -446,6 +647,31 @@
 		margin: 0;
 		padding: 0.7rem 0.9rem;
 		border-radius: 0.65rem;
+	}
+
+	.table-wrapper {
+		overflow-x: auto;
+	}
+
+	table {
+		width: 100%;
+		border-collapse: collapse;
+		background: #f9fcfa;
+		border: 1px solid #d8e5dd;
+		border-radius: 0.75rem;
+		overflow: hidden;
+	}
+
+	th,
+	td {
+		padding: 0.65rem 0.75rem;
+		text-align: left;
+		border-bottom: 1px solid #e3ece7;
+		white-space: nowrap;
+	}
+
+	tbody tr:last-child td {
+		border-bottom: none;
 	}
 
 	.error {

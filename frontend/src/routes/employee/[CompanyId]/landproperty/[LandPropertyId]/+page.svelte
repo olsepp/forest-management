@@ -3,7 +3,6 @@
 	import { resolve } from '$app/paths';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
-	import { user } from '$lib/stores/auth.store';
 	import { onMount } from 'svelte';
 
 	type LandPropertyDto = {
@@ -27,22 +26,24 @@
 		forestStandCount?: number;
 	};
 
-	type ForestStandListDto = {
-		id: string;
-	};
-
-	type ActivityListDto = {
+	type ActivityDto = {
 		id: string;
 		description: string;
 		quantity: number;
 		unit: string | null;
+		notes: string | null;
 		date: string;
+		userId: string;
 		activityTypeName: string;
+		activityTypeId: string;
 		userName: string;
+		cadasterId: string | null;
 		cadasterCadastralNumber: string | null;
-		forestStandNumber: number;
-		locationDescription: string | null;
-		applicationStatus: string | null;
+		forestStandId: string | null;
+		forestStandNumber: number | null;
+		landPropertyId: string | null;
+		landPropertyName: string | null;
+		applicationStatus: number | null;
 	};
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
@@ -53,11 +54,10 @@
 
 	let property = $state<LandPropertyDto | null>(null);
 	let cadasters = $state<CadasterLinkDto[]>([]);
-	let activities = $state<ActivityListDto[]>([]);
+	let activities = $state<ActivityDto[]>([]);
 
 	let companyId = $derived($page.params.CompanyId ?? '');
 	let propertyId = $derived($page.params.LandPropertyId ?? '');
-	let currentUsername = $derived(($user?.username ?? '').trim().toLowerCase());
 
 	function statusLabel(status: LandPropertyDto['status']): string {
 		if (typeof status === 'number') {
@@ -79,7 +79,7 @@
 		return date.toLocaleDateString();
 	}
 
-	function formatActivityQuantity(activity: ActivityListDto): string {
+	function formatActivityQuantity(activity: ActivityDto): string {
 		const quantity = Number.isFinite(activity.quantity) ? String(activity.quantity) : '—';
 		return activity.unit ? `${quantity} ${activity.unit}` : quantity;
 	}
@@ -123,51 +123,23 @@
 				? (((await cadastersResponse.json()) as CadasterLinkDto[]) ?? []).filter((item) => Boolean(item?.id))
 				: [];
 
-			const activityCollections = await Promise.all(
-				cadasters.map(async (cadaster) => {
-					const byCadasterResponse = await fetch(
-						`${apiBaseUrl}/api/activities/by-cadaster/${cadaster.id}`,
-						{ headers: { Authorization: `Bearer ${token}` } }
-					);
-					const byCadaster = byCadasterResponse.ok
-						? (((await byCadasterResponse.json()) as ActivityListDto[]) ?? [])
-						: [];
+			const activitiesResponse = await fetch(`${apiBaseUrl}/api/activities/by-property/${propertyId}/my`, {
+				headers: { Authorization: `Bearer ${token}` }
+			});
 
-					const forestStandResponse = await fetch(
-						`${apiBaseUrl}/api/foreststands/by-cadaster/${cadaster.id}`,
-						{ headers: { Authorization: `Bearer ${token}` } }
-					);
-					const forestStands = forestStandResponse.ok
-						? (((await forestStandResponse.json()) as ForestStandListDto[]) ?? []).filter((item) =>
-							Boolean(item?.id)
-						)
-						: [];
-
-					const forestStandActivityCollections = await Promise.all(
-						forestStands.map(async (stand) => {
-							const response = await fetch(
-								`${apiBaseUrl}/api/activities/by-foreststand/${stand.id}`,
-								{ headers: { Authorization: `Bearer ${token}` } }
-							);
-							return response.ok ? (((await response.json()) as ActivityListDto[]) ?? []) : [];
-						})
-					);
-
-					return [...byCadaster, ...forestStandActivityCollections.flat()];
-				})
-			);
-
-			const mergedActivities = activityCollections.flat();
-			const uniqueById: Record<string, ActivityListDto> = {};
-			for (const activity of mergedActivities) {
-				if (!activity?.id) continue;
-				if (!uniqueById[activity.id]) {
-					uniqueById[activity.id] = activity;
+			if (!activitiesResponse.ok) {
+				if (activitiesResponse.status === 401 || activitiesResponse.status === 403) {
+					isUnauthorized = true;
+					errorMessage = 'Unauthorized. Please sign in again.';
+					return;
 				}
+
+				errorMessage = 'Failed to load property details.';
+				return;
 			}
 
-			activities = Object.values(uniqueById)
-				.filter((item) => (item.userName ?? '').trim().toLowerCase() === currentUsername)
+			activities = (((await activitiesResponse.json()) as ActivityDto[]) ?? [])
+				.filter((item) => Boolean(item?.id))
 				.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 		} catch {
 			errorMessage = 'Failed to load property details.';
@@ -320,16 +292,34 @@
 	}
 
 	.cadaster-links a {
-		display: inline-flex;
-		align-items: center;
-		padding: 0.28rem 0.54rem;
-		border-radius: 0.55rem;
-		border: 1px solid #cde0d6;
-		background: #f7fbf9;
-		text-decoration: none;
-		font-size: 0.85rem;
-		color: #1f5a42;
-	}
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    min-width: 48px;
+    padding: 1rem 2.5rem;
+    border: 2px solid #1f5a42;
+    border-radius: 0.75rem;
+    background: #1f5a42;
+    text-decoration: none;
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    box-shadow: 0 4px 12px rgba(31, 90, 66, 0.3);
+    cursor: pointer;
+
+    /* Touch-specific */
+    touch-action: manipulation;        /* prevents double-tap zoom delay */
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+.cadaster-links a:active {
+    background: #174d38;
+    box-shadow: 0 2px 6px rgba(31, 90, 66, 0.2);
+    transform: scale(0.97);            /* subtle "press" feel */
+}
 
 	.activity-card {
 		border: 1px solid #d9e4de;

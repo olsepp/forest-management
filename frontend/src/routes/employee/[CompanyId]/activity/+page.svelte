@@ -3,39 +3,26 @@
 	import { resolve } from '$app/paths';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
-	import { user } from '$lib/stores/auth.store';
 	import { onMount } from 'svelte';
 
-	type ActivityListDto = {
+	type ActivityDto = {
 		id: string;
 		description: string;
 		quantity: number;
 		unit: string | null;
+		notes: string | null;
 		date: string;
+		userId: string;
 		activityTypeName: string;
+		activityTypeId: string;
 		userName: string;
-		cadasterCadastralNumber: string | null;
-		forestStandNumber: number;
-		applicationStatus: 'Pending' | 'Approved' | 'Rejected' | null;
-	};
-
-	type ActivityDetailsDto = {
-		id: string;
 		cadasterId: string | null;
+		cadasterCadastralNumber: string | null;
 		forestStandId: string | null;
+		forestStandNumber: number | null;
 		landPropertyId: string | null;
 		landPropertyName: string | null;
-		cadasterCadastralNumber: string | null;
-		forestStandNumber: number;
-	};
-
-	type LandPropertyListDto = { id: string };
-	type CadasterListDto = { id: string };
-	type ForestStandListDto = { id: string };
-
-	type ActivityRow = {
-		base: ActivityListDto;
-		details: ActivityDetailsDto | null;
+		applicationStatus: number | null;
 	};
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
@@ -43,10 +30,9 @@
 	let isLoading = $state(true);
 	let errorMessage = $state('');
 	let isUnauthorized = $state(false);
-	let activities = $state<ActivityRow[]>([]);
+	let activities = $state<ActivityDto[]>([]);
 
 	let companyId = $derived($page.params.CompanyId ?? '');
-	let currentUsername = $derived(($user?.username ?? '').trim().toLowerCase());
 
 	function formatDate(value: string): string {
 		const date = new Date(value);
@@ -54,41 +40,19 @@
 		return date.toLocaleString();
 	}
 
-	function formatQuantity(item: ActivityListDto): string {
+	function formatQuantity(item: ActivityDto): string {
 		const quantity = typeof item.quantity === 'number' && Number.isFinite(item.quantity) ? item.quantity : 0;
 		return item.unit ? `${quantity} ${item.unit}` : String(quantity);
 	}
 
-	function cadasterLabel(row: ActivityRow): string {
-		return row.details?.cadasterCadastralNumber || row.base.cadasterCadastralNumber || '—';
+	function cadasterLabel(item: ActivityDto): string {
+		return item.cadasterCadastralNumber || '—';
 	}
 
-	function forestStandLabel(row: ActivityRow): string {
-		const standNumber = row.details?.forestStandNumber || row.base.forestStandNumber;
+	function forestStandLabel(item: ActivityDto): string {
+		const standNumber = item.forestStandNumber;
 		if (Number.isFinite(standNumber) && standNumber > 0) return String(standNumber);
 		return '—';
-	}
-
-	async function loadActivityDetails(activityId: string, token: string): Promise<ActivityDetailsDto | null> {
-		const response = await fetch(`${apiBaseUrl}/api/activities/${activityId}`, {
-			headers: { Authorization: `Bearer ${token}` }
-		});
-
-		if (!response.ok) return null;
-
-		const data = (await response.json()) as ActivityDetailsDto;
-		return {
-			id: data.id,
-			cadasterId: data.cadasterId ?? null,
-			forestStandId: data.forestStandId ?? null,
-			landPropertyId: data.landPropertyId ?? null,
-			landPropertyName: data.landPropertyName ?? null,
-			cadasterCadastralNumber: data.cadasterCadastralNumber ?? null,
-			forestStandNumber:
-				typeof data.forestStandNumber === 'number' && Number.isFinite(data.forestStandNumber)
-					? data.forestStandNumber
-					: 0
-		};
 	}
 
 	async function loadData() {
@@ -105,15 +69,12 @@
 
 			const token = await authService.ensureValidToken();
 
-			const [activitiesResponse, propertiesResponse] = await Promise.all([
-				fetch(`${apiBaseUrl}/api/activities`, { headers: { Authorization: `Bearer ${token}` } }),
-				fetch(`${apiBaseUrl}/api/landproperties/search?companyId=${companyId}`, {
-					headers: { Authorization: `Bearer ${token}` }
-				})
-			]);
+			const activitiesResponse = await fetch(`${apiBaseUrl}/api/activities/by-company/${companyId}/my`, {
+				headers: { Authorization: `Bearer ${token}` }
+			});
 
-			if (!activitiesResponse.ok || !propertiesResponse.ok) {
-				if (activitiesResponse.status === 401 || propertiesResponse.status === 401) {
+			if (!activitiesResponse.ok) {
+				if (activitiesResponse.status === 401 || activitiesResponse.status === 403) {
 					isUnauthorized = true;
 					errorMessage = 'Unauthorized. Please sign in again.';
 					return;
@@ -123,65 +84,9 @@
 				return;
 			}
 
-			const allActivities = ((await activitiesResponse.json()) as ActivityListDto[]) ?? [];
-			const companyProperties = ((await propertiesResponse.json()) as LandPropertyListDto[]) ?? [];
-
-			const propertyIds = new Set(companyProperties.map((item) => item.id).filter(Boolean));
-
-			const cadastersByProperty = await Promise.all(
-				Array.from(propertyIds).map(async (propertyId) => {
-					const response = await fetch(`${apiBaseUrl}/api/cadasters/by-land-property/${propertyId}`, {
-						headers: { Authorization: `Bearer ${token}` }
-					});
-					if (!response.ok) return [] as CadasterListDto[];
-					const data = (await response.json()) as CadasterListDto[];
-					return Array.isArray(data) ? data.filter((item) => Boolean(item?.id)) : [];
-				})
-			);
-
-			const cadasterIds = new Set(cadastersByProperty.flat().map((item) => item.id).filter(Boolean));
-
-			const forestStandsByCadaster = await Promise.all(
-				Array.from(cadasterIds).map(async (cadasterId) => {
-					const response = await fetch(`${apiBaseUrl}/api/foreststands/by-cadaster/${cadasterId}`, {
-						headers: { Authorization: `Bearer ${token}` }
-					});
-					if (!response.ok) return [] as ForestStandListDto[];
-					const data = (await response.json()) as ForestStandListDto[];
-					return Array.isArray(data) ? data.filter((item) => Boolean(item?.id)) : [];
-				})
-			);
-
-			const forestStandIds = new Set(
-				forestStandsByCadaster
-					.flat()
-					.map((item) => item.id)
-					.filter(Boolean)
-			);
-
-			const myActivities = allActivities
+			activities = (((await activitiesResponse.json()) as ActivityDto[]) ?? [])
 				.filter((item) => Boolean(item?.id))
-				.filter((item) => (item.userName ?? '').trim().toLowerCase() === currentUsername);
-
-			const rowsWithDetails = await Promise.all(
-				myActivities.map(async (item) => {
-					const details = await loadActivityDetails(item.id, token);
-					return { base: item, details } as ActivityRow;
-				})
-			);
-
-			activities = rowsWithDetails
-				.filter((row) => {
-					const details = row.details;
-					if (!details) return false;
-
-					if (details.landPropertyId && propertyIds.has(details.landPropertyId)) return true;
-					if (details.cadasterId && cadasterIds.has(details.cadasterId)) return true;
-					if (details.forestStandId && forestStandIds.has(details.forestStandId)) return true;
-
-					return false;
-				})
-				.sort((a, b) => new Date(b.base.date).getTime() - new Date(a.base.date).getTime());
+				.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 		} catch {
 			errorMessage = 'Failed to load activities.';
 		} finally {
@@ -212,20 +117,20 @@
 {:else}
 	<section class="employee-card">
 		<div class="employee-stack-cards activities-mobile">
-			{#each activities as row (row.base.id)}
+			{#each activities as activity (activity.id)}
 				<article class="activity-card">
 					<p class="activity-head">
-						<strong>{row.base.activityTypeName || 'Activity'}</strong>
-						<span>{formatDate(row.base.date)}</span>
+						<strong>{activity.activityTypeName || 'Activity'}</strong>
+						<span>{formatDate(activity.date)}</span>
 					</p>
-					<p>{row.base.description || '—'}</p>
-					<p><strong>Cadaster:</strong> {cadasterLabel(row)}</p>
-					<p><strong>Forest stand:</strong> {forestStandLabel(row)}</p>
-					<p><strong>Quantity:</strong> {formatQuantity(row.base)}</p>
+					<p>{activity.description || '—'}</p>
+					<p><strong>Cadaster:</strong> {cadasterLabel(activity)}</p>
+					<p><strong>Forest stand:</strong> {forestStandLabel(activity)}</p>
+					<p><strong>Quantity:</strong> {formatQuantity(activity)}</p>
 					<a
 						href={resolve('/employee/[CompanyId]/activity/[ActivityId]', {
 							CompanyId: companyId,
-							ActivityId: row.base.id
+							ActivityId: activity.id
 						})}
 					>
 						Open activity
@@ -248,19 +153,19 @@
 					</tr>
 				</thead>
 				<tbody>
-					{#each activities as row (row.base.id)}
+					{#each activities as activity (activity.id)}
 						<tr>
-							<td>{formatDate(row.base.date)}</td>
-							<td>{row.base.activityTypeName || '—'}</td>
-							<td>{row.base.description || '—'}</td>
-							<td>{cadasterLabel(row)}</td>
-							<td>{forestStandLabel(row)}</td>
-							<td>{formatQuantity(row.base)}</td>
+							<td>{formatDate(activity.date)}</td>
+							<td>{activity.activityTypeName || '—'}</td>
+							<td>{activity.description || '—'}</td>
+							<td>{cadasterLabel(activity)}</td>
+							<td>{forestStandLabel(activity)}</td>
+							<td>{formatQuantity(activity)}</td>
 							<td>
 								<a
 									href={resolve('/employee/[CompanyId]/activity/[ActivityId]', {
 										CompanyId: companyId,
-										ActivityId: row.base.id
+										ActivityId: activity.id
 									})}
 								>
 									Open

@@ -210,7 +210,7 @@
 		border: 1px solid #dbe4df;
 		border-radius: 0.9rem;
 		padding: 0.85rem 0.85rem 0.95rem;
-		background: linear-gradient(180deg, #f9fcfa 0%, #f2f7f4 100%);
+		background: #1f5a42;
 	}
 
 	.employee-kicker {
@@ -219,7 +219,7 @@
 		font-weight: 700;
 		letter-spacing: 0.03em;
 		text-transform: uppercase;
-		color: #3d5447;
+		color: #d5d6d5;
 	}
 
 	.employee-title {
@@ -227,7 +227,7 @@
 		font-size: 1.1rem;
 		line-height: 1.25;
 		font-weight: 700;
-		color: #17231d;
+		color: #e7e7e7;
 	}
 
 	.employee-signout {
@@ -250,7 +250,7 @@
 
 	.employee-menu-toggle {
 		border: 1px solid #bfcec5;
-		background: #f9fcfa;
+		background: #dadada;
 		color: #24332b;
 		border-radius: 0.75rem;
 		min-height: 2.75rem;
@@ -345,7 +345,7 @@
 
 	.employee-content {
 		border: 1px solid #dce6e0;
-		background: #ffffff;
+		background: #1f5a42;
 		border-radius: 0.95rem;
 		padding: 0.85rem;
 		box-shadow: 0 8px 24px rgba(20, 41, 31, 0.06);
@@ -361,6 +361,7 @@
 		border-radius: 0.85rem;
 		background: #fff;
 		padding: 0.85rem;
+		margin-bottom: 1rem;
 		box-shadow: 0 3px 10px rgba(18, 39, 29, 0.04);
 	}
 
