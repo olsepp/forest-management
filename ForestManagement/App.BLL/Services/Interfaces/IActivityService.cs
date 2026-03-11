@@ -8,6 +8,10 @@ public interface IActivityService
     Task<ActivityDto?> GetByIdAsync(Guid id);
     Task<IEnumerable<ActivityListDto>> GetByForestStandIdAsync(Guid forestStandId);
     Task<IEnumerable<ActivityListDto>> GetByCadasterIdAsync(Guid cadasterId);
+    Task<IEnumerable<ActivityDto>> GetByCompanyIdAsync(Guid companyId);
+    Task<IEnumerable<ActivityDto>> GetByCompanyIdAndUserIdAsync(Guid companyId, Guid userId);
+    Task<IEnumerable<ActivityDto>> GetByLandPropertyIdAsync(Guid landPropertyId);
+    Task<IEnumerable<ActivityDto>> GetByLandPropertyIdAndUserIdAsync(Guid landPropertyId, Guid userId);
     Task<IEnumerable<RecentActivityDto>> GetRecentAsync(int count);
     Task<ActivityDto> CreateAsync(ActivityCreateDto dto, Guid userId);
     Task<ActivityDto?> UpdateAsync(Guid id, ActivityUpdateDto dto);

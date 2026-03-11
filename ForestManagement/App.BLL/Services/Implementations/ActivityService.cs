@@ -35,6 +35,30 @@ public class ActivityService : IActivityService
         return activities.Select(MapToListDto);
     }
 
+    public async Task<IEnumerable<ActivityDto>> GetByCompanyIdAsync(Guid companyId)
+    {
+        var activities = await _uow.Activities.GetByCompanyIdAsync(companyId);
+        return activities.Select(MapToDto);
+    }
+
+    public async Task<IEnumerable<ActivityDto>> GetByCompanyIdAndUserIdAsync(Guid companyId, Guid userId)
+    {
+        var activities = await _uow.Activities.GetByCompanyIdAndUserIdAsync(companyId, userId);
+        return activities.Select(MapToDto);
+    }
+
+    public async Task<IEnumerable<ActivityDto>> GetByLandPropertyIdAsync(Guid landPropertyId)
+    {
+        var activities = await _uow.Activities.GetByLandPropertyIdAsync(landPropertyId);
+        return activities.Select(MapToDto);
+    }
+
+    public async Task<IEnumerable<ActivityDto>> GetByLandPropertyIdAndUserIdAsync(Guid landPropertyId, Guid userId)
+    {
+        var activities = await _uow.Activities.GetByLandPropertyIdAndUserIdAsync(landPropertyId, userId);
+        return activities.Select(MapToDto);
+    }
+
     public async Task<IEnumerable<RecentActivityDto>> GetRecentAsync(int count)
     {
         var activities = await _uow.Activities.GetRecentAsync(count);

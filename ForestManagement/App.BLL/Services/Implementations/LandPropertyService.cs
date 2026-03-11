@@ -111,7 +111,17 @@ public class LandPropertyService : ILandPropertyService
         Name = p.Name,
         RegistrationNumber = p.RegistrationNumber,
         County = p.County,
+        Parish = p.Parish,
+        Village = p.Village,
+        BoughtDate = p.BoughtDate,
+        SoldDate = p.SoldDate,
         Status = p.Status,
-        CadastralNumbers = p.Cadasters?.Select(c => c.CadastralNumber).ToList() ?? new List<string>()
+        CompanyId = p.CompanyId,
+        CompanyName = p.Company?.Name ?? string.Empty,
+        Cadasters = p.Cadasters?.Select(c => new LandPropertyCadasterLinkDto
+        {
+            Id = c.Id,
+            CadastralNumber = c.CadastralNumber
+        }).ToList() ?? new List<LandPropertyCadasterLinkDto>()
     };
 }

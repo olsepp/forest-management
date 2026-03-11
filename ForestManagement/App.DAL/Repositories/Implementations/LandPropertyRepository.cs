@@ -23,6 +23,7 @@ public class LandPropertyRepository : Repository<LandProperty>, ILandPropertyRep
     {
         return await _dbSet
             .Include(l => l.Company)
+            .Include(l => l.Cadasters)
             .ToListAsync();
     }
 
@@ -59,6 +60,7 @@ public class LandPropertyRepository : Repository<LandProperty>, ILandPropertyRep
 
         return await query
             .Include(l => l.Company)
+            .Include(l => l.Cadasters)
             .ToListAsync();
     }
 }

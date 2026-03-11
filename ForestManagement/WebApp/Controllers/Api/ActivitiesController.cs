@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using App.BLL.Services.Interfaces;
 using App.DTO.Activity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApp.Controllers.Api;
@@ -38,6 +39,46 @@ public class ActivitiesController : ApiControllerBase
     public async Task<ActionResult<IEnumerable<ActivityListDto>>> GetByCadaster(Guid cadasterId)
     {
         var items = await _service.GetByCadasterIdAsync(cadasterId);
+        return Ok(items);
+    }
+
+    [HttpGet("by-company/{companyId:guid}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<IEnumerable<ActivityDto>>> GetByCompany(Guid companyId)
+    {
+        var items = await _service.GetByCompanyIdAsync(companyId);
+        return Ok(items);
+    }
+
+    [HttpGet("by-company/{companyId:guid}/my")]
+    [Authorize(Roles = "Admin,Employee")]
+    public async Task<ActionResult<IEnumerable<ActivityDto>>> GetByCompanyMy(Guid companyId)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var userId))
+            return Unauthorized();
+
+        var items = await _service.GetByCompanyIdAndUserIdAsync(companyId, userId);
+        return Ok(items);
+    }
+
+    [HttpGet("by-property/{landPropertyId:guid}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<IEnumerable<ActivityDto>>> GetByProperty(Guid landPropertyId)
+    {
+        var items = await _service.GetByLandPropertyIdAsync(landPropertyId);
+        return Ok(items);
+    }
+
+    [HttpGet("by-property/{landPropertyId:guid}/my")]
+    [Authorize(Roles = "Admin,Employee")]
+    public async Task<ActionResult<IEnumerable<ActivityDto>>> GetByPropertyMy(Guid landPropertyId)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var userId))
+            return Unauthorized();
+
+        var items = await _service.GetByLandPropertyIdAndUserIdAsync(landPropertyId, userId);
         return Ok(items);
     }
 

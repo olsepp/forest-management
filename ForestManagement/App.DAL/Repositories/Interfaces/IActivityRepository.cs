@@ -33,4 +33,24 @@ public interface IActivityRepository : IRepository<Activity>
     /// Get activities by user ID
     /// </summary>
     Task<IEnumerable<Activity>> GetByUserIdAsync(Guid userId);
+
+    /// <summary>
+    /// Get activities by company ID
+    /// </summary>
+    Task<IEnumerable<Activity>> GetByCompanyIdAsync(Guid companyId);
+
+    /// <summary>
+    /// Get activities by company ID and user ID
+    /// </summary>
+    Task<IEnumerable<Activity>> GetByCompanyIdAndUserIdAsync(Guid companyId, Guid userId);
+
+    /// <summary>
+    /// Get activities by land property ID
+    /// </summary>
+    Task<IEnumerable<Activity>> GetByLandPropertyIdAsync(Guid landPropertyId);
+
+    /// <summary>
+    /// Get activities by land property ID and user ID
+    /// </summary>
+    Task<IEnumerable<Activity>> GetByLandPropertyIdAndUserIdAsync(Guid landPropertyId, Guid userId);
 }
