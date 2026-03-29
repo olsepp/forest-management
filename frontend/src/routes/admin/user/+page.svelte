@@ -65,10 +65,10 @@
 			if (!response.ok) {
 				errorMessage =
 					response.status === 401
-						? 'Unauthorized. Please sign in again.'
+						? 'Ligipääs puudub. Logige uuesti sisse.'
 						: response.status === 403
-							? 'Forbidden. Admin role is required.'
-							: 'Failed to load users.';
+							? 'Keelatud. Vajalik on admini roll.'
+							: 'Kasutajate laadimine ebaõnnestus.';
 				return;
 			}
 
@@ -97,7 +97,7 @@
 
 			userDetailsById = Object.fromEntries(detailsEntries);
 		} catch {
-			errorMessage = 'Failed to load users.';
+			errorMessage = 'Kasutajate laadimine ebaõnnestus.';
 		} finally {
 			isLoading = false;
 		}
@@ -105,30 +105,30 @@
 </script>
 
 <div class="mb-4 flex items-center justify-between gap-3">
-	<h1 class="text-2xl font-semibold text-slate-900">Users</h1>
+	<h1 class="text-2xl font-semibold text-slate-900">Kasutajad</h1>
 	<a
 		href={resolve('/admin/user/new')}
 		class="inline-flex items-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
 	>
-		Create user
+		Loo kasutaja
 	</a>
 </div>
 
 {#if isLoading}
-	<p>Loading users...</p>
+	<p>Laetakse kasutajaid...</p>
 {:else if errorMessage}
 	<p class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{errorMessage}</p>
 {:else if users.length === 0}
-	<p>No users found.</p>
+	<p>Kasutajaid ei leitud.</p>
 {:else}
 	<div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
 		<table class="min-w-full divide-y divide-slate-200 text-sm">
 			<thead class="bg-slate-50">
 				<tr>
-					<th class="px-4 py-3 text-left font-semibold text-slate-700">First name</th>
-					<th class="px-4 py-3 text-left font-semibold text-slate-700">Last name</th>
+					<th class="px-4 py-3 text-left font-semibold text-slate-700">Eesnimi</th>
+					<th class="px-4 py-3 text-left font-semibold text-slate-700">Perekonnanimi</th>
 					<th class="px-4 py-3 text-left font-semibold text-slate-700">Email</th>
-					<th class="px-4 py-3 text-left font-semibold text-slate-700">Actions</th>
+					<th class="px-4 py-3 text-left font-semibold text-slate-700">Toimingud</th>
 				</tr>
 			</thead>
 			<tbody class="divide-y divide-slate-100">
@@ -142,7 +142,7 @@
 								type="button"
 								onclick={() => toggleExpand(user.id)}
 								class="expand-toggle"
-								aria-label={isExpanded(user.id) ? 'Collapse user details' : 'Expand user details'}
+								aria-label={isExpanded(user.id) ? 'Peida kasutaja detailid' : 'Näita kasutaja detaile'}
 								aria-expanded={isExpanded(user.id)}
 							>
 								<svg
@@ -164,7 +164,7 @@
 						<tr class="bg-slate-50/60">
 							<td colspan="4" class="px-4 py-3">
 								<div class="rounded-lg border border-slate-200 bg-white p-3">
-									<p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">All available user fields</p>
+									<p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Kõik saadaolevad kasutaja väljad</p>
 									<dl class="grid grid-cols-1 gap-2 sm:grid-cols-2">
 										{#each detailEntries(userDetailsById[user.id] ?? user) as [key, value] (key)}
 											<div class="rounded border border-slate-200 bg-slate-50 p-2">

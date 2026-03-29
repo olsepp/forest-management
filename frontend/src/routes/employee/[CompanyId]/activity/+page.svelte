@@ -51,13 +51,13 @@
 
 	function forestStandLabel(item: ActivityDto): string {
 		const standNumber = item.forestStandNumber;
-		if (Number.isFinite(standNumber) && standNumber > 0) return String(standNumber);
+		if (typeof standNumber === 'number' && Number.isFinite(standNumber) && standNumber > 0) return String(standNumber);
 		return '—';
 	}
 
 	async function loadData() {
 		if (!companyId) {
-			errorMessage = 'Missing company id.';
+			errorMessage = 'Puudub ettevõtte ID.';
 			isLoading = false;
 			return;
 		}
@@ -76,11 +76,11 @@
 			if (!activitiesResponse.ok) {
 				if (activitiesResponse.status === 401 || activitiesResponse.status === 403) {
 					isUnauthorized = true;
-					errorMessage = 'Unauthorized. Please sign in again.';
+					errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
 					return;
 				}
 
-				errorMessage = 'Failed to load activities.';
+				errorMessage = 'Tegevuste laadimine ebaõnnestus.';
 				return;
 			}
 
@@ -88,7 +88,7 @@
 				.filter((item) => Boolean(item?.id))
 				.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 		} catch {
-			errorMessage = 'Failed to load activities.';
+			errorMessage = 'Tegevuste laadimine ebaõnnestus.';
 		} finally {
 			isLoading = false;
 		}
@@ -98,42 +98,42 @@
 </script>
 
 <section class="employee-card summary">
-	<p class="kicker">Activity history</p>
-	<h1>Your company activity history</h1>
-	<p>Review all activities you have logged in this company.</p>
+	<p class="kicker">Tegevuste ajalugu</p>
+	<h1>Sinu ettevõtte tegevuste ajalugu</h1>
+	<p>Vaata kõiki tegevusi, mille oled selles ettevõttes sisestanud.</p>
 </section>
 
 {#if isLoading}
-	<div class="employee-state-block is-loading">Loading activities…</div>
+	<div class="employee-state-block is-loading">Laetakse tegevusi…</div>
 {:else if errorMessage}
 	<div class="employee-state-block is-error">
 		{errorMessage}
 		{#if isUnauthorized}
-			<span class="inline-note">Your session may have expired.</span>
+			<span class="inline-note">Teie sessioon võib olla aegunud.</span>
 		{/if}
 	</div>
 {:else if activities.length === 0}
-	<div class="employee-state-block is-empty">No activities found for your account in this company.</div>
+	<div class="employee-state-block is-empty">Selles ettevõttes ei leitud sinu konto tegevusi.</div>
 {:else}
 	<section class="employee-card">
 		<div class="employee-stack-cards activities-mobile">
 			{#each activities as activity (activity.id)}
 				<article class="activity-card">
 					<p class="activity-head">
-						<strong>{activity.activityTypeName || 'Activity'}</strong>
+						<strong>{activity.activityTypeName || 'Tegevus'}</strong>
 						<span>{formatDate(activity.date)}</span>
 					</p>
 					<p>{activity.description || '—'}</p>
-					<p><strong>Cadaster:</strong> {cadasterLabel(activity)}</p>
-					<p><strong>Forest stand:</strong> {forestStandLabel(activity)}</p>
-					<p><strong>Quantity:</strong> {formatQuantity(activity)}</p>
+					<p><strong>Kataster:</strong> {cadasterLabel(activity)}</p>
+					<p><strong>Eraldis:</strong> {forestStandLabel(activity)}</p>
+					<p><strong>Kogus:</strong> {formatQuantity(activity)}</p>
 					<a
 						href={resolve('/employee/[CompanyId]/activity/[ActivityId]', {
 							CompanyId: companyId,
 							ActivityId: activity.id
 						})}
 					>
-						Open activity
+						Ava tegevus
 					</a>
 				</article>
 			{/each}
@@ -141,17 +141,17 @@
 
 		<div class="employee-table-wrap activities-table">
 			<table>
-				<thead>
-					<tr>
-						<th>Date</th>
-						<th>Type</th>
-						<th>Description</th>
-						<th>Cadaster</th>
-						<th>Forest stand</th>
-						<th>Quantity</th>
-						<th>Open</th>
-					</tr>
-				</thead>
+			<thead>
+				<tr>
+					<th>Kuupäev</th>
+					<th>Tüüp</th>
+					<th>Kirjeldus</th>
+					<th>Kataster</th>
+					<th>Eraldis</th>
+					<th>Kogus</th>
+					<th>Ava</th>
+				</tr>
+			</thead>
 				<tbody>
 					{#each activities as activity (activity.id)}
 						<tr>
@@ -162,16 +162,16 @@
 							<td>{forestStandLabel(activity)}</td>
 							<td>{formatQuantity(activity)}</td>
 							<td>
-								<a
-									href={resolve('/employee/[CompanyId]/activity/[ActivityId]', {
-										CompanyId: companyId,
-										ActivityId: activity.id
-									})}
-								>
-									Open
-								</a>
-							</td>
-						</tr>
+							<a
+								href={resolve('/employee/[CompanyId]/activity/[ActivityId]', {
+									CompanyId: companyId,
+									ActivityId: activity.id
+								})}
+							>
+								Ava
+							</a>
+						</td>
+					</tr>
 					{/each}
 				</tbody>
 			</table>

@@ -2,6 +2,7 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import type { CompanyListDto } from '$lib/types/company';
 	import { onMount } from 'svelte';
 
@@ -24,38 +25,38 @@
 			});
 
 			if (!response.ok) {
-				errorMessage = response.status === 401 ? 'Unauthorized. Please sign in again.' : 'Failed to load companies';
+				errorMessage = response.status === 401 ? 'Ligipääs puudub. Logige uuesti sisse.' : 'Ettevõtteid ei õnnestunud laadida.';
 				return;
 			}
 
 			companies = await response.json();
 		} catch {
-			errorMessage = 'Failed to load companies';
+			errorMessage = 'Ettevõtteid ei õnnestunud laadida.';
 		} finally {
 			isLoading = false;
 		}
 	});
 
 	function openCompany(companyId: string) {
-		goto(`/admin/${companyId}`);
+		goto(resolve('/admin/[CompanyId]', { CompanyId: companyId }));
 	}
 </script>
 
-<h1>Admin company selection</h1>
+<h1>Admini ettevõtte valik</h1>
 
 {#if isLoading}
-	<p>Loading companies...</p>
+	<p>Laetakse ettevõtteid...</p>
 {:else if errorMessage}
 	<p>{errorMessage}</p>
 {:else if companies.length === 0}
-	<p>No companies found.</p>
+	<p>Ettevõtteid ei leitud.</p>
 {:else}
-	<p class="intro-text">Choose a company to continue:</p>
+	<p class="intro-text">Jätkamiseks valige ettevõte:</p>
 	<div class="company-grid" role="list">
-		{#each companies as company}
+		{#each companies as company (company.id)}
 			<button class="company-card" type="button" onclick={() => openCompany(company.id)}>
 				<span class="company-name">{company.name}</span>
-				<span class="company-action">Open company</span>
+				<span class="company-action">Ava ettevõte</span>
 			</button>
 		{/each}
 	</div>

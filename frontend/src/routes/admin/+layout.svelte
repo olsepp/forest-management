@@ -2,6 +2,7 @@
 	import '$lib/styles/admin-theme.css';
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import AdminContentArea from '$lib/components/admin/AdminContentArea.svelte';
 	import AdminSidebar from '$lib/components/admin/AdminSidebar.svelte';
 	import { authService } from '$lib/services/auth';
@@ -15,13 +16,13 @@
 
 		const role = $user?.role?.trim().toLowerCase();
 		if (role && role !== 'admin') {
-			goto(getDefaultRouteForRole(role));
+			goto(resolve(getDefaultRouteForRole(role)));
 		}
 	});
 
 	async function handleSignOut() {
 		await authService.logout();
-		goto('/sign-in');
+		goto(resolve('/sign-in'));
 	}
 </script>
 
@@ -34,7 +35,7 @@
 				onclick={handleSignOut}
 				class="admin-signout"
 			>
-				Sign out
+				Logi välja
 			</button>
 		</div>
 		{@render children()}

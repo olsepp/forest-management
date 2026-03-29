@@ -36,7 +36,7 @@
 		cadasterOptions = [],
 		cancelHref = '',
 		redirectHref = '',
-		submitLabel = 'Log activity'
+		submitLabel = 'Logi tegevus'
 	}: Props = $props();
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
@@ -76,7 +76,7 @@
 			});
 
 			if (!response.ok) {
-				errorMessage = 'Failed to load activity types.';
+				errorMessage = 'Tegevuste tüüpe ei õnnestunud laadida.';
 				activityTypes = [];
 				return;
 			}
@@ -85,7 +85,7 @@
 			activityTypes = Array.isArray(data) ? data : [];
 			activityTypeId = activityTypes[0]?.id ?? '';
 		} catch {
-			errorMessage = 'Failed to load activity types.';
+			errorMessage = 'Tegevuste tüüpe ei õnnestunud laadida.';
 			activityTypes = [];
 		} finally {
 			isLoadingActivityTypes = false;
@@ -99,24 +99,24 @@
 		errorMessage = '';
 
 		if (!description.trim()) {
-			errorMessage = 'Description is required.';
+			errorMessage = 'Kirjeldus on kohustuslik.';
 			return;
 		}
 
 		if (!activityTypeId) {
-			errorMessage = 'Activity type is required.';
+			errorMessage = 'Tegevuse tüüp on kohustuslik.';
 			return;
 		}
 
 		if (!selectedCadasterId) {
-			errorMessage = 'Cadaster is required.';
+			errorMessage = 'Kataster on kohustuslik.';
 			return;
 		}
 
 		const quantityRaw = String(quantity ?? '').trim();
 		const quantityNumber = quantityRaw === '' ? 0 : Number(quantityRaw);
 		if (!Number.isFinite(quantityNumber)) {
-			errorMessage = 'Quantity must be a valid number.';
+			errorMessage = 'Kogus peab olema korrektne number.';
 			return;
 		}
 
@@ -147,18 +147,18 @@
 			if (!response.ok) {
 				errorMessage =
 					response.status === 400
-						? 'Validation failed. Please check required fields.'
+						? 'Valideerimine ebaõnnestus. Kontrollige kohustuslikke välju.'
 						: response.status === 401
-							? 'Unauthorized. Please sign in again.'
-							: 'Failed to create activity.';
+							? 'Ligipääs puudub. Logige uuesti sisse.'
+							: 'Tegevuse loomine ebaõnnestus.';
 				return;
 			}
 
 			if (redirectHref) {
-				await goto(resolve(redirectHref));
+				await goto(resolve(redirectHref as unknown as '/'));
 			}
 		} catch {
-			errorMessage = 'Failed to create activity.';
+			errorMessage = 'Tegevuse loomine ebaõnnestus.';
 		} finally {
 			isSubmitting = false;
 		}
@@ -168,16 +168,16 @@
 </script>
 
 <section class="employee-card activity-form-card">
-	<h2>New activity</h2>
+	<h2>Uus tegevus</h2>
 
 	<form class="form-grid" onsubmit={submit}>
 		<label>
-			<span>Cadaster</span>
+			<span>Kataster</span>
 			{#if lockCadaster}
 				<input type="text" value={cadasterLabel || selectedCadasterId} readonly />
 			{:else}
 				<select bind:value={selectedCadasterId} required>
-					<option value="" disabled>Select cadaster</option>
+					<option value="" disabled>Vali kataster</option>
 					{#each cadasterOptions as option (option.id)}
 						<option value={option.id}>{option.label}</option>
 					{/each}
@@ -186,9 +186,9 @@
 		</label>
 
 		<label>
-			<span>Activity type</span>
+			<span>Tegevuse tüüp</span>
 			<select bind:value={activityTypeId} disabled={isLoadingActivityTypes} required>
-				<option value="" disabled>{isLoadingActivityTypes ? 'Loading...' : 'Select activity type'}</option>
+				<option value="" disabled>{isLoadingActivityTypes ? 'Laadimine...' : 'Vali tegevuse tüüp'}</option>
 				{#each activityTypes as type (type.id)}
 					<option value={type.id}>{type.activityTypeName}</option>
 				{/each}
@@ -196,36 +196,36 @@
 		</label>
 
 		<label>
-			<span>Date</span>
+			<span>Kuupäev</span>
 			<input type="datetime-local" bind:value={date} required />
 		</label>
 
 		<label class="full-width">
-			<span>Description</span>
+			<span>Kirjeldus</span>
 			<textarea bind:value={description} rows="3" required></textarea>
 		</label>
 
 		<label>
-			<span>Quantity</span>
+			<span>Kogus</span>
 			<input type="number" step="any" bind:value={quantity} />
 		</label>
 
 		<label>
-			<span>Unit</span>
-			<input type="text" bind:value={unit} placeholder="e.g. m3, ha" />
+			<span>Ühik</span>
+			<input type="text" bind:value={unit} placeholder="nt m3, ha" />
 		</label>
 
 		<label class="full-width">
-			<span>Notes</span>
+			<span>Märkused</span>
 			<textarea bind:value={notes} rows="3"></textarea>
 		</label>
 
 		<div class="actions">
 			{#if cancelHref}
-				<a class="ghost" href={resolve(cancelHref)}>Cancel</a>
+				<a class="ghost" href={resolve(cancelHref as unknown as '/')}>Tühista</a>
 			{/if}
 			<button type="submit" disabled={isSubmitting || isLoadingActivityTypes}>
-				{isSubmitting ? 'Saving...' : submitLabel}
+				{isSubmitting ? 'Salvestamine...' : submitLabel}
 			</button>
 		</div>
 	</form>

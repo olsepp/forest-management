@@ -71,6 +71,7 @@
 	let property = $state<LandPropertyDto | null>(null);
 	let activities = $state<ActivityDto[]>([]);
 	let cadasters = $state<CadasterLinkDto[]>([]);
+	const companyId = $derived($page.params.CompanyId ?? '');
 
 	let form = $state({
 		name: '',
@@ -161,9 +162,9 @@
 
 	function applicationStatusLabel(status: number | null): string {
 		if (status === null || typeof status !== 'number') return '—';
-		if (status === 0) return 'Pending';
-		if (status === 1) return 'Approved';
-		if (status === 2) return 'Rejected';
+		if (status === 0) return 'Ootel';
+		if (status === 1) return 'Kinnitatud';
+		if (status === 2) return 'Tagasi lükatud';
 		return String(status);
 	}
 
@@ -177,7 +178,7 @@
 
 			const propertyId = $page.params.LandPropertyId;
 			if (!propertyId) {
-				errorMessage = 'Missing property id';
+				errorMessage = 'Puudub kinnistu ID.';
 				return;
 			}
 
@@ -191,10 +192,10 @@
 			if (!response.ok) {
 				errorMessage =
 					response.status === 404
-						? 'Land property not found.'
+						? 'Kinnistut ei leitud.'
 						: response.status === 401
-							? 'Unauthorized. Please sign in again.'
-							: 'Failed to load land property.';
+							? 'Ligipääs puudub. Logige uuesti sisse.'
+							: 'Kinnistu laadimine ebaõnnestus.';
 				return;
 			}
 
@@ -215,8 +216,8 @@
 				cadasters = [];
 				cadasterErrorMessage =
 					cadastersResponse.status === 401 || cadastersResponse.status === 403
-						? 'Unauthorized to load cadasters.'
-						: 'Failed to load cadasters.';
+						? 'Katastrite laadimiseks puudub ligipääs.'
+						: 'Katastrite laadimine ebaõnnestus.';
 			}
 
 			const activitiesResponse = await fetch(`${apiBaseUrl}/api/activities/by-property/${propertyId}`, {
@@ -233,11 +234,11 @@
 				activities = [];
 				activityErrorMessage =
 					activitiesResponse.status === 401 || activitiesResponse.status === 403
-						? 'Unauthorized to load property activities.'
-						: 'Failed to load property activities.';
+						? 'Kinnistu tegevuste laadimiseks puudub ligipääs.'
+						: 'Kinnistu tegevuste laadimine ebaõnnestus.';
 			}
 		} catch {
-			errorMessage = 'Failed to load land property.';
+			errorMessage = 'Kinnistu laadimine ebaõnnestus.';
 		} finally {
 			isLoading = false;
 		}
@@ -249,7 +250,7 @@
 
 		const registrationNumber = Number(form.registrationNumber);
 		if (!Number.isFinite(registrationNumber)) {
-			errorMessage = 'Registration number must be a valid number.';
+			errorMessage = 'Registrinumber peab olema korrektne number.';
 			return;
 		}
 
@@ -284,10 +285,10 @@
 			if (!response.ok) {
 				errorMessage =
 					response.status === 400
-						? 'Validation failed. Please check your values.'
+						? 'Valideerimine ebaõnnestus. Kontrollige sisestatud väärtusi.'
 						: response.status === 404
-							? 'Land property not found.'
-							: 'Failed to save changes.';
+							? 'Kinnistut ei leitud.'
+							: 'Muudatuste salvestamine ebaõnnestus.';
 				return;
 			}
 
@@ -295,9 +296,9 @@
 			property = updated;
 			fillForm(updated);
 			isEditMode = false;
-			successMessage = 'Land property updated successfully.';
+			successMessage = 'Kinnistu uuendati edukalt.';
 		} catch {
-			errorMessage = 'Failed to save changes.';
+			errorMessage = 'Muudatuste salvestamine ebaõnnestus.';
 		} finally {
 			isSaving = false;
 		}
@@ -307,87 +308,87 @@
 </script>
 
 {#if isLoading}
-	<p>Loading property details...</p>
+	<p>Laetakse kinnistu detaile...</p>
 {:else if errorMessage && !property}
 	<p class="message error">{errorMessage}</p>
 {:else if property}
 	<div class="detail-page">
 		<p class="breadcrumb">
-			<a href={resolve('/admin/[CompanyId]/landproperty', { CompanyId: $page.params.CompanyId })}
-				>← Back to properties</a
+			<a href={resolve('/admin/[CompanyId]/landproperty', { CompanyId: companyId })}
+				>← Tagasi kinnistute juurde</a
 			>
 		</p>
 
 		<header class="page-head">
 			<div>
-				<p class="eyebrow">Land property</p>
+				<p class="eyebrow">Kinnistu</p>
 				<h1>{property.name}</h1>
-				<p class="subtitle">Professional record and status management for this land asset.</p>
+				<p class="subtitle">Selle kinnistu kirje- ja olekuhaldus.</p>
 			</div>
 			<button type="button" class="mode-btn" onclick={() => (isEditMode = !isEditMode)} disabled={isSaving}>
-				{isEditMode ? 'Cancel editing' : 'Enable editing'}
+				{isEditMode ? 'Tühista muutmine' : 'Luba muutmine'}
 			</button>
 		</header>
 
 		<section class="meta-grid">
 			<article class="meta-card">
-				<p class="meta-label">Property ID</p>
+				<p class="meta-label">Kinnistu ID</p>
 				<p class="meta-value mono">{property.id}</p>
 			</article>
 			<article class="meta-card">
-				<p class="meta-label">Company</p>
+				<p class="meta-label">Ettevõte</p>
 				<p class="meta-value">{property.companyName}</p>
 			</article>
 			<article class="meta-card">
-				<p class="meta-label">Current status</p>
+				<p class="meta-label">Praegune olek</p>
 				<p class="meta-value">{form.status}</p>
 			</article>
 		</section>
 
 		<form id="property-form" onsubmit={saveProperty} class="detail-form">
 			<section class="form-section">
-				<h2>Core information</h2>
+				<h2>Põhiandmed</h2>
 				<div class="form-grid">
 					<label>
-						<span>Name</span>
+						<span>Nimi</span>
 						<input type="text" bind:value={form.name} required readonly={!isEditMode} />
 					</label>
 					<label>
-						<span>Registration number</span>
+						<span>Registrinumber</span>
 						<input type="number" bind:value={form.registrationNumber} required readonly={!isEditMode} />
 					</label>
 					<label>
-						<span>Status</span>
+						<span>Olek</span>
 						<select bind:value={form.status} disabled={!isEditMode}>
-							<option value="Active">Active</option>
-							<option value="Inactive">Inactive</option>
-							<option value="Sold">Sold</option>
+							<option value="Active">Aktiivne</option>
+							<option value="Inactive">Mitteaktiivne</option>
+							<option value="Sold">Müüdud</option>
 						</select>
 					</label>
 				</div>
 			</section>
 
 			<section class="form-section">
-				<h2>Location and timeline</h2>
+				<h2>Asukoht ja ajajoon</h2>
 				<div class="form-grid">
 					<label>
-						<span>County</span>
+						<span>Maakond</span>
 						<input type="text" bind:value={form.county} required readonly={!isEditMode} />
 					</label>
 					<label>
-						<span>Parish</span>
+						<span>Vald</span>
 						<input type="text" bind:value={form.parish} readonly={!isEditMode} />
 					</label>
 					<label>
-						<span>Village</span>
+						<span>Küla</span>
 						<input type="text" bind:value={form.village} readonly={!isEditMode} />
 					</label>
 					<label>
-						<span>Bought date</span>
+						<span>Ostukuupäev</span>
 						<input type="date" bind:value={form.boughtDate} readonly={!isEditMode} />
 					</label>
 					<label>
-						<span>Sold date</span>
+						<span>Müügikuupäev</span>
 						<input type="date" bind:value={form.soldDate} readonly={!isEditMode} />
 					</label>
 				</div>
@@ -395,23 +396,23 @@
 
 			<div class="form-actions">
 				<button class="btn-save" type="submit" disabled={isSaving || !isEditMode}>
-					{isSaving ? 'Saving...' : 'Save changes'}
+					{isSaving ? 'Salvestamine...' : 'Salvesta muudatused'}
 				</button>
 			</div>
 		</form>
 
 		<section class="activity-section">
-			<h2>Cadasters for this property</h2>
+			<h2>Selle kinnistu katastrid</h2>
 			{#if cadasterErrorMessage}
 				<p class="message error">{cadasterErrorMessage}</p>
 			{:else if cadasters.length === 0}
-				<p class="message">No cadasters connected to this property.</p>
+				<p class="message">Selle kinnistuga pole seotud ühtegi katastrit.</p>
 			{:else}
 				<div class="cadaster-links">
 					{#each cadasters as cadaster (cadaster.id)}
 						<a
 							href={resolve('/admin/[CompanyId]/cadaster/[CadasterId]', {
-								CompanyId: $page.params.CompanyId,
+								CompanyId: companyId,
 								CadasterId: cadaster.id
 							})}
 						>
@@ -423,23 +424,23 @@
 		</section>
 
 		<section class="activity-section">
-			<h2>Activities for this property</h2>
+			<h2>Selle kinnistu tegevused</h2>
 			{#if activityErrorMessage}
 				<p class="message error">{activityErrorMessage}</p>
 			{:else if activities.length === 0}
-				<p class="message">No activities found for this property.</p>
+				<p class="message">Selle kinnistu tegevusi ei leitud.</p>
 			{:else}
 				<div class="table-wrapper">
 					<table>
 						<thead>
 							<tr>
-								<th>Date</th>
-								<th>Type</th>
-								<th>Cadaster</th>
-								<th>Forest stand</th>
-								<th>User</th>
-								<th>Quantity</th>
-								<th>Status</th>
+								<th>Kuupäev</th>
+								<th>Tüüp</th>
+								<th>Kataster</th>
+								<th>Eraldis</th>
+								<th>Kasutaja</th>
+								<th>Kogus</th>
+								<th>Staatus</th>
 							</tr>
 						</thead>
 						<tbody>

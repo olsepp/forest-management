@@ -79,7 +79,7 @@
 
 	async function loadData() {
 		if (!companyId || !cadasterId) {
-			errorMessage = 'Missing route parameters.';
+			errorMessage = 'Marsruudi parameetrid puuduvad.';
 			isLoading = false;
 			return;
 		}
@@ -106,11 +106,11 @@
 			if (!cadasterResponse.ok) {
 				if (cadasterResponse.status === 401) {
 					isUnauthorized = true;
-					errorMessage = 'Unauthorized. Please sign in again.';
+					errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
 					return;
 				}
 
-				errorMessage = cadasterResponse.status === 404 ? 'Cadaster not found.' : 'Failed to load cadaster.';
+				errorMessage = cadasterResponse.status === 404 ? 'Katasterit ei leitud.' : 'Katastri laadimine ebaõnnestus.';
 				return;
 			}
 
@@ -128,7 +128,7 @@
 						.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 				: [];
 		} catch {
-			errorMessage = 'Failed to load cadaster.';
+			errorMessage = 'Katastri laadimine ebaõnnestus.';
 		} finally {
 			isLoading = false;
 		}
@@ -138,12 +138,12 @@
 </script>
 
 {#if isLoading}
-	<div class="employee-state-block is-loading">Loading cadaster details…</div>
+	<div class="employee-state-block is-loading">Laetakse katastri detaile…</div>
 {:else if errorMessage && !cadaster}
 	<div class="employee-state-block is-error">
 		{errorMessage}
 		{#if isUnauthorized}
-			<span class="inline-note">Your session may have expired.</span>
+			<span class="inline-note">Teie sessioon võib olla aegunud.</span>
 		{/if}
 	</div>
 {:else if cadaster}
@@ -151,13 +151,13 @@
 		<a href={resolve('/employee/[CompanyId]/landproperty/[LandPropertyId]', {
 			CompanyId: companyId,
 			LandPropertyId: cadaster.landPropertyId
-		})}>← Back to property</a>
+		})}>← Tagasi kinnistu juurde</a>
 	</p>
 
 	<section class="employee-card summary">
 		<div class="summary-head">
 			<div>
-				<p class="kicker">Cadaster details</p>
+				<p class="kicker">Katastri detailid</p>
 				<h1>{cadaster.cadastralNumber}</h1>
 			</div>
 			<a
@@ -167,44 +167,44 @@
 					CadasterId: cadaster.id
 				})}
 			>
-				Log activity
+				Logi tegevus
 			</a>
 		</div>
 
 		<div class="meta-grid">
-			<p><strong>Property:</strong> {cadaster.landPropertyName || '—'}</p>
-			<p><strong>Forest area:</strong> {formatNumber(cadaster.forestArea)}</p>
-			<p><strong>Arable area:</strong> {formatNumber(cadaster.arableArea)}</p>
-			<p><strong>Grassland area:</strong> {formatNumber(cadaster.grasslandArea)}</p>
-			<p><strong>Yard area:</strong> {formatNumber(cadaster.yardArea)}</p>
-			<p><strong>Building footprint:</strong> {formatNumber(cadaster.buildingFootprintArea)}</p>
-			<p><strong>Underwater area:</strong> {formatNumber(cadaster.underwaterArea)}</p>
-			<p><strong>Other area:</strong> {formatNumber(cadaster.otherArea)}</p>
-			<p><strong>Soil quality index:</strong> {formatNumber(cadaster.soilQualityIndex)}</p>
-			<p><strong>Calculated volume:</strong> {formatNumber(cadaster.calculatedVolume)}</p>
-			<p><strong>Volume growth:</strong> {formatNumber(cadaster.volumeGrowth)}</p>
+			<p><strong>Kinnistu:</strong> {cadaster.landPropertyName || '—'}</p>
+			<p><strong>Metsamaa pindala:</strong> {formatNumber(cadaster.forestArea)}</p>
+			<p><strong>Haritav maa:</strong> {formatNumber(cadaster.arableArea)}</p>
+			<p><strong>Rohumaa:</strong> {formatNumber(cadaster.grasslandArea)}</p>
+			<p><strong>Õueala:</strong> {formatNumber(cadaster.yardArea)}</p>
+			<p><strong>Ehitusala:</strong> {formatNumber(cadaster.buildingFootprintArea)}</p>
+			<p><strong>Veealune maa:</strong> {formatNumber(cadaster.underwaterArea)}</p>
+			<p><strong>Muu maa:</strong> {formatNumber(cadaster.otherArea)}</p>
+			<p><strong>Mullaviljakuse indeks:</strong> {formatNumber(cadaster.soilQualityIndex)}</p>
+			<p><strong>Arvutuslik tagavara:</strong> {formatNumber(cadaster.calculatedVolume)}</p>
+			<p><strong>Tagavara juurdekasv:</strong> {formatNumber(cadaster.volumeGrowth)}</p>
 		</div>
 	</section>
 
 	<section class="employee-card">
-		<h2>Forest stands in this cadaster</h2>
+		<h2>Eraldised selles katastris</h2>
 		{#if forestStands.length === 0}
-			<div class="employee-state-block is-empty">No forest stands found.</div>
+			<div class="employee-state-block is-empty">Eraldisi ei leitud.</div>
 		{:else}
 			<div class="employee-stack-cards stands-mobile">
 				{#each forestStands as stand (stand.id)}
 					<article class="stand-card">
-						<p><strong>Stand:</strong> #{stand.number}</p>
-						<p><strong>Area:</strong> {formatNumber(stand.area)}</p>
-						<p><strong>Total volume:</strong> {formatNumber(stand.totalVolume)}</p>
-						<p><strong>Status:</strong> {stand.isActive ? 'Active' : 'Inactive'}</p>
+						<p><strong>Eraldis:</strong> #{stand.number}</p>
+						<p><strong>Pindala:</strong> {formatNumber(stand.area)}</p>
+						<p><strong>Tagavara kokku:</strong> {formatNumber(stand.totalVolume)}</p>
+						<p><strong>Olek:</strong> {stand.isActive ? 'Aktiivne' : 'Mitteaktiivne'}</p>
 						<a
 							href={resolve('/employee/[CompanyId]/foreststand/[ForestStandId]', {
 								CompanyId: companyId,
 								ForestStandId: stand.id
 							})}
 						>
-							Open stand
+							Ava eraldis
 						</a>
 					</article>
 				{/each}
@@ -214,11 +214,11 @@
 				<table>
 					<thead>
 						<tr>
-							<th>Stand</th>
-							<th>Area</th>
-							<th>Total volume</th>
-							<th>Status</th>
-							<th>Open</th>
+							<th>Eraldis</th>
+							<th>Pindala</th>
+							<th>Tagavara kokku</th>
+							<th>Olek</th>
+							<th>Ava</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -227,7 +227,7 @@
 								<td>#{stand.number}</td>
 								<td>{formatNumber(stand.area)}</td>
 								<td>{formatNumber(stand.totalVolume)}</td>
-								<td>{stand.isActive ? 'Active' : 'Inactive'}</td>
+								<td>{stand.isActive ? 'Aktiivne' : 'Mitteaktiivne'}</td>
 								<td>
 									<a
 										href={resolve('/employee/[CompanyId]/foreststand/[ForestStandId]', {
@@ -235,7 +235,7 @@
 											ForestStandId: stand.id
 										})}
 									>
-										Open
+										Ava
 									</a>
 								</td>
 							</tr>
@@ -247,20 +247,20 @@
 	</section>
 
 	<section class="employee-card">
-		<h2>Your activities in this cadaster</h2>
+		<h2>Sinu tegevused selles katastris</h2>
 		{#if activities.length === 0}
-			<div class="employee-state-block is-empty">No activities found for your account in this cadaster.</div>
+			<div class="employee-state-block is-empty">Selles katastris ei leitud sinu konto tegevusi.</div>
 		{:else}
 			<div class="employee-stack-cards">
 				{#each activities as activity (activity.id)}
 					<article class="activity-card">
 						<p class="activity-head">
-							<strong>{activity.activityTypeName || 'Activity'}</strong>
+							<strong>{activity.activityTypeName || 'Tegevus'}</strong>
 							<span>{formatDate(activity.date)}</span>
 						</p>
 						<p>{activity.description || '—'}</p>
-						<p><strong>Quantity:</strong> {formatActivityQuantity(activity)}</p>
-						<p><strong>Stand:</strong> {activity.forestStandNumber || '—'}</p>
+						<p><strong>Kogus:</strong> {formatActivityQuantity(activity)}</p>
+						<p><strong>Eraldis:</strong> {activity.forestStandNumber || '—'}</p>
 					</article>
 				{/each}
 			</div>
@@ -268,7 +268,7 @@
 	</section>
 
 	<section class="employee-card">
-		<h2>Cadastral unit on map</h2>
+		<h2>Katastriüksus kaardil</h2>
 		<CadastralMap tunnus={cadaster.cadastralNumber} />
 	</section>
 

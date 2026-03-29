@@ -3,6 +3,7 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import type { CompanyDto } from '$lib/types/company';
 	import { onMount } from 'svelte';
 
@@ -18,7 +19,7 @@
 			isLoading = true;
 			const companyId = $page.params.CompanyId;
 			if (!companyId) {
-				errorMessage = 'Missing company id';
+				errorMessage = 'Puudub ettevõtte ID.';
 				return;
 			}
 
@@ -30,47 +31,48 @@
 			});
 
 			if (!response.ok) {
-				errorMessage = response.status === 401 ? 'Unauthorized. Please sign in again.' : 'Failed to load company';
+				errorMessage =
+					response.status === 401 ? 'Ligipääs puudub. Logige uuesti sisse.' : 'Ettevõtte laadimine ebaõnnestus.';
 				return;
 			}
 
 			company = await response.json();
 		} catch {
-			errorMessage = 'Failed to load company';
+			errorMessage = 'Ettevõtte laadimine ebaõnnestus.';
 		} finally {
 			isLoading = false;
 		}
 	});
 
 	function openSection(path: string) {
-		goto(path);
+		goto(resolve(path as unknown as '/'));
 	}
 
 	const companyActions = $derived.by(() => {
 		if (!company) return [] as { label: string; path: string }[];
 
 		return [
-			{ label: 'Open dashboard', path: `/admin/${company.id}/dashboard` },
-			{ label: 'Open land properties', path: `/admin/${company.id}/landproperty` },
-			{ label: 'Open activities', path: `/admin/${company.id}/activity` }
+			{ label: 'Ava töölaud', path: `/admin/${company.id}/dashboard` },
+			{ label: 'Ava kinnistud', path: `/admin/${company.id}/landproperty` },
+			{ label: 'Ava tegevused', path: `/admin/${company.id}/activity` }
 		];
 	});
 </script>
 
-<h1>Company workspace</h1>
+<h1>Ettevõtte tööruum</h1>
 
 {#if isLoading}
-	<p>Loading company...</p>
+	<p>Laetakse ettevõtet...</p>
 {:else if errorMessage}
 	<p class="error">{errorMessage}</p>
 {:else if company}
 	<section class="card">
-		<p class="meta">Selected company</p>
+		<p class="meta">Valitud ettevõte</p>
 		<h2>{company.name}</h2>
-		<p><strong>Company ID:</strong> {company.id}</p>
+		<p><strong>Ettevõtte ID:</strong> {company.id}</p>
 
 		<div class="actions">
-			{#each companyActions as action}
+			{#each companyActions as action (action.path)}
 				<button type="button" onclick={() => openSection(action.path)}>{action.label}</button>
 			{/each}
 		</div>

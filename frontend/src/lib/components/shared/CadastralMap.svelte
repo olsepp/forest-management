@@ -56,7 +56,7 @@
       retryTimeout = null;
 
       try {
-        tileLayer.setParams({}, true);
+        tileLayer.setParams({ layers: 'of10000' }, true);
         await loadCadastralUnit(L, tun);
         retryScheduled = false;
       } catch (error) {

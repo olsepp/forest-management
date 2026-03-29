@@ -57,6 +57,7 @@
 	let successMessage = $state('');
 	let cadaster = $state<CadasterDto | null>(null);
 	let forestStands = $state<ForestStandListDto[]>([]);
+	const companyId = $derived($page.params.CompanyId ?? '');
 
 	let form = $state({
 		cadastralNumber: '',
@@ -110,7 +111,7 @@
 
 			const cadasterId = $page.params.CadasterId;
 			if (!cadasterId) {
-				errorMessage = 'Missing cadaster id';
+				errorMessage = 'Puudub katastri ID.';
 				return;
 			}
 
@@ -124,10 +125,10 @@
 			if (!response.ok) {
 				errorMessage =
 					response.status === 404
-						? 'Cadaster not found.'
+						? 'Katastrit ei leitud.'
 						: response.status === 401
-							? 'Unauthorized. Please sign in again.'
-							: 'Failed to load cadaster.';
+							? 'Ligipääs puudub. Logige uuesti sisse.'
+							: 'Katastri laadimine ebaõnnestus.';
 				return;
 			}
 
@@ -138,7 +139,7 @@
 				: [];
 			fillForm(detail);
 		} catch {
-			errorMessage = 'Failed to load cadaster.';
+			errorMessage = 'Katastri laadimine ebaõnnestus.';
 		} finally {
 			isLoading = false;
 		}
@@ -182,10 +183,10 @@
 			if (!response.ok) {
 				errorMessage =
 					response.status === 400
-						? 'Validation failed. Please check your values.'
+						? 'Valideerimine ebaõnnestus. Kontrollige sisestatud väärtusi.'
 						: response.status === 404
-							? 'Cadaster not found.'
-							: 'Failed to save changes.';
+							? 'Katastrit ei leitud.'
+							: 'Muudatuste salvestamine ebaõnnestus.';
 				return;
 			}
 
@@ -196,9 +197,9 @@
 				: [];
 			fillForm(updated);
 			isEditMode = false;
-			successMessage = 'Cadaster updated successfully.';
+			successMessage = 'Kataster uuendati edukalt.';
 		} catch {
-			errorMessage = 'Failed to save changes.';
+			errorMessage = 'Muudatuste salvestamine ebaõnnestus.';
 		} finally {
 			isSaving = false;
 		}
@@ -208,55 +209,55 @@
 </script>
 
 {#if isLoading}
-	<p>Loading cadaster details...</p>
+	<p>Laetakse katastri detaile...</p>
 {:else if errorMessage && !cadaster}
 	<p class="message error">{errorMessage}</p>
 {:else if cadaster}
 	<div class="detail-page">
 		<p class="breadcrumb">
-			<a href={resolve('/admin/[CompanyId]/landproperty', { CompanyId: $page.params.CompanyId })}
-				>← Back to properties</a
+			<a href={resolve('/admin/[CompanyId]/landproperty', { CompanyId: companyId })}
+				>← Tagasi kinnistute juurde</a
 			>
 		</p>
 
 		<header class="page-head">
 			<div>
-				<p class="eyebrow">Cadaster</p>
+				<p class="eyebrow">Kataster</p>
 				<h1>{cadaster.cadastralNumber}</h1>
-				<p class="subtitle">Manage cadastral values and review connected forest stand records.</p>
+				<p class="subtitle">Halda katastri väärtusi ja vaata seotud eraldise kirjeid.</p>
 			</div>
 			<div class="head-actions">
 				<a
 					class="btn-log-activity"
 					href={resolve('/admin/[CompanyId]/cadaster/[CadasterId]/activity/new', {
-						CompanyId: $page.params.CompanyId,
+						CompanyId: companyId,
 						CadasterId: cadaster.id
-					})}>Log activity</a
+					})}>Logi tegevus</a
 				>
 				<button type="button" class="mode-btn" onclick={() => (isEditMode = !isEditMode)} disabled={isSaving}>
-					{isEditMode ? 'Cancel editing' : 'Enable editing'}
+					{isEditMode ? 'Tühista muutmine' : 'Luba muutmine'}
 				</button>
 			</div>
 		</header>
 
 		<section class="meta-grid">
 			<article class="meta-card">
-				<p class="meta-label">Cadaster ID</p>
+				<p class="meta-label">Katastri ID</p>
 				<p class="meta-value mono">{cadaster.id}</p>
 			</article>
 			<article class="meta-card">
-				<p class="meta-label">Land property</p>
+				<p class="meta-label">Kinnistu</p>
 				<p class="meta-value">
 					<a
 						href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
-							CompanyId: $page.params.CompanyId,
+							CompanyId: companyId,
 							LandPropertyId: cadaster.landPropertyId
 						})}>{cadaster.landPropertyName}</a
 					>
 				</p>
 			</article>
 			<article class="meta-card">
-				<p class="meta-label">Forest stand count</p>
+				<p class="meta-label">Eraldiste arv</p>
 				<p class="meta-value">{forestStands.length}</p>
 			</article>
 		</section>
@@ -264,47 +265,47 @@
 		
 		<form id="cadaster-form" onsubmit={saveCadaster} class="detail-form">
 			<section class="form-section">
-				<h2>General values</h2>
+				<h2>Üldised väärtused</h2>
 				<div class="form-grid">
-					<label><span>Cadastral number</span><input type="text" bind:value={form.cadastralNumber} required readonly={!isEditMode} /></label>
-					<label><span>Soil quality index</span><input type="number" min="0" max="4" bind:value={form.soilQualityIndex} readonly={!isEditMode} /></label>
-					<label><span>Calculated volume</span><input type="number" bind:value={form.calculatedVolume} readonly={!isEditMode} /></label>
-					<label><span>Volume growth</span><input type="number" step="any" bind:value={form.volumeGrowth} readonly={!isEditMode} /></label>
+					<label><span>Katastrinumber</span><input type="text" bind:value={form.cadastralNumber} required readonly={!isEditMode} /></label>
+					<label><span>Mullaviljakuse indeks</span><input type="number" min="0" max="4" bind:value={form.soilQualityIndex} readonly={!isEditMode} /></label>
+					<label><span>Arvutatud maht</span><input type="number" bind:value={form.calculatedVolume} readonly={!isEditMode} /></label>
+					<label><span>Mahukasv</span><input type="number" step="any" bind:value={form.volumeGrowth} readonly={!isEditMode} /></label>
 				</div>
 			</section>
 
 			<section class="form-section">
-				<h2>Area breakdown</h2>
+				<h2>Pindalade jaotus</h2>
 				<div class="form-grid">
-					<label><span>Forest area</span><input type="number" step="any" bind:value={form.forestArea} readonly={!isEditMode} /></label>
-					<label><span>Arable area</span><input type="number" step="any" bind:value={form.arableArea} readonly={!isEditMode} /></label>
-					<label><span>Grassland area</span><input type="number" step="any" bind:value={form.grasslandArea} readonly={!isEditMode} /></label>
-					<label><span>Yard area</span><input type="number" step="any" bind:value={form.yardArea} readonly={!isEditMode} /></label>
-					<label><span>Building footprint area</span><input type="number" step="any" bind:value={form.buildingFootprintArea} readonly={!isEditMode} /></label>
-					<label><span>Underwater area</span><input type="number" step="any" bind:value={form.underwaterArea} readonly={!isEditMode} /></label>
-					<label><span>Other area</span><input type="number" step="any" bind:value={form.otherArea} readonly={!isEditMode} /></label>
+					<label><span>Metsamaa pindala</span><input type="number" step="any" bind:value={form.forestArea} readonly={!isEditMode} /></label>
+					<label><span>Haritava maa pindala</span><input type="number" step="any" bind:value={form.arableArea} readonly={!isEditMode} /></label>
+					<label><span>Rohumaa pindala</span><input type="number" step="any" bind:value={form.grasslandArea} readonly={!isEditMode} /></label>
+					<label><span>Õueala pindala</span><input type="number" step="any" bind:value={form.yardArea} readonly={!isEditMode} /></label>
+					<label><span>Hoonete alune pindala</span><input type="number" step="any" bind:value={form.buildingFootprintArea} readonly={!isEditMode} /></label>
+					<label><span>Veealune pindala</span><input type="number" step="any" bind:value={form.underwaterArea} readonly={!isEditMode} /></label>
+					<label><span>Muu pindala</span><input type="number" step="any" bind:value={form.otherArea} readonly={!isEditMode} /></label>
 				</div>
 			</section>
 
 			<div class="form-actions">
-				<button class="btn-save" type="submit" disabled={isSaving || !isEditMode}>{isSaving ? 'Saving...' : 'Save changes'}</button>
+				<button class="btn-save" type="submit" disabled={isSaving || !isEditMode}>{isSaving ? 'Salvestamine...' : 'Salvesta muudatused'}</button>
 			</div>
 		</form>
 
 		<section class="form-section">
-			<h2>Forest stands in this cadaster</h2>
+			<h2>Selle katastri eraldised</h2>
 			{#if forestStands.length === 0}
-				<p>No forest stands found.</p>
+				<p>Eraldisi ei leitud.</p>
 			{:else}
 				<div class="table-wrapper">
 					<table>
 						<thead>
 							<tr>
-								<th>Number</th>
-								<th>Area</th>
-								<th>Total volume</th>
-								<th>Status</th>
-								<th class="actions">Open</th>
+								<th>Eraldise nr</th>
+								<th>Pindala</th>
+								<th>Kogumaht</th>
+								<th>Staatus</th>
+								<th class="actions">Ava</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -313,13 +314,13 @@
 									<td>{stand.number}</td>
 									<td>{stand.area}</td>
 									<td>{stand.totalVolume}</td>
-									<td>{stand.isActive ? 'Active' : 'Inactive'}</td>
+									<td>{stand.isActive ? 'Aktiivne' : 'Mitteaktiivne'}</td>
 									<td class="actions">
 										<a
 											href={resolve('/admin/[CompanyId]/foreststand/[ForestStandId]', {
-												CompanyId: $page.params.CompanyId,
+												CompanyId: companyId,
 												ForestStandId: stand.id
-											})}>Open</a
+											})}>Ava</a
 										>
 									</td>
 								</tr>
@@ -338,7 +339,7 @@
 		{/if}
 
 		<section class="form-section">
-			<h2>Cadastral unit on map</h2>
+			<h2>Katastriüksus kaardil</h2>
 			<CadastralMap tunnus={cadaster.cadastralNumber} />
 		</section>
 

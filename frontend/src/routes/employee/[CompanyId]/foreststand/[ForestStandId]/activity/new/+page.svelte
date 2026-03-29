@@ -27,6 +27,8 @@
 	let isLoading = $state(true);
 	let errorMessage = $state('');
 	let isUnauthorized = $state(false);
+	const companyId = $derived($page.params.CompanyId ?? '');
+	const forestStandId = $derived($page.params.ForestStandId ?? '');
 
 	async function loadCadasterPropertyFallback(cadasterId: string, token: string): Promise<void> {
 		const response = await fetch(`${apiBaseUrl}/api/cadasters/${cadasterId}`, {
@@ -51,7 +53,7 @@
 
 			const forestStandId = $page.params.ForestStandId;
 			if (!forestStandId) {
-				errorMessage = 'Missing forest stand id.';
+				errorMessage = 'Puudub eraldise ID.';
 				return;
 			}
 
@@ -63,12 +65,12 @@
 			if (!response.ok) {
 				if (response.status === 401) {
 					isUnauthorized = true;
-					errorMessage = 'Unauthorized. Please sign in again.';
+					errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
 					return;
 				}
 
 				errorMessage =
-					response.status === 404 ? 'Forest stand not found.' : 'Failed to load forest stand.';
+					response.status === 404 ? 'Eraldist ei leitud.' : 'Eraldise laadimine ebaõnnestus.';
 				return;
 			}
 
@@ -86,7 +88,7 @@
 				await loadCadasterPropertyFallback(forestStand.cadasterId, token);
 			}
 		} catch {
-			errorMessage = 'Failed to load forest stand.';
+			errorMessage = 'Eraldise laadimine ebaõnnestus.';
 		} finally {
 			isLoading = false;
 		}
@@ -95,35 +97,35 @@
 	onMount(loadForestStandSummary);
 </script>
 
-<h1>Log activity for forest stand</h1>
+<h1>Logi tegevus eraldise jaoks</h1>
 
 <p class="breadcrumb">
 	<a
 		href={resolve('/employee/[CompanyId]/foreststand/[ForestStandId]', {
-			CompanyId: $page.params.CompanyId,
-			ForestStandId: $page.params.ForestStandId
-		})}>← Back to forest stand details</a
+			CompanyId: companyId,
+			ForestStandId: forestStandId
+		})}>← Tagasi eraldise detailidesse</a
 	>
 </p>
 
 {#if isLoading}
-	<div class="employee-state-block is-loading">Loading forest stand…</div>
+	<div class="employee-state-block is-loading">Laetakse eraldist…</div>
 {:else if errorMessage}
 	<div class="employee-state-block is-error">
 		{errorMessage}
 		{#if isUnauthorized}
-			<span class="inline-note">Your session may have expired.</span>
+			<span class="inline-note">Teie sessioon võib olla aegunud.</span>
 		{/if}
 	</div>
 {:else if forestStand}
 	<section class="employee-card summary">
-		<h2>Forest stand context</h2>
-		<p><strong>Forest stand:</strong> Stand {forestStand.number}</p>
+		<h2>Eraldise kontekst</h2>
+		<p><strong>Eraldis:</strong> Eraldis {forestStand.number}</p>
 		<p>
-			<strong>Cadaster:</strong>
+			<strong>Kataster:</strong>
 			<a
 				href={resolve('/employee/[CompanyId]/cadaster/[CadasterId]', {
-					CompanyId: $page.params.CompanyId,
+					CompanyId: companyId,
 					CadasterId: forestStand.cadasterId
 				})}
 				>{forestStand.cadasterCadastralNumber}</a
@@ -131,10 +133,10 @@
 		</p>
 		{#if forestStand.landPropertyId && forestStand.landPropertyName}
 			<p>
-				<strong>Land property:</strong>
+				<strong>Kinnistu:</strong>
 				<a
 					href={resolve('/employee/[CompanyId]/landproperty/[LandPropertyId]', {
-						CompanyId: $page.params.CompanyId,
+						CompanyId: companyId,
 						LandPropertyId: forestStand.landPropertyId
 					})}
 					>{forestStand.landPropertyName}</a
@@ -144,14 +146,14 @@
 	</section>
 
 	<ActivityForm
-		companyId={$page.params.CompanyId}
+		companyId={companyId}
 		cadasterId={forestStand.cadasterId}
 		cadasterLabel={forestStand.cadasterCadastralNumber}
 		forestStandId={forestStand.id}
 		lockCadaster={true}
-		cancelHref={`/employee/${$page.params.CompanyId}/foreststand/${forestStand.id}`}
-		redirectHref={`/employee/${$page.params.CompanyId}/foreststand/${forestStand.id}`}
-		submitLabel="Log activity"
+		cancelHref={`/employee/${companyId}/foreststand/${forestStand.id}`}
+		redirectHref={`/employee/${companyId}/foreststand/${forestStand.id}`}
+		submitLabel="Logi tegevus"
 	/>
 {/if}
 

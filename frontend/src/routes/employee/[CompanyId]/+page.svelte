@@ -12,7 +12,7 @@
 	type QuickAction = {
 		label: string;
 		description: string;
-		path: string;
+		kind: 'properties' | 'activities' | 'profile';
 	};
 
 	let company = $state<CompanyDto | null>(null);
@@ -28,26 +28,26 @@
 
 		return [
 			{
-				label: 'Properties',
-				description: 'Browse active properties and open cadastral details.',
-				path: `/employee/${companyId}/landproperty`
+				label: 'Kinnistud',
+				description: 'Sirvi aktiivseid kinnistuid ja ava katasteri detailid.',
+				kind: 'properties'
 			},
 			{
-				label: 'Activity history',
-				description: 'Review your latest work logs for this company.',
-				path: `/employee/${companyId}/activity`
+				label: 'Tegevuste ajalugu',
+				description: 'Vaata selle ettevõtte viimaseid töölogisid.',
+				kind: 'activities'
 			},
 			{
-				label: 'Profile',
-				description: 'View your account details and contact data.',
-				path: currentUserId ? `/employee/user/${currentUserId}` : '/employee'
+				label: 'Profiil',
+				description: 'Vaata oma konto ja kontaktandmeid.',
+				kind: 'profile'
 			}
 		];
 	});
 
 	onMount(async () => {
 		if (!companyId) {
-			errorMessage = 'Missing company id.';
+			errorMessage = 'Puudub ettevõtte ID.';
 			isLoading = false;
 			return;
 		}
@@ -67,17 +67,17 @@
 			if (!response.ok) {
 				if (response.status === 401) {
 					isUnauthorized = true;
-					errorMessage = 'Unauthorized. Please sign in again.';
+					errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
 					return;
 				}
 
-				errorMessage = 'Unable to load company details.';
+				errorMessage = 'Ettevõtte andmeid ei õnnestunud laadida.';
 				return;
 			}
 
 			company = (await response.json()) as CompanyDto;
 		} catch {
-			errorMessage = 'Unable to load company details.';
+			errorMessage = 'Ettevõtte andmeid ei õnnestunud laadida.';
 		} finally {
 			isLoading = false;
 		}
@@ -85,36 +85,56 @@
 </script>
 
 <section class="intro employee-card">
-	<p class="kicker">Company workspace</p>
-	<h1>{company?.name ?? 'Employee dashboard'}</h1>
+	<p class="kicker">Ettevõtte tööruum</p>
+	<h1>{company?.name ?? 'Töötaja töölaud'}</h1>
 	<p>
 		{#if company}
-			Choose an area to continue your daily work in <strong>{company.name}</strong>.
+			Valige valdkond, kus jätkata igapäevast tööd ettevõttes <strong>{company.name}</strong>.
 		{:else}
-			Choose an area to continue your daily work.
+			Valige valdkond, kus jätkata igapäevast tööd.
 		{/if}
 	</p>
 </section>
 
 {#if isLoading}
-	<div class="employee-state-block is-loading">Loading company dashboard…</div>
+	<div class="employee-state-block is-loading">Laetakse ettevõtte töölauda…</div>
 {:else if errorMessage}
 	<div class="employee-state-block is-error">
 		{errorMessage}
 		{#if isUnauthorized}
-			<span class="inline-note">Your session may have expired.</span>
+			<span class="inline-note">Teie sessioon võib olla aegunud.</span>
 		{/if}
 	</div>
 {:else if quickActions.length === 0}
-	<div class="employee-state-block is-empty">No actions available yet.</div>
-{:else}
-	<section class="employee-stack-cards" aria-label="Employee quick actions">
-		{#each quickActions as action (action.path)}
-			<a class="action-card" href={resolve(action.path)}>
-				<h2>{action.label}</h2>
-				<p>{action.description}</p>
-				<span class="action-link">Open</span>
-			</a>
+	<div class="employee-state-block is-empty">Toimingud puuduvad.</div>
+	{:else}
+	<section class="employee-stack-cards" aria-label="Töötaja kiirtoimingud">
+		{#each quickActions as action (action.kind)}
+			{#if action.kind === 'properties'}
+				<a class="action-card" href={resolve('/employee/[CompanyId]/landproperty', { CompanyId: companyId })}>
+					<h2>{action.label}</h2>
+					<p>{action.description}</p>
+					<span class="action-link">Ava</span>
+				</a>
+			{:else if action.kind === 'activities'}
+				<a class="action-card" href={resolve('/employee/[CompanyId]/activity', { CompanyId: companyId })}>
+					<h2>{action.label}</h2>
+					<p>{action.description}</p>
+					<span class="action-link">Ava</span>
+				</a>
+			{:else if currentUserId}
+				<a class="action-card" href={resolve('/employee/user/[userId]', { userId: currentUserId })}>
+					<h2>{action.label}</h2>
+					<p>{action.description}</p>
+					<span class="action-link">Ava</span>
+				</a>
+			{:else}
+				<a class="action-card" href={resolve('/employee')}>
+					<h2>{action.label}</h2>
+					<p>{action.description}</p>
+					<span class="action-link">Ava</span>
+				</a>
+			{/if}
 		{/each}
 	</section>
 {/if}
@@ -122,11 +142,14 @@
 <style>
 	.intro {
 		margin-bottom: 0.85rem;
+		padding: 1rem;
+		background: linear-gradient(180deg, #ffffff 0%, #f3f8f5 100%);
+		border-color: #d2e1d8;
 	}
 
 	.kicker {
 		margin: 0;
-		font-size: 0.77rem;
+		font-size: 0.72rem;
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 0.03em;
@@ -135,7 +158,7 @@
 
 	h1 {
 		margin: 0.32rem 0 0.4rem;
-		font-size: 1.28rem;
+		font-size: 1.16rem;
 		line-height: 1.2;
 		color: #17251e;
 	}
@@ -155,9 +178,10 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.45rem;
-		border: 1px solid #d5e2db;
-		border-radius: 0.85rem;
-		padding: 0.9rem;
+		min-height: 2.75rem;
+		border: 1px solid #d2e0d8;
+		border-radius: 1rem;
+		padding: 0.92rem;
 		background: #fff;
 		text-decoration: none;
 		transition:
@@ -167,9 +191,13 @@
 	}
 
 	.action-card:hover {
-		border-color: #9eb8ab;
+		border-color: #99b8a9;
 		box-shadow: 0 6px 16px rgba(25, 53, 40, 0.12);
 		transform: translateY(-1px);
+	}
+
+	.action-card:active {
+		transform: translateY(1px);
 	}
 
 	.action-card:focus-visible {
@@ -185,9 +213,15 @@
 
 	.action-link {
 		margin-top: 0.22rem;
-		font-size: 0.88rem;
+		font-size: 0.84rem;
 		font-weight: 700;
 		color: #1f5a42;
+	}
+
+	@media (min-width: 640px) {
+		h1 {
+			font-size: 1.28rem;
+		}
 	}
 
 	@media (min-width: 768px) {

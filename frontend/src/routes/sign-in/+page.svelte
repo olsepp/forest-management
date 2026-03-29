@@ -24,7 +24,7 @@
 			const targetRoute = getDefaultRouteForRole(loginResponse.role);
 			goto(resolve(targetRoute), { replaceState: true });
 		} catch (err) {
-			error = err instanceof AuthServiceError ? err.message : 'Login failed. Please try again.';
+			error = err instanceof AuthServiceError ? err.message : 'Sisselogimine ebaõnnestus. Proovige uuesti.';
 		} finally {
 			isLoading = false;
 		}
@@ -32,7 +32,7 @@
 </script>
 
 <svelte:head>
-	<title>Sign In - Forest Management</title>
+	<title>Logi sisse - Metsandusüsteem</title>
 </svelte:head>
 
 <div class="min-h-screen flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
@@ -43,8 +43,8 @@
 					<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v14m0-14L7 8m5-5 5 5M5 20h14" />
 				</svg>
 			</div>
-			<h1 class="text-2xl font-bold tracking-tight text-[#1f2a24] sm:text-3xl">Sign in to your account</h1>
-			<p class="mt-2 text-sm text-[#56645d]">Forest Management System</p>
+			<h1 class="text-2xl font-bold tracking-tight text-[#1f2a24] sm:text-3xl">Logige sisse oma kontole</h1>
+			<p class="mt-2 text-sm text-[#56645d]">Metsandusüsteem</p>
 		</div>
 
 		<form
@@ -70,7 +70,7 @@
 
 			<div class="space-y-4">
 				<div>
-					<label for="username" class="mb-1.5 block text-sm font-medium text-[#2d3a34]">Username</label>
+					<label for="username" class="mb-1.5 block text-sm font-medium text-[#2d3a34]">Kasutajanimi</label>
 					<input
 						id="username"
 						name="username"
@@ -79,11 +79,11 @@
 						required
 						bind:value={username}
 						class="block w-full rounded-lg border border-[#cad6cf] bg-[#fcfdfc] px-3 py-2.5 text-sm text-[#1f2a24] placeholder:text-[#7a8a82] shadow-sm transition focus:border-[#1f5a42] focus:outline-none focus:ring-2 focus:ring-[#1f5a42]/20"
-						placeholder="Username"
+						placeholder="Kasutajanimi"
 					/>
 				</div>
 				<div>
-					<label for="password" class="mb-1.5 block text-sm font-medium text-[#2d3a34]">Password</label>
+					<label for="password" class="mb-1.5 block text-sm font-medium text-[#2d3a34]">Parool</label>
 					<input
 						id="password"
 						name="password"
@@ -92,7 +92,7 @@
 						required
 						bind:value={password}
 						class="block w-full rounded-lg border border-[#cad6cf] bg-[#fcfdfc] px-3 py-2.5 text-sm text-[#1f2a24] placeholder:text-[#7a8a82] shadow-sm transition focus:border-[#1f5a42] focus:outline-none focus:ring-2 focus:ring-[#1f5a42]/20"
-						placeholder="Password"
+						placeholder="Parool"
 					/>
 				</div>
 			</div>
@@ -108,9 +108,9 @@
 							<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
 							<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
 						</svg>
-						Signing in...
+						Logimisel...
 					{:else}
-						Sign in
+						Logi sisse
 					{/if}
 				</button>
 			</div>

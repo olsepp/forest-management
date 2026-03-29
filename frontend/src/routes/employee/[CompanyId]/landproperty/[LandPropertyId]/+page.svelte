@@ -61,15 +61,15 @@
 
 	function statusLabel(status: LandPropertyDto['status']): string {
 		if (typeof status === 'number') {
-			if (status === 0) return 'Active';
-			if (status === 2) return 'Sold';
-			return 'Inactive';
+			if (status === 0) return 'Aktiivne';
+			if (status === 2) return 'Müüdud';
+			return 'Mitteaktiivne';
 		}
 
 		const value = String(status ?? '').trim().toLowerCase();
-		if (value === 'active') return 'Active';
-		if (value === 'sold') return 'Sold';
-		return 'Inactive';
+		if (value === 'active') return 'Aktiivne';
+		if (value === 'sold') return 'Müüdud';
+		return 'Mitteaktiivne';
 	}
 
 	function formatDate(value: string | null): string {
@@ -86,7 +86,7 @@
 
 	async function loadData() {
 		if (!companyId || !propertyId) {
-			errorMessage = 'Missing route parameters.';
+			errorMessage = 'Marsruudi parameetrid puuduvad.';
 			isLoading = false;
 			return;
 		}
@@ -105,11 +105,11 @@
 			if (!propertyResponse.ok) {
 				if (propertyResponse.status === 401) {
 					isUnauthorized = true;
-					errorMessage = 'Unauthorized. Please sign in again.';
+					errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
 					return;
 				}
 
-				errorMessage = propertyResponse.status === 404 ? 'Property not found.' : 'Failed to load property.';
+				errorMessage = propertyResponse.status === 404 ? 'Kinnistut ei leitud.' : 'Kinnistu laadimine ebaõnnestus.';
 				return;
 			}
 
@@ -130,11 +130,11 @@
 			if (!activitiesResponse.ok) {
 				if (activitiesResponse.status === 401 || activitiesResponse.status === 403) {
 					isUnauthorized = true;
-					errorMessage = 'Unauthorized. Please sign in again.';
+					errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
 					return;
 				}
 
-				errorMessage = 'Failed to load property details.';
+				errorMessage = 'Kinnistu detailide laadimine ebaõnnestus.';
 				return;
 			}
 
@@ -142,7 +142,7 @@
 				.filter((item) => Boolean(item?.id))
 				.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 		} catch {
-			errorMessage = 'Failed to load property details.';
+			errorMessage = 'Kinnistu detailide laadimine ebaõnnestus.';
 		} finally {
 			isLoading = false;
 		}
@@ -152,37 +152,37 @@
 </script>
 
 {#if isLoading}
-	<div class="employee-state-block is-loading">Loading property details…</div>
+	<div class="employee-state-block is-loading">Laetakse kinnistu detaile…</div>
 {:else if errorMessage && !property}
 	<div class="employee-state-block is-error">
 		{errorMessage}
 		{#if isUnauthorized}
-			<span class="inline-note">Your session may have expired.</span>
+			<span class="inline-note">Teie sessioon võib olla aegunud.</span>
 		{/if}
 	</div>
 {:else if property}
 	<p class="back-link">
-		<a href={resolve('/employee/[CompanyId]/landproperty', { CompanyId: companyId })}>← Back to properties</a>
+		<a href={resolve('/employee/[CompanyId]/landproperty', { CompanyId: companyId })}>← Tagasi kinnistute juurde</a>
 	</p>
 
 	<section class="employee-card summary">
-		<p class="kicker">Property details</p>
+		<p class="kicker">Kinnistu detailid</p>
 		<h1>{property.name}</h1>
-		<p class="status-line">Status: <strong>{statusLabel(property.status)}</strong></p>
+		<p class="status-line">Olek: <strong>{statusLabel(property.status)}</strong></p>
 		<div class="meta-grid">
-			<p><strong>Registration:</strong> {property.registrationNumber}</p>
-			<p><strong>County:</strong> {property.county || '—'}</p>
-			<p><strong>Parish:</strong> {property.parish || '—'}</p>
-			<p><strong>Village:</strong> {property.village || '—'}</p>
-			<p><strong>Bought:</strong> {formatDate(property.boughtDate)}</p>
-			<p><strong>Sold:</strong> {formatDate(property.soldDate)}</p>
+			<p><strong>Registrinumber:</strong> {property.registrationNumber}</p>
+			<p><strong>Maakond:</strong> {property.county || '—'}</p>
+			<p><strong>Vald:</strong> {property.parish || '—'}</p>
+			<p><strong>Küla:</strong> {property.village || '—'}</p>
+			<p><strong>Ostetud:</strong> {formatDate(property.boughtDate)}</p>
+			<p><strong>Müüdud:</strong> {formatDate(property.soldDate)}</p>
 		</div>
 	</section>
 
 	<section class="employee-card">
-		<h2>Related cadasters</h2>
+		<h2>Seotud katastrid</h2>
 		{#if cadasters.length === 0}
-			<div class="employee-state-block is-empty">No cadasters connected to this property.</div>
+			<div class="employee-state-block is-empty">Selle kinnistuga pole seotud ühtegi katastrit.</div>
 		{:else}
 			<div class="cadaster-links">
 				{#each cadasters as cadaster (cadaster.id)}
@@ -200,25 +200,25 @@
 	</section>
 
 	<section class="employee-card">
-		<h2>Your activity history for this property</h2>
+		<h2>Sinu tegevuste ajalugu sellel kinnistul</h2>
 		{#if activities.length === 0}
-			<div class="employee-state-block is-empty">No activities found for your account in this property.</div>
+			<div class="employee-state-block is-empty">Sellel kinnistul ei leitud sinu konto tegevusi.</div>
 		{:else}
 			<div class="employee-stack-cards">
 				{#each activities as activity (activity.id)}
 					<article class="activity-card">
 						<p class="activity-head">
-							<strong>{activity.activityTypeName || 'Activity'}</strong>
+							<strong>{activity.activityTypeName || 'Tegevus'}</strong>
 							<span>{formatDate(activity.date)}</span>
 						</p>
 						<p>{activity.description || '—'}</p>
-						<p><strong>Quantity:</strong> {formatActivityQuantity(activity)}</p>
+						<p><strong>Kogus:</strong> {formatActivityQuantity(activity)}</p>
 						<p>
-							<strong>Target:</strong>
+							<strong>Siht:</strong>
 							{activity.cadasterCadastralNumber
-								? `Cadaster ${activity.cadasterCadastralNumber}`
+								? `Kataster ${activity.cadasterCadastralNumber}`
 								: activity.forestStandNumber
-									? `Stand ${activity.forestStandNumber}`
+									? `Eraldis ${activity.forestStandNumber}`
 									: '—'}
 						</p>
 					</article>

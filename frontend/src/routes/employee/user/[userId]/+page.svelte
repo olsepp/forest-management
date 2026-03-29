@@ -91,19 +91,19 @@
 					profile = fallback;
 					errorMessage =
 						response.status === 401
-							? 'Profile endpoint unavailable (unauthorized). Showing account data from your session.'
+							? 'Profiili teenus pole saadaval (ligipääs puudub). Kuvatakse sinu seansi kontoandmed.'
 							: response.status === 403
-								? 'Profile endpoint is restricted. Showing account data from your session.'
-								: 'Profile endpoint unavailable. Showing account data from your session.';
+								? 'Profiili teenus on piiratud. Kuvatakse sinu seansi kontoandmed.'
+								: 'Profiili teenus pole saadaval. Kuvatakse sinu seansi kontoandmed.';
 					return;
 				}
 
 				errorMessage =
 					response.status === 401
-						? 'Unauthorized. Please sign in again.'
+						? 'Ligipääs puudub. Logige uuesti sisse.'
 						: response.status === 403
-							? 'Profile endpoint is restricted for your role.'
-							: 'Failed to load profile.';
+							? 'Profiili teenus on sinu rollile piiratud.'
+							: 'Profiili laadimine ebaõnnestus.';
 				return;
 			}
 
@@ -113,11 +113,11 @@
 			const fallback = fallbackFromStore();
 			if (fallback) {
 				profile = fallback;
-				errorMessage = 'Failed to load profile endpoint. Showing account data from your session.';
+				errorMessage = 'Profiili teenuse laadimine ebaõnnestus. Kuvatakse sinu seansi kontoandmed.';
 				return;
 			}
 
-			errorMessage = 'Failed to load profile.';
+			errorMessage = 'Profiili laadimine ebaõnnestus.';
 		} finally {
 			isLoading = false;
 		}
@@ -127,33 +127,33 @@
 </script>
 
 <p class="back-link">
-	<a href={resolve('/employee')}>← Back to employee home</a>
+	<a href={resolve('/employee')}>← Tagasi töötaja avalehele</a>
 </p>
 
 <section class="employee-card summary">
-	<p class="kicker">User profile</p>
-	<h1>Your account</h1>
-	<p>Profile details for your employee account.</p>
+	<p class="kicker">Kasutajaprofiil</p>
+	<h1>Sinu konto</h1>
+	<p>Profiiliandmed sinu töötaja kontole.</p>
 </section>
 
 {#if isLoading}
-	<div class="employee-state-block is-loading">Loading profile…</div>
+	<div class="employee-state-block is-loading">Laetakse profiili…</div>
 {:else if !profile}
-	<div class="employee-state-block is-error">{errorMessage || 'Profile is unavailable.'}</div>
+	<div class="employee-state-block is-error">{errorMessage || 'Profiil pole saadaval.'}</div>
 {:else}
 	{#if errorMessage}
 		<div class="employee-state-block is-error">{errorMessage}</div>
 	{/if}
 
 	<section class="employee-card profile-grid">
-		<p><strong>User ID:</strong> {profile.id}</p>
-		<p><strong>Username:</strong> {profile.username}</p>
+		<p><strong>Kasutaja ID:</strong> {profile.id}</p>
+		<p><strong>Kasutajanimi:</strong> {profile.username}</p>
 		<p><strong>Email:</strong> {profile.email}</p>
-		<p><strong>First name:</strong> {profile.firstName}</p>
-		<p><strong>Last name:</strong> {profile.lastName}</p>
-		<p><strong>Role:</strong> {profile.role}</p>
-		<p><strong>Phone:</strong> {profile.phoneNumber}</p>
-		<p><strong>Data source:</strong> {profile.source === 'api' ? 'Profile endpoint' : 'Session fallback'}</p>
+		<p><strong>Eesnimi:</strong> {profile.firstName}</p>
+		<p><strong>Perekonnanimi:</strong> {profile.lastName}</p>
+		<p><strong>Roll:</strong> {profile.role}</p>
+		<p><strong>Telefon:</strong> {profile.phoneNumber}</p>
+		<p><strong>Andmeallikas:</strong> {profile.source === 'api' ? 'Profiili teenus' : 'Seansi varuandmed'}</p>
 	</section>
 {/if}
 
@@ -163,19 +163,44 @@
 	}
 
 	.back-link a {
-		font-size: 0.9rem;
+		display: inline-flex;
+		align-items: center;
+		min-height: 2.75rem;
+		padding: 0.25rem 0.5rem;
+		border-radius: 0.75rem;
+		font-size: 0.86rem;
 		font-weight: 700;
 		text-decoration: none;
 		color: #1f5a42;
+		transition:
+			background-color 0.18s ease,
+			color 0.18s ease,
+			transform 0.12s ease;
+	}
+
+	.back-link a:hover {
+		background: #eef6f2;
+	}
+
+	.back-link a:active {
+		transform: translateY(1px);
+	}
+
+	.back-link a:focus-visible {
+		outline: none;
+		box-shadow: 0 0 0 3px rgba(31, 90, 66, 0.22);
 	}
 
 	.summary {
 		margin-bottom: 0.75rem;
+		padding: 1rem;
+		background: linear-gradient(180deg, #ffffff 0%, #f3f8f5 100%);
+		border-color: #d2e1d8;
 	}
 
 	.kicker {
 		margin: 0;
-		font-size: 0.77rem;
+		font-size: 0.72rem;
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 0.03em;
@@ -184,7 +209,7 @@
 
 	h1 {
 		margin: 0.3rem 0 0.4rem;
-		font-size: 1.2rem;
+		font-size: 1.14rem;
 		line-height: 1.2;
 		color: #17251e;
 	}
@@ -196,12 +221,22 @@
 
 	.profile-grid {
 		display: grid;
-		gap: 0.45rem;
+		gap: 0.52rem;
 	}
 
 	.profile-grid p {
 		margin: 0;
 		color: #3f564a;
+		padding: 0.58rem 0.64rem;
+		border: 1px solid #d9e5df;
+		border-radius: 0.8rem;
+		background: #f8fbf9;
+	}
+
+	@media (min-width: 640px) {
+		h1 {
+			font-size: 1.22rem;
+		}
 	}
 
 	@media (min-width: 768px) {

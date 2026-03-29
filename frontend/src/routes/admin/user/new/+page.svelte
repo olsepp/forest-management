@@ -16,7 +16,8 @@
 	let errorMessage = $state('');
 	let successMessage = $state('');
 
-	async function createUser() {
+	async function createUser(event: SubmitEvent) {
+		event.preventDefault();
 		errorMessage = '';
 		successMessage = '';
 		isSubmitting = true;
@@ -41,7 +42,7 @@
 			});
 
 			if (response.status === 201) {
-				successMessage = 'User account created successfully.';
+				successMessage = 'Kasutajakonto loodi edukalt.';
 				username = '';
 				email = '';
 				firstName = '';
@@ -52,24 +53,24 @@
 			}
 
 			if (response.status === 401) {
-				errorMessage = 'Unauthorized. Please sign in again.';
+				errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
 				return;
 			}
 
 			if (response.status === 403) {
-				errorMessage = 'Forbidden. Admin role is required.';
+				errorMessage = 'Keelatud. Vajalik on admini roll.';
 				return;
 			}
 
 			if (response.status === 400) {
 				const data = (await response.json().catch(() => null)) as { message?: string } | null;
-				errorMessage = data?.message || 'Validation failed. Username or email may already exist.';
+				errorMessage = data?.message || 'Valideerimine ebaõnnestus. Kasutajanimi või e-post võib juba olemas olla.';
 				return;
 			}
 
-			errorMessage = 'Failed to create user account.';
+			errorMessage = 'Kasutajakonto loomine ebaõnnestus.';
 		} catch {
-			errorMessage = 'Network error. Please try again.';
+			errorMessage = 'Võrguviga. Proovige uuesti.';
 		} finally {
 			isSubmitting = false;
 		}
@@ -77,12 +78,12 @@
 </script>
 
 <div class="mb-4 flex items-center justify-between gap-3">
-	<h1 class="text-2xl font-semibold text-slate-900">Create user account</h1>
+	<h1 class="text-2xl font-semibold text-slate-900">Loo kasutajakonto</h1>
 	<a
 		href={resolve('/admin/user')}
 		class="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
 	>
-		Back to users
+		Tagasi kasutajate juurde
 	</a>
 </div>
 
@@ -94,10 +95,10 @@
 	<p class="mb-4 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">{successMessage}</p>
 {/if}
 
-<form on:submit|preventDefault={createUser} class="max-w-2xl space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+<form onsubmit={createUser} class="max-w-2xl space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
 	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 		<label class="flex flex-col gap-1 text-sm">
-			<span class="font-medium text-slate-700">Username</span>
+			<span class="font-medium text-slate-700">Kasutajanimi</span>
 			<input bind:value={username} required class="rounded-lg border border-slate-300 px-3 py-2" />
 		</label>
 
@@ -107,25 +108,25 @@
 		</label>
 
 		<label class="flex flex-col gap-1 text-sm">
-			<span class="font-medium text-slate-700">First name</span>
+			<span class="font-medium text-slate-700">Eesnimi</span>
 			<input bind:value={firstName} required class="rounded-lg border border-slate-300 px-3 py-2" />
 		</label>
 
 		<label class="flex flex-col gap-1 text-sm">
-			<span class="font-medium text-slate-700">Last name</span>
+			<span class="font-medium text-slate-700">Perekonnanimi</span>
 			<input bind:value={lastName} required class="rounded-lg border border-slate-300 px-3 py-2" />
 		</label>
 
 		<label class="flex flex-col gap-1 text-sm">
-			<span class="font-medium text-slate-700">Role</span>
+			<span class="font-medium text-slate-700">Roll</span>
 			<select bind:value={role} class="rounded-lg border border-slate-300 px-3 py-2">
-				<option value="Employee">Employee</option>
+				<option value="Employee">Töötaja</option>
 				<option value="Admin">Admin</option>
 			</select>
 		</label>
 
 		<label class="flex flex-col gap-1 text-sm">
-			<span class="font-medium text-slate-700">Password</span>
+			<span class="font-medium text-slate-700">Parool</span>
 			<input
 				bind:value={password}
 				type="password"
@@ -133,9 +134,7 @@
 				required
 				class="rounded-lg border border-slate-300 px-3 py-2"
 			/>
-			<span class="text-xs text-slate-500"
-				>Password must include at least 1 symbol, 1 uppercase letter, and 1 number.</span
-			>
+			<span class="text-xs text-slate-500">Parool peab sisaldama vähemalt 1 sümbolit, 1 suurtähte ja 1 numbrit.</span>
 		</label>
 	</div>
 
@@ -145,7 +144,7 @@
 			disabled={isSubmitting}
 			class="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
 		>
-			{isSubmitting ? 'Creating...' : 'Create account'}
+			{isSubmitting ? 'Loomine...' : 'Loo konto'}
 		</button>
 	</div>
 </form>

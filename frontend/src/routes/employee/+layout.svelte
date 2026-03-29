@@ -9,18 +9,19 @@
 	import { user } from '$lib/stores/auth.store';
 	import { getDefaultRouteForRole } from '$lib/services/auth';
 
+	type AppRoleRoute = '/' | '/admin' | '/employee' | '/sign-in';
+
 	let { children } = $props();
-	let isMenuOpen = $state(false);
 	let pathname = $derived($page.url.pathname);
-	let employeeDisplayName = $state('Forest management');
+	let employeeDisplayName = $state('Metsandus');
 	let currentUserId = $derived($user?.userId?.trim() ?? '');
-	let profilePath = $derived(currentUserId ? `/employee/user/${currentUserId}` : '/employee');
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
 	type UserProfileDto = {
 		firstName?: string;
 		lastName?: string;
 	};
+
 	let currentCompanyId = $derived.by(() => {
 		const fromParams = $page.params.CompanyId?.trim();
 		if (fromParams) return fromParams;
@@ -31,54 +32,22 @@
 		const candidate = matched[1].trim();
 		return candidate.toLowerCase() === 'user' ? null : candidate;
 	});
-	let navItems = $derived.by(() => {
-		const items: { path: string; label: string; activeWhen: (path: string) => boolean }[] = [];
 
-		if (currentCompanyId) {
-			items.push(
-				{
-					path: '/employee',
-					label: 'Home',
-					activeWhen: (path) => path === '/employee'
-				},	
-				{
-					path: `/employee/${currentCompanyId}/landproperty`,
-					label: 'Properties',
-					activeWhen: (path) => path.includes(`/employee/${currentCompanyId}/landproperty`)
-				},
-				{
-					path: `/employee/${currentCompanyId}/activity`,
-					label: 'Activities',
-					activeWhen: (path) => path.includes(`/employee/${currentCompanyId}/activity`)
-				}
-			);
-		} else {
-			items.push({
-				path: '/employee',
-				label: 'Home',
-				activeWhen: (path) => path === '/employee'
-			});
-		}
-
-		return items;
-	});
+	let hasProfileId = $derived(currentUserId.length > 0);
+	let navCompanyId = $derived(currentCompanyId ?? '');
 
 	$effect(() => {
 		if (!browser) return;
 
 		const role = $user?.role?.trim().toLowerCase();
 		if (role && role !== 'employee') {
-			goto(resolve(getDefaultRouteForRole(role)));
+			goto(resolve(getDefaultRouteForRole(role) as AppRoleRoute));
 		}
 	});
 
 	async function handleSignOut() {
 		await authService.logout();
 		goto(resolve('/sign-in'));
-	}
-
-	function toggleMenu() {
-		isMenuOpen = !isMenuOpen;
 	}
 
 	function normalizeNamePart(value: unknown): string {
@@ -113,131 +82,156 @@
 	onMount(() => {
 		loadEmployeeDisplayName();
 	});
-
-	$effect(() => {
-		if (pathname) {
-			isMenuOpen = false;
-			return;
-		}
-
-		isMenuOpen = false;
-	});
 </script>
 
-
-<div class="employee-layout mx-auto min-h-screen w-full max-w-6xl px-3 pb-6 pt-3 sm:px-4 sm:pt-4 md:px-5 md:pb-8">
-	<header class="employee-header mb-3 sm:mb-4">
-		<div class="employee-title-wrap">
-			<button
-				type="button"
-				onclick={toggleMenu}
-				class="employee-menu-toggle"
-				aria-expanded={isMenuOpen}
-				aria-controls="employee-main-nav"
-				aria-label="Open navigation menu"
-			>
-				<span aria-hidden="true" class="hamburger-icon">☰</span>
-			</button>
-
-			<div>
-			<p class="employee-kicker">Employee workspace</p>
+<div class="employee-layout mx-auto min-h-screen w-full max-w-6xl px-3 pt-0 sm:px-4 sm:pt-0 md:px-5">
+	<header class="employee-appbar">
+		<div>
+			<p class="employee-kicker">Töötajate tööruum</p>
 			<h1 class="employee-title">{employeeDisplayName}</h1>
-			</div>
 		</div>
+
+		<button type="button" onclick={handleSignOut} class="employee-signout">Logi välja</button>
 	</header>
 
-	{#if navItems.length > 0}
-		{#if isMenuOpen}
-			<button
-				type="button"
-				class="employee-menu-backdrop"
-				onclick={toggleMenu}
-				aria-label="Close navigation menu"
-			></button>
-		{/if}
-
-		<nav
-			id="employee-main-nav"
-			class="employee-nav mb-4"
-			class:is-open={isMenuOpen}
-			aria-label="Employee section navigation"
-		>
-			{#each navItems as item (item.path)}
-				<a
-					href={resolve(item.path)}
-					class="employee-nav-link"
-					class:is-active={item.activeWhen(pathname)}
-					onclick={() => (isMenuOpen = false)}
-				>
-					{item.label}
-				</a>
-			{/each}
-
+	{#if navCompanyId}
+		<nav class="employee-top-nav" aria-label="Employee section navigation">
+			<a href={resolve('/employee')} class="employee-nav-link" class:is-active={pathname === '/employee'}>
+				Avaleht
+			</a>
 			<a
-				href={resolve(profilePath)}
-				class="employee-nav-link employee-profile-link"
-				class:is-active={pathname.startsWith('/employee/user/')}
-				onclick={() => (isMenuOpen = false)}
+				href={resolve('/employee/[CompanyId]/landproperty', { CompanyId: navCompanyId })}
+				class="employee-nav-link"
+				class:is-active={pathname.includes(`/employee/${navCompanyId}/landproperty`)}
 			>
-				Profile
+				Kinnistud
+			</a>
+			<a
+				href={resolve('/employee/[CompanyId]/activity', { CompanyId: navCompanyId })}
+				class="employee-nav-link"
+				class:is-active={pathname.includes(`/employee/${navCompanyId}/activity`)}
+			>
+				Tegevused
 			</a>
 
-			<button type="button" onclick={handleSignOut} class="employee-signout">Sign out</button>
+			{#if hasProfileId}
+				<a
+					href={resolve('/employee/user/[userId]', { userId: currentUserId })}
+					class="employee-nav-link"
+					class:is-active={pathname.startsWith('/employee/user/')}
+				>
+					Profiil
+				</a>
+			{:else}
+				<a href={resolve('/employee')} class="employee-nav-link" class:is-active={pathname === '/employee'}>
+					Profiil
+				</a>
+			{/if}
 		</nav>
 	{/if}
 
 	<div class="employee-content">
 		{@render children()}
 	</div>
+
+	{#if navCompanyId}
+		<nav class="employee-bottom-nav" aria-label="Employee mobile navigation">
+			<a href={resolve('/employee')} class="employee-tab-link" class:is-active={pathname === '/employee'}>
+				Avaleht
+			</a>
+			<a
+				href={resolve('/employee/[CompanyId]/landproperty', { CompanyId: navCompanyId })}
+				class="employee-tab-link"
+				class:is-active={pathname.includes(`/employee/${navCompanyId}/landproperty`)}
+			>
+				Kinnistud
+			</a>
+			<a
+				href={resolve('/employee/[CompanyId]/activity', { CompanyId: navCompanyId })}
+				class="employee-tab-link"
+				class:is-active={pathname.includes(`/employee/${navCompanyId}/activity`)}
+			>
+				Tegevused
+			</a>
+			{#if hasProfileId}
+				<a
+					href={resolve('/employee/user/[userId]', { userId: currentUserId })}
+					class="employee-tab-link"
+					class:is-active={pathname.startsWith('/employee/user/')}
+				>
+					Profiil
+				</a>
+			{:else}
+				<a href={resolve('/employee')} class="employee-tab-link" class:is-active={pathname === '/employee'}>
+					Profiil
+				</a>
+			{/if}
+		</nav>
+	{/if}
 </div>
 
 <style>
+	:global(:root) {
+		--employee-shell-bg: #eef4f0;
+		--employee-surface: #ffffff;
+		--employee-accent: #1f5a42;
+		--employee-border: #d7e2dc;
+		--employee-radius-md: 0.9rem;
+		--employee-radius-lg: 1rem;
+		--employee-shadow-1: 0 6px 20px rgba(20, 41, 31, 0.08);
+		--employee-shadow-2: 0 10px 26px rgba(20, 41, 31, 0.12);
+		--employee-bottom-nav-height: 4.4rem;
+		--employee-safe-bottom: max(0.55rem, env(safe-area-inset-bottom));
+		--employee-shell-pad-x: 0.75rem;
+	}
+
 	.employee-layout {
 		color: #1f2a24;
+		padding-bottom: calc(var(--employee-bottom-nav-height) + var(--employee-safe-bottom) + 0.9rem);
 	}
 
-	.employee-title-wrap {
+	.employee-appbar {
+		position: sticky;
+		top: 0;
+		z-index: 1100;
 		display: flex;
 		align-items: center;
-		gap: 0.55rem;
-	}
-
-	.employee-header {
-		display: flex;
-		align-items: flex-start;
 		justify-content: space-between;
-		gap: 0.8rem;
-		border: 1px solid #dbe4df;
-		border-radius: 0.9rem;
-		padding: 0.85rem 0.85rem 0.95rem;
-		background: #1f5a42;
+		gap: 0.75rem;
+		margin-bottom: 0.75rem;
+		padding: 0.78rem 0.82rem;
+		background: linear-gradient(180deg, #265f48 0%, #1f5a42 100%);
+		box-shadow: var(--employee-shadow-2);
+		width: calc(100% + (var(--employee-shell-pad-x) * 2));
+		margin-left: calc(var(--employee-shell-pad-x) * -1);
+		margin-right: calc(var(--employee-shell-pad-x) * -1);
 	}
 
 	.employee-kicker {
 		margin: 0;
-		font-size: 0.74rem;
+		font-size: 0.7rem;
 		font-weight: 700;
 		letter-spacing: 0.03em;
 		text-transform: uppercase;
-		color: #d5d6d5;
+		color: #d8e9df;
 	}
 
 	.employee-title {
-		margin: 0.2rem 0 0;
-		font-size: 1.1rem;
+		margin: 0.16rem 0 0;
+		font-size: 1.02rem;
 		line-height: 1.25;
 		font-weight: 700;
-		color: #e7e7e7;
+		color: #eef6f1;
 	}
 
 	.employee-signout {
-		border: 1px solid #bfcec5;
-		background: #f7faf8;
-		color: #24332b;
-		border-radius: 0.75rem;
+		border: 1px solid #c0d7cb;
+		background: #f8fbf9;
+		color: #1f352a;
+		border-radius: var(--employee-radius-md);
 		min-height: 2.75rem;
-		padding: 0.65rem 0.95rem;
-		font-size: 0.9rem;
+		padding: 0.68rem 0.92rem;
+		font-size: 0.86rem;
 		font-weight: 600;
 		line-height: 1;
 		text-align: center;
@@ -245,30 +239,17 @@
 		transition:
 			background-color 0.18s ease,
 			border-color 0.18s ease,
+			transform 0.12s ease,
 			box-shadow 0.18s ease;
-	}
-
-	.employee-menu-toggle {
-		border: 1px solid #bfcec5;
-		background: #dadada;
-		color: #24332b;
-		border-radius: 0.75rem;
-		min-height: 2.75rem;
-		min-width: 2.75rem;
-		padding: 0.65rem;
-		font-size: 0.9rem;
-		font-weight: 600;
-		line-height: 1;
-	}
-
-	.hamburger-icon {
-		font-size: 1.12rem;
-		line-height: 1;
 	}
 
 	.employee-signout:hover {
 		background: #f2f6f3;
-		border-color: #a7beb1;
+		border-color: #9fbcad;
+	}
+
+	.employee-signout:active {
+		transform: translateY(1px);
 	}
 
 	.employee-signout:focus-visible {
@@ -276,36 +257,8 @@
 		box-shadow: 0 0 0 3px rgba(41, 94, 69, 0.24);
 	}
 
-	.employee-nav {
-		position: fixed;
-		top: 0;
-		left: 0;
-		z-index: 30;
-		display: flex;
-		flex-direction: column;
-		align-content: start;
-		gap: 0.55rem;
-		width: min(84vw, 18rem);
-		height: 100dvh;
-		padding: 1rem 0.8rem 1.2rem;
-		background: #ffffff;
-		border-right: 1px solid #d2ded8;
-		box-shadow: 0 16px 32px rgba(17, 37, 28, 0.18);
-		transform: translateX(-105%);
-		transition: transform 0.22s ease;
-	}
-
-	.employee-nav.is-open {
-		transform: translateX(0);
-	}
-
-	.employee-menu-backdrop {
-		position: fixed;
-		inset: 0;
-		z-index: 20;
-		background: rgba(19, 34, 27, 0.34);
-		border: 0;
-		padding: 0;
+	.employee-top-nav {
+		display: none;
 	}
 
 	.employee-nav-link {
@@ -316,9 +269,9 @@
 		text-decoration: none;
 		min-height: 2.8rem;
 		padding: 0.62rem 0.7rem;
-		border-radius: 0.75rem;
-		border: 1px solid #d2ded8;
-		background: #ffffff;
+		border-radius: var(--employee-radius-md);
+		border: 1px solid var(--employee-border);
+		background: var(--employee-surface);
 		font-size: 0.9rem;
 		font-weight: 600;
 		color: #1f4f39;
@@ -334,42 +287,91 @@
 	}
 
 	.employee-nav-link.is-active {
-		background: #1f5a42;
-		border-color: #1f5a42;
+		background: var(--employee-accent);
+		border-color: var(--employee-accent);
 		color: #f6fbf8;
 	}
 
-	.employee-profile-link {
-		margin-top: auto;
+	.employee-content {
+		border: 1px solid var(--employee-border);
+		background: var(--employee-shell-bg);
+		border-radius: var(--employee-radius-lg);
+		padding: 0.82rem;
+		box-shadow: var(--employee-shadow-1);
 	}
 
-	.employee-content {
-		border: 1px solid #dce6e0;
-		background: #1f5a42;
-		border-radius: 0.95rem;
-		padding: 0.85rem;
-		box-shadow: 0 8px 24px rgba(20, 41, 31, 0.06);
+	.employee-bottom-nav {
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 1200;
+		display: flex;
+		gap: 0.4rem;
+		height: calc(var(--employee-bottom-nav-height) + var(--employee-safe-bottom));
+		padding: 0.45rem 0.6rem calc(0.45rem + var(--employee-safe-bottom));
+		background: rgba(255, 255, 255, 0.96);
+		border-top: 1px solid #d4e1db;
+		box-shadow: 0 -8px 24px rgba(20, 40, 31, 0.15);
+		backdrop-filter: blur(8px);
+	}
+
+	.employee-tab-link {
+		flex: 1;
+		display: inline-grid;
+		align-items: center;
+		justify-content: center;
+		text-align: center;
+		text-decoration: none;
+		min-height: 2.75rem;
+		padding: 0.55rem 0.35rem;
+		border-radius: var(--employee-radius-md);
+		border: 1px solid transparent;
+		background: transparent;
+		font-size: 0.8rem;
+		font-weight: 600;
+		color: #466055;
+		transition:
+			background-color 0.18s ease,
+			border-color 0.18s ease,
+			color 0.18s ease,
+			transform 0.12s ease;
+	}
+
+	.employee-tab-link:active {
+		transform: translateY(1px);
+	}
+
+	.employee-tab-link.is-active {
+		background: #eaf3ee;
+		border-color: #c4d7ce;
+		color: #194934;
+	}
+
+	.employee-tab-link:focus-visible {
+		outline: none;
+		box-shadow: 0 0 0 3px rgba(31, 90, 66, 0.24);
 	}
 
 	:global(.employee-stack-cards) {
 		display: grid;
-		gap: 0.7rem;
+		gap: 0.75rem;
 	}
 
 	:global(.employee-card) {
-		border: 1px solid #d9e4de;
-		border-radius: 0.85rem;
-		background: #fff;
-		padding: 0.85rem;
+		border: 1px solid var(--employee-border);
+		border-radius: var(--employee-radius-lg);
+		background: var(--employee-surface);
+		padding: 0.9rem;
 		margin-bottom: 1rem;
-		box-shadow: 0 3px 10px rgba(18, 39, 29, 0.04);
+		box-shadow: 0 4px 14px rgba(18, 39, 29, 0.05);
 	}
 
 	:global(.employee-table-wrap) {
 		overflow-x: auto;
 		max-width: 100%;
-		border: 1px solid #d9e3de;
-		border-radius: 0.8rem;
+		border: 1px solid var(--employee-border);
+		border-radius: var(--employee-radius-md);
 		background: #fff;
 		-webkit-overflow-scrolling: touch;
 	}
@@ -390,7 +392,7 @@
 	}
 
 	:global(.employee-state-block) {
-		border-radius: 0.8rem;
+		border-radius: var(--employee-radius-md);
 		border: 1px solid #d9e5df;
 		background: #f7faf8;
 		padding: 0.85rem;
@@ -416,37 +418,47 @@
 		color: #24543e;
 	}
 
+	:global(.employee-content :is(button, a, input, select, textarea)) {
+		min-height: 2.75rem;
+	}
+
+	:global(.employee-content :is(button, a):focus-visible),
+	:global(.employee-content :is(input, select, textarea):focus-visible) {
+		outline: none;
+		box-shadow: 0 0 0 3px rgba(31, 90, 66, 0.22);
+	}
+
+	:global(.employee-content :is(button, a):active) {
+		transform: translateY(1px);
+	}
+
 	@media (min-width: 640px) {
-		.employee-menu-toggle {
-			display: none;
+		:global(:root) {
+			--employee-shell-pad-x: 1rem;
 		}
 
-		.employee-header {
-			align-items: center;
-			padding: 1rem 1.05rem;
+		.employee-layout {
+			padding-bottom: 2rem;
+		}
+
+		.employee-appbar {
+			position: static;
+			padding: 0.9rem 1rem;
 		}
 
 		.employee-title {
-			font-size: 1.25rem;
+			font-size: 1.18rem;
 		}
 
-		.employee-nav {
-			position: static;
-			transform: none;
-			width: auto;
-			height: auto;
-			padding: 0;
-			background: transparent;
-			border-right: 0;
-			box-shadow: none;
+		.employee-top-nav {
 			display: flex;
-			flex-direction: row;
 			align-items: center;
+			gap: 0.55rem;
+			margin-bottom: 0.85rem;
 		}
 
-		.employee-signout {
-			margin-top: 0;
-			margin-left: auto;
+		.employee-bottom-nav {
+			display: none;
 		}
 
 		.employee-content {
@@ -459,6 +471,10 @@
 	}
 
 	@media (min-width: 768px) {
+		:global(:root) {
+			--employee-shell-pad-x: 1.25rem;
+		}
+
 		.employee-content {
 			padding: 1.1rem 1.2rem;
 		}

@@ -7,7 +7,9 @@ const API_BASE_URL = PUBLIC_API_URL || 'http://localhost:5000';
 /**
  * Resolve the default post-auth route for a user role.
  */
-export function getDefaultRouteForRole(role: string | null | undefined): string {
+export type AppRoleRoute = '/' | '/admin' | '/employee';
+
+export function getDefaultRouteForRole(role: string | null | undefined): AppRoleRoute {
 	const normalizedRole = role?.trim().toLowerCase();
 
 	if (normalizedRole === 'admin') return '/admin';

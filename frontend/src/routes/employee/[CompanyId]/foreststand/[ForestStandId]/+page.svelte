@@ -87,7 +87,7 @@
 
 	async function loadData() {
 		if (!companyId || !forestStandId) {
-			errorMessage = 'Missing route parameters.';
+			errorMessage = 'Marsruudi parameetrid puuduvad.';
 			isLoading = false;
 			return;
 		}
@@ -111,12 +111,12 @@
 			if (!forestStandResponse.ok) {
 				if (forestStandResponse.status === 401) {
 					isUnauthorized = true;
-					errorMessage = 'Unauthorized. Please sign in again.';
+					errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
 					return;
 				}
 
 				errorMessage =
-					forestStandResponse.status === 404 ? 'Forest stand not found.' : 'Failed to load forest stand.';
+					forestStandResponse.status === 404 ? 'Eraldist ei leitud.' : 'Eraldise laadimine ebaõnnestus.';
 				return;
 			}
 
@@ -130,7 +130,7 @@
 
 			if (activityResponse.status === 401) {
 				isUnauthorized = true;
-				errorMessage = 'Unauthorized. Please sign in again.';
+				errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
 				activities = [];
 				return;
 			}
@@ -141,7 +141,7 @@
 						.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 				: [];
 		} catch {
-			errorMessage = 'Failed to load forest stand.';
+			errorMessage = 'Eraldise laadimine ebaõnnestus.';
 		} finally {
 			isLoading = false;
 		}
@@ -151,12 +151,12 @@
 </script>
 
 {#if isLoading}
-	<div class="employee-state-block is-loading">Loading forest stand details…</div>
+	<div class="employee-state-block is-loading">Laetakse eraldise detaile…</div>
 {:else if errorMessage && !forestStand}
 	<div class="employee-state-block is-error">
 		{errorMessage}
 		{#if isUnauthorized}
-			<span class="inline-note">Your session may have expired.</span>
+			<span class="inline-note">Teie sessioon võib olla aegunud.</span>
 		{/if}
 	</div>
 {:else if forestStand}
@@ -165,15 +165,15 @@
 			href={resolve('/employee/[CompanyId]/cadaster/[CadasterId]', {
 				CompanyId: companyId,
 				CadasterId: forestStand.cadasterId
-			})}>← Back to cadaster</a
+			})}>← Tagasi katastri juurde</a
 		>
 	</p>
 
 	<section class="employee-card summary">
 		<div class="summary-head">
 			<div>
-				<p class="kicker">Forest stand details</p>
-				<h1>Stand #{forestStand.number}</h1>
+				<p class="kicker">Eraldise detailid</p>
+				<h1>Eraldis #{forestStand.number}</h1>
 			</div>
 			<a
 				class="log-activity-link"
@@ -182,13 +182,13 @@
 					ForestStandId: forestStand.id
 				})}
 			>
-				Log activity
+				Logi tegevus
 			</a>
 		</div>
 
 		<div class="context-grid">
 			<p>
-				<strong>Cadaster:</strong>
+				<strong>Kataster:</strong>
 				<a
 					href={resolve('/employee/[CompanyId]/cadaster/[CadasterId]', {
 						CompanyId: companyId,
@@ -197,7 +197,7 @@
 				>{forestStand.cadasterCadastralNumber || '—'}</a>
 			</p>
 			<p>
-				<strong>Property:</strong>
+				<strong>Kinnistu:</strong>
 				{#if linkedLandPropertyId && linkedLandPropertyName}
 					<a
 						href={resolve('/employee/[CompanyId]/landproperty/[LandPropertyId]', {
@@ -212,35 +212,35 @@
 		</div>
 
 		<div class="meta-grid">
-			<p><strong>Status:</strong> {forestStand.isActive ? 'Active' : 'Inactive'}</p>
-			<p><strong>Area:</strong> {formatNumber(forestStand.area)}</p>
-			<p><strong>Total volume:</strong> {formatNumber(forestStand.totalVolume)}</p>
-			<p><strong>Valid from:</strong> {formatDate(forestStand.validFrom)}</p>
-			<p><strong>Valid to:</strong> {formatDate(forestStand.validTo)}</p>
+			<p><strong>Olek:</strong> {forestStand.isActive ? 'Aktiivne' : 'Mitteaktiivne'}</p>
+			<p><strong>Pindala:</strong> {formatNumber(forestStand.area)}</p>
+			<p><strong>Tagavara kokku:</strong> {formatNumber(forestStand.totalVolume)}</p>
+			<p><strong>Kehtiv alates:</strong> {formatDate(forestStand.validFrom)}</p>
+			<p><strong>Kehtiv kuni:</strong> {formatDate(forestStand.validTo)}</p>
 		</div>
 	</section>
 
 	<section class="employee-card">
-		<h2>Your activities in this stand</h2>
+		<h2>Sinu tegevused selles eraldises</h2>
 		{#if activities.length === 0}
-			<div class="employee-state-block is-empty">No activities found for your account in this stand.</div>
+			<div class="employee-state-block is-empty">Selles eraldises ei leitud sinu konto tegevusi.</div>
 		{:else}
 			<div class="employee-stack-cards activities-mobile">
 				{#each activities as activity (activity.id)}
 					<article class="activity-card">
 						<p class="activity-head">
-							<strong>{activity.activityTypeName || 'Activity'}</strong>
+							<strong>{activity.activityTypeName || 'Tegevus'}</strong>
 							<span>{formatDate(activity.date)}</span>
 						</p>
 						<p>{activity.description || '—'}</p>
-						<p><strong>Quantity:</strong> {formatActivityQuantity(activity)}</p>
+						<p><strong>Kogus:</strong> {formatActivityQuantity(activity)}</p>
 						<a
 							href={resolve('/employee/[CompanyId]/activity/[ActivityId]', {
 								CompanyId: companyId,
 								ActivityId: activity.id
 							})}
 						>
-							Open activity
+							Ava tegevus
 						</a>
 					</article>
 				{/each}
@@ -250,11 +250,11 @@
 				<table>
 					<thead>
 						<tr>
-							<th>Date</th>
-							<th>Type</th>
-							<th>Description</th>
-							<th>Quantity</th>
-							<th>Open</th>
+							<th>Kuupäev</th>
+							<th>Tüüp</th>
+							<th>Kirjeldus</th>
+							<th>Kogus</th>
+							<th>Ava</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -271,7 +271,7 @@
 											ActivityId: activity.id
 										})}
 									>
-										Open
+									Ava
 									</a>
 								</td>
 							</tr>

@@ -60,6 +60,7 @@
 	let recentActivities = $state<RecentActivityDto[]>([]);
 	let linkedLandPropertyId = $state('');
 	let linkedLandPropertyName = $state('');
+	const companyId = $derived($page.params.CompanyId ?? '');
 
 	let form = $state({
 		number: '',
@@ -134,7 +135,7 @@
 
 			const forestStandId = $page.params.ForestStandId;
 			if (!forestStandId) {
-				errorMessage = 'Missing forest stand id';
+				errorMessage = 'Puudub eraldise ID.';
 				return;
 			}
 
@@ -148,10 +149,10 @@
 			if (!response.ok) {
 				errorMessage =
 					response.status === 404
-						? 'Forest stand not found.'
+						? 'Eraldist ei leitud.'
 						: response.status === 401
-							? 'Unauthorized. Please sign in again.'
-							: 'Failed to load forest stand.';
+							? 'Ligipääs puudub. Logige uuesti sisse.'
+							: 'Eraldise laadimine ebaõnnestus.';
 				return;
 			}
 
@@ -167,7 +168,7 @@
 
 			fillForm(detail);
 		} catch {
-			errorMessage = 'Failed to load forest stand.';
+			errorMessage = 'Eraldise laadimine ebaõnnestus.';
 		} finally {
 			isLoading = false;
 		}
@@ -206,10 +207,10 @@
 			if (!response.ok) {
 				errorMessage =
 					response.status === 400
-						? 'Validation failed. Please check your values.'
+						? 'Valideerimine ebaõnnestus. Kontrollige sisestatud väärtusi.'
 						: response.status === 404
-							? 'Forest stand not found.'
-							: 'Failed to save changes.';
+							? 'Eraldist ei leitud.'
+							: 'Muudatuste salvestamine ebaõnnestus.';
 				return;
 			}
 
@@ -220,9 +221,9 @@
 			linkedLandPropertyName = updated.landPropertyName ?? linkedLandPropertyName;
 			fillForm(updated);
 			isEditMode = false;
-			successMessage = 'Forest stand updated successfully.';
+			successMessage = 'Eraldis uuendati edukalt.';
 		} catch {
-			errorMessage = 'Failed to save changes.';
+			errorMessage = 'Muudatuste salvestamine ebaõnnestus.';
 		} finally {
 			isSaving = false;
 		}
@@ -232,7 +233,7 @@
 </script>
 
 {#if isLoading}
-	<p>Loading forest stand details...</p>
+	<p>Laetakse eraldise detaile...</p>
 {:else if errorMessage && !forestStand}
 	<p class="message error">{errorMessage}</p>
 {:else if forestStand}
@@ -240,34 +241,34 @@
 		<p class="breadcrumb">
 			<a
 				href={resolve('/admin/[CompanyId]/cadaster/[CadasterId]', {
-					CompanyId: $page.params.CompanyId,
+					CompanyId: companyId,
 					CadasterId: forestStand.cadasterId
-				})}>← Back to cadaster</a
+				})}>← Tagasi katastri juurde</a
 			>
 		</p>
 
 		<header class="page-head">
 			<div>
-				<p class="eyebrow">Forest stand</p>
-				<h1>Stand {forestStand.number}</h1>
-				<p class="subtitle">Manage forest stand values and review recent activities.</p>
+				<p class="eyebrow">Eraldis</p>
+				<h1>Eraldis {forestStand.number}</h1>
+				<p class="subtitle">Halda eraldise väärtusi ja vaata hiljutisi tegevusi.</p>
 			</div>
 			<button type="button" class="mode-btn" onclick={() => (isEditMode = !isEditMode)} disabled={isSaving}>
-				{isEditMode ? 'Cancel editing' : 'Enable editing'}
+				{isEditMode ? 'Tühista muutmine' : 'Luba muutmine'}
 			</button>
 		</header>
 
 		<section class="meta-grid">
 			<article class="meta-card">
-				<p class="meta-label">Forest stand ID</p>
+				<p class="meta-label">Eraldise ID</p>
 				<p class="meta-value mono">{forestStand.id}</p>
 			</article>
 			<article class="meta-card">
-				<p class="meta-label">Cadaster</p>
+				<p class="meta-label">Kataster</p>
 				<p class="meta-value">
 					<a
 						href={resolve('/admin/[CompanyId]/cadaster/[CadasterId]', {
-							CompanyId: $page.params.CompanyId,
+							CompanyId: companyId,
 							CadasterId: forestStand.cadasterId
 						})}>
 						{forestStand.cadasterCadastralNumber}
@@ -275,12 +276,12 @@
 				</p>
 			</article>
 			<article class="meta-card">
-				<p class="meta-label">Land property</p>
+				<p class="meta-label">Kinnistu</p>
 				<p class="meta-value">
 					{#if linkedLandPropertyId && linkedLandPropertyName}
 						<a
 							href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
-								CompanyId: $page.params.CompanyId,
+								CompanyId: companyId,
 								LandPropertyId: linkedLandPropertyId
 							})}>
 							{linkedLandPropertyName}
@@ -294,67 +295,67 @@
 
 		<form id="foreststand-form" onsubmit={saveForestStand} class="detail-form">
 			<section class="form-section">
-				<h2>Core values</h2>
+				<h2>Põhiväärtused</h2>
 				<div class="form-grid">
-					<label><span>Number</span><input type="number" min="0" bind:value={form.number} readonly={!isEditMode} /></label>
-					<label><span>Area</span><input type="number" step="any" bind:value={form.area} readonly={!isEditMode} /></label>
-					<label><span>Total volume</span><input type="number" bind:value={form.totalVolume} readonly={!isEditMode} /></label>
+					<label><span>Eraldise nr</span><input type="number" min="0" bind:value={form.number} readonly={!isEditMode} /></label>
+					<label><span>Pindala</span><input type="number" step="any" bind:value={form.area} readonly={!isEditMode} /></label>
+					<label><span>Kogumaht</span><input type="number" bind:value={form.totalVolume} readonly={!isEditMode} /></label>
 					<label class="checkbox-label">
-						<span>Is active</span>
+						<span>Aktiivne</span>
 						<input type="checkbox" bind:checked={form.isActive} disabled={!isEditMode} />
 					</label>
-					<label><span>Valid from</span><input type="date" bind:value={form.validFrom} readonly={!isEditMode} /></label>
-					<label><span>Valid to</span><input type="date" bind:value={form.validTo} readonly={!isEditMode} /></label>
+					<label><span>Kehtib alates</span><input type="date" bind:value={form.validFrom} readonly={!isEditMode} /></label>
+					<label><span>Kehtib kuni</span><input type="date" bind:value={form.validTo} readonly={!isEditMode} /></label>
 				</div>
 			</section>
 
 			<div class="form-actions">
-				<button class="btn-save" type="submit" disabled={isSaving || !isEditMode}>{isSaving ? 'Saving...' : 'Save changes'}</button>
+				<button class="btn-save" type="submit" disabled={isSaving || !isEditMode}>{isSaving ? 'Salvestamine...' : 'Salvesta muudatused'}</button>
 			</div>
 		</form>
 
 		<section class="form-section">
-			<h2>Validity overview</h2>
+			<h2>Kehtivuse ülevaade</h2>
 			<div class="meta-grid">
 				<article class="meta-card">
-					<p class="meta-label">Valid from</p>
+					<p class="meta-label">Kehtib alates</p>
 					<p class="meta-value">{formatDate(forestStand.validFrom)}</p>
 				</article>
 				<article class="meta-card">
-					<p class="meta-label">Valid to</p>
+					<p class="meta-label">Kehtib kuni</p>
 					<p class="meta-value">{formatDate(forestStand.validTo)}</p>
 				</article>
 				<article class="meta-card">
-					<p class="meta-label">Status</p>
-					<p class="meta-value">{forestStand.isActive ? 'Active' : 'Inactive'}</p>
+					<p class="meta-label">Staatus</p>
+					<p class="meta-value">{forestStand.isActive ? 'Aktiivne' : 'Mitteaktiivne'}</p>
 				</article>
 			</div>
 		</section>
 
 		<section class="form-section">
 			<div class="section-head">
-				<h2>Recent activities</h2>
+				<h2>Hiljutised tegevused</h2>
 				<a
 					class="inline-link"
 					href={resolve('/admin/[CompanyId]/foreststand/[ForestStandId]/activity/new', {
-						CompanyId: $page.params.CompanyId,
+						CompanyId: companyId,
 						ForestStandId: forestStand.id
-					})}>Log activity</a
+					})}>Logi tegevus</a
 				>
 			</div>
 			{#if recentActivities.length === 0}
-				<p>No activities found for this forest stand.</p>
+				<p>Selle eraldise jaoks tegevusi ei leitud.</p>
 			{:else}
 				<div class="table-wrapper">
 					<table>
 						<thead>
 							<tr>
-								<th>Date</th>
-								<th>Type</th>
-								<th>Description</th>
-								<th>Quantity</th>
-								<th>User</th>
-								<th class="actions">Open</th>
+								<th>Kuupäev</th>
+								<th>Tüüp</th>
+								<th>Kirjeldus</th>
+								<th>Kogus</th>
+								<th>Kasutaja</th>
+								<th class="actions">Ava</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -366,12 +367,12 @@
 									<td>{activity.quantity}{activity.unit ? ` ${activity.unit}` : ''}</td>
 									<td>{activity.userName}</td>
 									<td class="actions">
-										<a
-											href={resolve('/admin/[CompanyId]/activity/[ActivityId]', {
-												CompanyId: $page.params.CompanyId,
-												ActivityId: activity.id
-											})}>Open</a
-										>
+									<a
+										href={resolve('/admin/[CompanyId]/activity/[ActivityId]', {
+											CompanyId: companyId,
+											ActivityId: activity.id
+										})}>Ava</a
+									>
 									</td>
 								</tr>
 							{/each}

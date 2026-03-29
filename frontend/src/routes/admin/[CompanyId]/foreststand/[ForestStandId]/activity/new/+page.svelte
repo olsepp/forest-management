@@ -20,6 +20,8 @@
 	let forestStand = $state<ForestStandSummaryDto | null>(null);
 	let isLoading = $state(true);
 	let errorMessage = $state('');
+	const companyId = $derived($page.params.CompanyId ?? '');
+	const forestStandId = $derived($page.params.ForestStandId ?? '');
 
 	async function loadForestStandSummary() {
 		try {
@@ -28,7 +30,7 @@
 
 			const forestStandId = $page.params.ForestStandId;
 			if (!forestStandId) {
-				errorMessage = 'Missing forest stand id';
+				errorMessage = 'Puudub eraldise ID.';
 				return;
 			}
 
@@ -42,10 +44,10 @@
 			if (!response.ok) {
 				errorMessage =
 					response.status === 404
-						? 'Forest stand not found.'
+						? 'Eraldist ei leitud.'
 						: response.status === 401
-							? 'Unauthorized. Please sign in again.'
-							: 'Failed to load forest stand.';
+							? 'Ligipääs puudub. Logige uuesti sisse.'
+							: 'Eraldise laadimine ebaõnnestus.';
 				return;
 			}
 
@@ -59,7 +61,7 @@
 				landPropertyName: dto.landPropertyName
 			};
 		} catch {
-			errorMessage = 'Failed to load forest stand.';
+			errorMessage = 'Eraldise laadimine ebaõnnestus.';
 		} finally {
 			isLoading = false;
 		}
@@ -68,31 +70,31 @@
 	onMount(loadForestStandSummary);
 </script>
 
-<h1>Log activity for forest stand</h1>
+<h1>Logi tegevus eraldisele</h1>
 
 <p class="breadcrumb">
 	<a
 		href={resolve('/admin/[CompanyId]/foreststand/[ForestStandId]', {
-			CompanyId: $page.params.CompanyId,
-			ForestStandId: $page.params.ForestStandId
+			CompanyId: companyId,
+			ForestStandId: forestStandId
 		})}
-		>← Back to forest stand details</a
+		>← Tagasi eraldise detailidesse</a
 	>
 </p>
 
 {#if isLoading}
-	<p>Loading forest stand...</p>
+	<p>Laetakse eraldist...</p>
 {:else if errorMessage}
 	<p class="error">{errorMessage}</p>
 {:else if forestStand}
 	<section class="summary card">
-		<h2>Forest stand context</h2>
-		<p><strong>Forest stand:</strong> Stand {forestStand.number}</p>
+		<h2>Eraldise kontekst</h2>
+		<p><strong>Eraldis:</strong> Eraldis {forestStand.number}</p>
 		<p>
-			<strong>Cadaster:</strong>
+			<strong>Kataster:</strong>
 			<a
 				href={resolve('/admin/[CompanyId]/cadaster/[CadasterId]', {
-					CompanyId: $page.params.CompanyId,
+					CompanyId: companyId,
 					CadasterId: forestStand.cadasterId
 				})}
 				>{forestStand.cadasterCadastralNumber}</a
@@ -100,10 +102,10 @@
 		</p>
 		{#if forestStand.landPropertyId && forestStand.landPropertyName}
 			<p>
-				<strong>Land property:</strong>
+				<strong>Kinnistu:</strong>
 				<a
 					href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
-						CompanyId: $page.params.CompanyId,
+						CompanyId: companyId,
 						LandPropertyId: forestStand.landPropertyId
 					})}
 					>{forestStand.landPropertyName}</a
@@ -113,14 +115,14 @@
 	</section>
 
 	<ActivityForm
-		companyId={$page.params.CompanyId}
+		companyId={companyId}
 		cadasterId={forestStand.cadasterId}
 		cadasterLabel={forestStand.cadasterCadastralNumber}
 		forestStandId={forestStand.id}
 		lockCadaster={true}
-		cancelHref={`/admin/${$page.params.CompanyId}/foreststand/${forestStand.id}`}
-		redirectHref={`/admin/${$page.params.CompanyId}/activity`}
-		submitLabel="Log activity"
+		cancelHref={`/admin/${companyId}/foreststand/${forestStand.id}`}
+		redirectHref={`/admin/${companyId}/activity`}
+		submitLabel="Logi tegevus"
 	/>
 {/if}
 

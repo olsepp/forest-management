@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { resolve } from '$app/paths';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import ActivityForm from '$lib/components/admin/ActivityForm.svelte';
 	import { authService } from '$lib/services/auth';
@@ -17,6 +18,8 @@
 	let cadaster = $state<CadasterSummaryDto | null>(null);
 	let isLoading = $state(true);
 	let errorMessage = $state('');
+	const companyId = $derived($page.params.CompanyId ?? '');
+	const cadasterId = $derived($page.params.CadasterId ?? '');
 
 	async function loadCadasterSummary() {
 		try {
@@ -25,7 +28,7 @@
 
 			const cadasterId = $page.params.CadasterId;
 			if (!cadasterId) {
-				errorMessage = 'Missing cadaster id';
+				errorMessage = 'Puudub katastri ID.';
 				return;
 			}
 
@@ -39,10 +42,10 @@
 			if (!response.ok) {
 				errorMessage =
 					response.status === 404
-						? 'Cadaster not found.'
+						? 'Katastrit ei leitud.'
 						: response.status === 401
-							? 'Unauthorized. Please sign in again.'
-							: 'Failed to load cadaster.';
+							? 'Ligipääs puudub. Logige uuesti sisse.'
+							: 'Katastri laadimine ebaõnnestus.';
 				return;
 			}
 
@@ -54,7 +57,7 @@
 				landPropertyName: dto.landPropertyName
 			};
 		} catch {
-			errorMessage = 'Failed to load cadaster.';
+			errorMessage = 'Katastri laadimine ebaõnnestus.';
 		} finally {
 			isLoading = false;
 		}
@@ -63,36 +66,44 @@
 	onMount(loadCadasterSummary);
 </script>
 
-<h1>Log activity for cadaster</h1>
+<h1>Logi tegevus katastrile</h1>
 
 <p class="breadcrumb">
-	<a href={`/admin/${$page.params.CompanyId}/cadaster/${$page.params.CadasterId}`}>← Back to cadaster details</a>
+	<a
+		href={resolve('/admin/[CompanyId]/cadaster/[CadasterId]', {
+			CompanyId: companyId,
+			CadasterId: cadasterId
+		})}>← Tagasi katastri detailidesse</a
+	>
 </p>
 
 {#if isLoading}
-	<p>Loading cadaster...</p>
+	<p>Laetakse katastrit...</p>
 {:else if errorMessage}
 	<p class="error">{errorMessage}</p>
 {:else if cadaster}
 	<section class="summary card">
-		<h2>Cadaster context</h2>
-		<p><strong>Cadastral number:</strong> {cadaster.cadastralNumber}</p>
+		<h2>Katastri kontekst</h2>
+		<p><strong>Katastrinumber:</strong> {cadaster.cadastralNumber}</p>
 		<p>
-			<strong>Land property:</strong>
-			<a href={`/admin/${$page.params.CompanyId}/landproperty/${cadaster.landPropertyId}`}
+			<strong>Kinnistu:</strong>
+			<a href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
+				CompanyId: companyId,
+				LandPropertyId: cadaster.landPropertyId
+			})}
 				>{cadaster.landPropertyName}</a
 			>
 		</p>
 	</section>
 
 	<ActivityForm
-		companyId={$page.params.CompanyId}
+		companyId={companyId}
 		cadasterId={cadaster.id}
 		cadasterLabel={cadaster.cadastralNumber}
 		lockCadaster={true}
-		cancelHref={`/admin/${$page.params.CompanyId}/cadaster/${cadaster.id}`}
-		redirectHref={`/admin/${$page.params.CompanyId}/activity`}
-		submitLabel="Log activity"
+		cancelHref={`/admin/${companyId}/cadaster/${cadaster.id}`}
+		redirectHref={`/admin/${companyId}/activity`}
+		submitLabel="Logi tegevus"
 	/>
 {/if}
 

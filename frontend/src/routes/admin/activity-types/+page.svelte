@@ -70,7 +70,7 @@
 
 			const response = await authorizedFetch(endpoint);
 			if (!response.ok) {
-				errorMessage = 'Failed to load activity types.';
+				errorMessage = 'Tegevuse tüüpide laadimine ebaõnnestus.';
 				activityTypes = [];
 				activityTypeDetailsById = {};
 				return;
@@ -106,7 +106,7 @@
 
 			activityTypeDetailsById = Object.fromEntries(detailsEntries);
 		} catch {
-			errorMessage = 'Failed to load activity types.';
+			errorMessage = 'Tegevuse tüüpide laadimine ebaõnnestus.';
 			activityTypes = [];
 			activityTypeDetailsById = {};
 		} finally {
@@ -129,7 +129,7 @@
 	async function createActivityType() {
 		const name = createName.trim();
 		if (!name) {
-			errorMessage = 'Name is required.';
+			errorMessage = 'Nimi on kohustuslik.';
 			return;
 		}
 
@@ -144,15 +144,15 @@
 			});
 
 			if (!response.ok) {
-				errorMessage = 'Failed to create activity type.';
+				errorMessage = 'Tegevuse tüübi loomine ebaõnnestus.';
 				return;
 			}
 
 			createName = '';
-			successMessage = 'Activity type created.';
+			successMessage = 'Tegevuse tüüp loodi.';
 			await loadActivityTypes();
 		} catch {
-			errorMessage = 'Failed to create activity type.';
+			errorMessage = 'Tegevuse tüübi loomine ebaõnnestus.';
 		} finally {
 			isSubmitting = false;
 		}
@@ -161,7 +161,7 @@
 	async function updateActivityType(id: string) {
 		const name = editName.trim();
 		if (!name) {
-			errorMessage = 'Name is required.';
+			errorMessage = 'Nimi on kohustuslik.';
 			return;
 		}
 
@@ -176,15 +176,15 @@
 			});
 
 			if (!response.ok) {
-				errorMessage = 'Failed to update activity type.';
+				errorMessage = 'Tegevuse tüübi uuendamine ebaõnnestus.';
 				return;
 			}
 
 			cancelEdit();
-			successMessage = 'Activity type updated.';
+			successMessage = 'Tegevuse tüüp uuendati.';
 			await loadActivityTypes();
 		} catch {
-			errorMessage = 'Failed to update activity type.';
+			errorMessage = 'Tegevuse tüübi uuendamine ebaõnnestus.';
 		} finally {
 			isSubmitting = false;
 		}
@@ -201,15 +201,15 @@
 			});
 
 			if (!response.ok) {
-				errorMessage = 'Failed to delete activity type.';
+				errorMessage = 'Tegevuse tüübi kustutamine ebaõnnestus.';
 				return;
 			}
 
 			if (editingId === id) cancelEdit();
-			successMessage = 'Activity type deleted.';
+			successMessage = 'Tegevuse tüüp kustutati.';
 			await loadActivityTypes();
 		} catch {
-			errorMessage = 'Failed to delete activity type.';
+			errorMessage = 'Tegevuse tüübi kustutamine ebaõnnestus.';
 		} finally {
 			isSubmitting = false;
 		}
@@ -218,16 +218,16 @@
 	onMount(loadActivityTypes);
 </script>
 
-<h1 class="mb-4 text-2xl font-semibold text-slate-900">Activity types</h1>
+<h1 class="mb-4 text-2xl font-semibold text-slate-900">Tegevuse tüübid</h1>
 
 <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm mb-6">
-	<h2 class="mb-3 text-lg font-semibold text-slate-800">Create activity type</h2>
+	<h2 class="mb-3 text-lg font-semibold text-slate-800">Loo tegevuse tüüp</h2>
 	<label class="text-sm text-slate-700 create-row">
-		<span class="font-medium create-label">Name</span>
+		<span class="font-medium create-label">Nimi</span>
 		<input
 			type="text"
 			bind:value={createName}
-			placeholder="e.g. Planting"
+			placeholder="nt Istutamine"
 			class="rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-emerald-500"
 			class:create-input={true}
 		/>
@@ -240,7 +240,7 @@
 			disabled={isSubmitting}
 			class="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
 		>
-			Create
+			Loo
 		</button>
 	</div>
 </section>
@@ -256,21 +256,21 @@
 {/if}
 
 {#if isLoading}
-	<p>Loading activity types...</p>
+	<p>Laetakse tegevuse tüüpe...</p>
 {:else if activityTypes.length === 0}
-	<p>No activity types found.</p>
+	<p>Tegevuse tüüpe ei leitud.</p>
 {:else}
 	<div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
 		<table class="min-w-full divide-y divide-slate-200 text-sm">
 			<thead class="bg-slate-50">
 				<tr>
-					<th class="px-4 py-3 text-left font-semibold text-slate-700">Name</th>
-					<th class="px-4 py-3 text-left font-semibold text-slate-700">Activity count</th>
-					<th class="px-4 py-3 text-left font-semibold text-slate-700">Actions</th>
+					<th class="px-4 py-3 text-left font-semibold text-slate-700">Nimi</th>
+					<th class="px-4 py-3 text-left font-semibold text-slate-700">Tegevuste arv</th>
+					<th class="px-4 py-3 text-left font-semibold text-slate-700">Toimingud</th>
 				</tr>
 			</thead>
 			<tbody class="divide-y divide-slate-100">
-				{#each activityTypes as item}
+				{#each activityTypes as item (item.id)}
 					<tr class="hover:bg-slate-50">
 						{#if editingId === item.id}
 							<td class="px-4 py-3">
@@ -287,19 +287,19 @@
 										type="button"
 										onclick={() => updateActivityType(item.id)}
 										disabled={isSubmitting}
-										class="inline-flex items-center rounded-lg border border-emerald-300 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-60"
-									>
-										Save
-									</button>
-									<button
-										type="button"
-										onclick={cancelEdit}
-										class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
-									>
-										Cancel
-									</button>
-								</div>
-							</td>
+									class="inline-flex items-center rounded-lg border border-emerald-300 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-60"
+								>
+									Salvesta
+								</button>
+								<button
+									type="button"
+									onclick={cancelEdit}
+									class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+								>
+									Tühista
+								</button>
+							</div>
+						</td>
 						{:else}
 							<td class="px-4 py-3 text-slate-900">{item.activityTypeName}</td>
 							<td class="px-4 py-3 text-slate-700">{activityTypeDetailsById[item.id]?.activityCount ?? 0}</td>
@@ -308,20 +308,20 @@
 									<button
 										type="button"
 										onclick={() => startEdit(item)}
-										class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
-									>
-										Edit
-									</button>
-									<button
-										type="button"
-										onclick={() => deleteActivityType(item.id)}
-										disabled={isSubmitting}
-										class="inline-flex items-center rounded-lg border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
-									>
-										Delete
-									</button>
-								</div>
-							</td>
+									class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+								>
+									Muuda
+								</button>
+								<button
+									type="button"
+									onclick={() => deleteActivityType(item.id)}
+									disabled={isSubmitting}
+									class="inline-flex items-center rounded-lg border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
+								>
+									Kustuta
+								</button>
+							</div>
+						</td>
 						{/if}
 					</tr>
 				{/each}

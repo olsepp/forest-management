@@ -69,9 +69,9 @@
 
 	function statusLabel(status: LandPropertyListDto['status'] | number | string | null | undefined): string {
 		const normalized = normalizeStatus(status);
-		if (normalized === 'active') return 'Active';
-		if (normalized === 'sold') return 'Sold';
-		return 'Inactive';
+		if (normalized === 'active') return 'Aktiivne';
+		if (normalized === 'sold') return 'Müüdud';
+		return 'Mitteaktiivne';
 	}
 
 	function isExpanded(propertyId: string): boolean {
@@ -136,7 +136,7 @@
 			isLoading = true;
 
 			if (!companyId) {
-				errorMessage = 'Missing company id';
+				errorMessage = 'Puudub ettevõtte ID.';
 				return;
 			}
 
@@ -149,7 +149,7 @@
 
 			if (!response.ok) {
 				errorMessage =
-					response.status === 401 ? 'Unauthorized. Please sign in again.' : 'Failed to load land properties';
+					response.status === 401 ? 'Ligipääs puudub. Logige uuesti sisse.' : 'Kinnistute laadimine ebaõnnestus.';
 				return;
 			}
 
@@ -166,63 +166,63 @@
 				}))
 				: [];
 		} catch {
-			errorMessage = 'Failed to load land properties';
+			errorMessage = 'Kinnistute laadimine ebaõnnestus.';
 		} finally {
 			isLoading = false;
 		}
 	});
 </script>
 
-<h1>Land properties</h1>
+<h1>Kinnistud</h1>
 
 {#if isLoading}
-	<p>Loading land properties...</p>
+	<p>Laetakse kinnistuid...</p>
 {:else if errorMessage}
 	<p>{errorMessage}</p>
 {:else if properties.length === 0}
-	<p>No land properties found for this company.</p>
+	<p>Selle ettevõtte jaoks kinnistuid ei leitud.</p>
 {:else}
 	<div class="search-row">
 		<label class="search-input">
-			<span class="sr-only">Search properties</span>
+			<span class="sr-only">Otsi kinnistuid</span>
 			<input
 				type="search"
 				bind:value={searchQuery}
-				placeholder="Search by property name, registration number, or cadastral number"
+				placeholder="Otsi kinnistu nime, registrinumbri või katastrinumbri järgi"
 			/>
 		</label>
 		<label class="county-filter">
-			<span class="sr-only">Filter by county</span>
+			<span class="sr-only">Filtreeri maakonna järgi</span>
 			<select bind:value={selectedCounty}>
-				<option value="">All counties</option>
+				<option value="">Kõik maakonnad</option>
 				{#each availableCounties as county (county)}
 					<option value={county}>{county}</option>
 				{/each}
 			</select>
 		</label>
 		{#if searchQuery.trim()}
-			<button type="button" class="clear-search" onclick={() => (searchQuery = '')}>Clear search</button>
+			<button type="button" class="clear-search" onclick={() => (searchQuery = '')}>Tühjenda otsing</button>
 		{/if}
 		{#if selectedCounty}
 			<button type="button" class="clear-search" onclick={() => (selectedCounty = '')}
-				>Clear county</button
+				>Tühjenda maakond</button
 			>
 		{/if}
 	</div>
 
 	{#if filteredProperties.length === 0}
-		<p>No properties match the current search.</p>
+		<p>Praegusele otsingule vastavaid kinnistuid ei leitud.</p>
 	{:else}
 	<div class="table-wrapper">
 		<table>
 			<thead>
 				<tr>
-					<th>Property</th>
-					<th>Registration</th>
-					<th>County</th>
-					<th>Status</th>
-					<th>Cadastral numbers</th>
-					<th class="actions">Details</th>
+					<th>Kinnistu</th>
+					<th>Registrinumber</th>
+					<th>Maakond</th>
+					<th>Olek</th>
+					<th>Katastrinumbrid</th>
+					<th class="actions">Detailid</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -269,7 +269,7 @@
 							type="button"
 							class="expand-toggle"
 							onclick={() => toggleExpand(property.id)}
-							aria-label={isExpanded(property.id) ? 'Collapse details' : 'Expand details'}
+							aria-label={isExpanded(property.id) ? 'Peida detailid' : 'Näita detaile'}
 							aria-expanded={isExpanded(property.id)}
 						>
 							<svg
@@ -291,28 +291,28 @@
 					{#if isExpanded(property.id)}
 						<tr class="details-row">
 							<td colspan="6">
-								<div class="details-actions">
-									<a
-										href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
-											CompanyId: companyId,
-											LandPropertyId: property.id
-										})}
-										>Open property page</a
-									>
-								</div>
-								<div class="details-grid">
-									<p><strong>ID:</strong> {property.id}</p>
-									<p><strong>Parish:</strong> {property.parish || '—'}</p>
-									<p><strong>Village:</strong> {property.village || '—'}</p>
-									<p><strong>Bought date:</strong> {formatDate(property.boughtDate ?? null)}</p>
-									<p><strong>Sold date:</strong> {formatDate(property.soldDate ?? null)}</p>
-									<p><strong>Company:</strong> {property.companyName || '—'}</p>
-								</div>
+							<div class="details-actions">
+								<a
+									href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
+										CompanyId: companyId,
+										LandPropertyId: property.id
+									})}
+									>Ava kinnistu leht</a
+								>
+							</div>
+							<div class="details-grid">
+								<p><strong>ID:</strong> {property.id}</p>
+								<p><strong>Vald:</strong> {property.parish || '—'}</p>
+								<p><strong>Küla:</strong> {property.village || '—'}</p>
+								<p><strong>Ostukuupäev:</strong> {formatDate(property.boughtDate ?? null)}</p>
+								<p><strong>Müügikuupäev:</strong> {formatDate(property.soldDate ?? null)}</p>
+								<p><strong>Ettevõte:</strong> {property.companyName || '—'}</p>
+							</div>
 
-								<h4>Cadasters</h4>
-								{#if tableCadasters(property).length === 0}
-									<p>No cadasters found.</p>
-								{:else}
+							<h4>Katastrid</h4>
+							{#if tableCadasters(property).length === 0}
+								<p>Katastrid puuduvad.</p>
+							{:else}
 									<ul>
 										{#each tableCadasters(property) as cadaster (`${property.id}:${cadaster.id || cadaster.cadastralNumber}`)}
 											<li>

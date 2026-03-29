@@ -47,6 +47,7 @@
 	let activityChartPoints = $state<ActivityChartPoint[]>([]);
 	let maxDailyActivityCount = $state(0);
 	let recentActivities = $state<ActivityListDto[]>([]);
+	const companyId = $derived($page.params.CompanyId ?? '');
 
 	const chartWidth = 880;
 	const chartHeight = 240;
@@ -238,7 +239,7 @@
 
 			const companyId = $page.params.CompanyId;
 			if (!companyId) {
-				errorMessage = 'Missing company id';
+				errorMessage = 'Puudub ettevõtte ID.';
 				return;
 			}
 
@@ -260,16 +261,16 @@
 			if (!companyResponse.ok) {
 				errorMessage =
 					companyResponse.status === 401
-						? 'Unauthorized. Please sign in again.'
-						: 'Failed to load company';
+						? 'Ligipääs puudub. Logige uuesti sisse.'
+						: 'Ettevõtte laadimine ebaõnnestus.';
 				return;
 			}
 
 			if (!propertiesResponse.ok) {
 				errorMessage =
 					propertiesResponse.status === 401
-						? 'Unauthorized. Please sign in again.'
-						: 'Failed to load dashboard data';
+						? 'Ligipääs puudub. Logige uuesti sisse.'
+						: 'Töölaua andmete laadimine ebaõnnestus.';
 				return;
 			}
 
@@ -333,56 +334,56 @@
 				})
 				.slice(0, 5);
 		} catch {
-			errorMessage = 'Failed to load dashboard data';
+			errorMessage = 'Töölaua andmete laadimine ebaõnnestus.';
 		} finally {
 			isLoading = false;
 		}
 	});
 </script>
 
-<h1 class="mb-2 text-2xl font-semibold text-slate-900">Company dashboard</h1>
+<h1 class="mb-2 text-2xl font-semibold text-slate-900">Ettevõtte töölaud</h1>
 <p class="mb-6 text-sm text-slate-600">
 	{#if company}
-		Overview for <span class="font-medium text-slate-800">{company.name}</span>
+		Ülevaade ettevõttele <span class="font-medium text-slate-800">{company.name}</span>
 	{:else}
-		Overview
+		Ülevaade
 	{/if}
 </p>
 
 {#if isLoading}
-	<p class="text-slate-600">Loading dashboard...</p>
+	<p class="text-slate-600">Laetakse töölauda...</p>
 {:else if errorMessage}
 	<div class="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{errorMessage}</div>
 {:else}
 
 	<div class="grid gap-4 md:grid-cols-3">
 		<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-			<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total properties</p>
+			<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Kinnistuid kokku</p>
 			<p class="mt-2 text-3xl font-bold text-slate-900">{totalProperties}</p>
 		</div>
 
 		<div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
-			<p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Active properties</p>
+			<p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Aktiivseid kinnistuid</p>
 			<p class="mt-2 text-3xl font-bold text-emerald-800">{totalActiveProperties}</p>
 		</div>
 
 		<div class="rounded-xl border border-blue-200 bg-blue-50 p-4 shadow-sm">
-			<p class="text-xs font-semibold uppercase tracking-wide text-blue-700">Total cadasters</p>
+			<p class="text-xs font-semibold uppercase tracking-wide text-blue-700">Katastrite arv kokku</p>
 			<p class="mt-2 text-3xl font-bold text-blue-800">{totalCadasters}</p>
 		</div>
 	</div>
 
 	<section class="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
 		<div class="mb-4 flex items-center justify-between">
-			<h2 class="text-lg font-semibold text-slate-900">Activity trend (last 30 days)</h2>
-			<p class="text-xs text-slate-500">Max/day: {maxDailyActivityCount}</p>
+			<h2 class="text-lg font-semibold text-slate-900">Tegevuste trend (viimased 30 päeva)</h2>
+			<p class="text-xs text-slate-500">Maks/päev: {maxDailyActivityCount}</p>
 		</div>
 
 		{#if activityChartPoints.length === 0}
-			<p class="text-sm text-slate-600">No activity data available.</p>
+			<p class="text-sm text-slate-600">Tegevusandmed puuduvad.</p>
 		{:else}
 			<div class="chart-wrap">
-				<svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} class="activity-chart" role="img" aria-label="Activity trend line chart">
+				<svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} class="activity-chart" role="img" aria-label="Tegevuste trendijoonis">
 					<line
 						x1={chartPadding.left}
 						y1={chartHeight - chartPadding.bottom}
@@ -400,7 +401,7 @@
 					/>
 					{#each activityChartPoints as point, index (point.label)}
 						<circle cx={point.x} cy={point.y} r="2.75" fill="#0f766e">
-							<title>{point.label}: {point.count} activities</title>
+							<title>{point.label}: {point.count} tegevust</title>
 						</circle>
 						{#if index % 5 === 0 || index === activityChartPoints.length - 1}
 							<text
@@ -421,26 +422,26 @@
 
 	<section class="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
 		<div class="mb-4 flex items-center justify-between gap-3">
-			<h2 class="text-lg font-semibold text-slate-900">Most recent activities</h2>
+			<h2 class="text-lg font-semibold text-slate-900">Viimased tegevused</h2>
 			<a
 				class="text-sm font-medium text-teal-700 hover:text-teal-800"
-				href={resolve('/admin/[CompanyId]/activity', { CompanyId: $page.params.CompanyId })}
-				>Open all activities →</a
+				href={resolve('/admin/[CompanyId]/activity', { CompanyId: companyId })}
+				>Ava kõik tegevused →</a
 			>
 		</div>
 
 		{#if recentActivities.length === 0}
-			<p class="text-sm text-slate-600">No activities available.</p>
+			<p class="text-sm text-slate-600">Tegevused puuduvad.</p>
 		{:else}
 			<div class="overflow-x-auto">
 				<table class="min-w-full text-sm">
 					<thead>
 						<tr class="border-b border-slate-200 text-left text-slate-500">
-							<th class="py-2 pr-3">Date</th>
-							<th class="py-2 pr-3">Type</th>
-							<th class="py-2 pr-3">Description</th>
-							<th class="py-2 pr-3">User</th>
-							<th class="py-2 text-right">Open</th>
+							<th class="py-2 pr-3">Kuupäev</th>
+							<th class="py-2 pr-3">Tüüp</th>
+							<th class="py-2 pr-3">Kirjeldus</th>
+							<th class="py-2 pr-3">Kasutaja</th>
+							<th class="py-2 text-right">Ava</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -451,13 +452,13 @@
 								<td class="py-2 pr-3">{activity.description ?? '—'}</td>
 								<td class="py-2 pr-3">{activity.userName ?? '—'}</td>
 								<td class="py-2 text-right">
-									<a
-										class="font-medium text-teal-700 hover:text-teal-800"
-										href={resolve('/admin/[CompanyId]/activity/[ActivityId]', {
-											CompanyId: $page.params.CompanyId,
-											ActivityId: activity.id
-										})}>Open</a
-									>
+								<a
+								class="font-medium text-teal-700 hover:text-teal-800"
+								href={resolve('/admin/[CompanyId]/activity/[ActivityId]', {
+									CompanyId: companyId,
+									ActivityId: activity.id
+								})}>Ava</a
+								>
 								</td>
 							</tr>
 						{/each}

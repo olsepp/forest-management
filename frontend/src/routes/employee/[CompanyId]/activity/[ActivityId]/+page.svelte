@@ -130,7 +130,7 @@
 
 	async function loadActivity() {
 		if (!activityId) {
-			errorMessage = 'Missing activity id.';
+			errorMessage = 'Puudub tegevuse ID.';
 			isLoading = false;
 			return;
 		}
@@ -149,11 +149,11 @@
 			if (!response.ok) {
 				if (response.status === 401) {
 					isUnauthorized = true;
-					errorMessage = 'Unauthorized. Please sign in again.';
+					errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
 					return;
 				}
 
-				errorMessage = response.status === 404 ? 'Activity not found.' : 'Failed to load activity.';
+				errorMessage = response.status === 404 ? 'Tegevust ei leitud.' : 'Tegevuse laadimine ebaõnnestus.';
 				return;
 			}
 
@@ -161,7 +161,7 @@
 
 			if (!isOwnActivity(detail)) {
 				isUnauthorized = true;
-				errorMessage = 'You do not have access to this activity.';
+				errorMessage = 'Sul puudub sellele tegevusele ligipääs.';
 				activity = null;
 				return;
 			}
@@ -169,7 +169,7 @@
 			activity = detail;
 			fillForm(detail);
 		} catch {
-			errorMessage = 'Failed to load activity.';
+			errorMessage = 'Tegevuse laadimine ebaõnnestus.';
 		} finally {
 			isLoading = false;
 		}
@@ -183,25 +183,25 @@
 		successMessage = '';
 
 		if (!form.description.trim()) {
-			errorMessage = 'Description is required.';
+			errorMessage = 'Kirjeldus on kohustuslik.';
 			return;
 		}
 
 		if (!form.activityTypeId) {
-			errorMessage = 'Activity type is required.';
+			errorMessage = 'Tegevuse tüüp on kohustuslik.';
 			return;
 		}
 
 		const quantityRaw = String(form.quantity ?? '').trim();
 		const quantity = quantityRaw === '' ? 0 : Number(quantityRaw);
 		if (!Number.isFinite(quantity)) {
-			errorMessage = 'Quantity must be a valid number.';
+			errorMessage = 'Kogus peab olema korrektne number.';
 			return;
 		}
 
 		const parsedDate = form.date ? new Date(form.date) : new Date();
 		if (Number.isNaN(parsedDate.getTime())) {
-			errorMessage = 'Date must be valid.';
+			errorMessage = 'Kuupäev peab olema korrektne.';
 			return;
 		}
 
@@ -233,12 +233,12 @@
 			if (!response.ok) {
 				errorMessage =
 					response.status === 400
-						? 'Validation failed. Please check your values.'
+						? 'Valideerimine ebaõnnestus. Kontrollige sisestatud väärtusi.'
 						: response.status === 404
-							? 'Activity not found.'
+							? 'Tegevust ei leitud.'
 							: response.status === 403
-								? 'You are not allowed to edit this activity.'
-								: 'Failed to save changes.';
+								? 'Sul ei ole õigust seda tegevust muuta.'
+								: 'Muudatuste salvestamine ebaõnnestus.';
 				return;
 			}
 
@@ -246,9 +246,9 @@
 			activity = updated;
 			fillForm(updated);
 			isEditMode = false;
-			successMessage = 'Activity updated successfully.';
+			successMessage = 'Tegevus uuendati edukalt.';
 		} catch {
-			errorMessage = 'Failed to save changes.';
+			errorMessage = 'Muudatuste salvestamine ebaõnnestus.';
 		} finally {
 			isSaving = false;
 		}
@@ -260,38 +260,38 @@
 </script>
 
 {#if isLoading}
-	<div class="employee-state-block is-loading">Loading activity details…</div>
+	<div class="employee-state-block is-loading">Laetakse tegevuse detaile…</div>
 {:else if errorMessage && !activity}
 	<div class="employee-state-block is-error">
 		{errorMessage}
 		{#if isUnauthorized}
-			<span class="inline-note">Your session may have expired or access is restricted.</span>
+			<span class="inline-note">Teie sessioon võib olla aegunud või ligipääs piiratud.</span>
 		{/if}
 	</div>
 {:else if activity}
 	<p class="back-link">
-		<a href={resolve('/employee/[CompanyId]/activity', { CompanyId: companyId })}>← Back to activity history</a>
+		<a href={resolve('/employee/[CompanyId]/activity', { CompanyId: companyId })}>← Tagasi tegevuste ajalukku</a>
 	</p>
 
 	<section class="employee-card summary">
 		<div class="summary-head">
 			<div>
-				<p class="kicker">Activity record</p>
-				<h1>{activity.activityTypeName || 'Activity'}</h1>
-				<p class="subtitle">Review and update your logged activity details.</p>
+				<p class="kicker">Tegevuse kirje</p>
+				<h1>{activity.activityTypeName || 'Tegevus'}</h1>
+				<p class="subtitle">Vaata ja uuenda oma sisestatud tegevuse detaile.</p>
 			</div>
 			<button type="button" class="mode-btn" onclick={() => (isEditMode = !isEditMode)} disabled={isSaving}>
-				{isEditMode ? 'Cancel editing' : 'Enable editing'}
+				{isEditMode ? 'Tühista muutmine' : 'Luba muutmine'}
 			</button>
 		</div>
 
 		<div class="meta-grid">
-			<p><strong>Logged by:</strong> {activity.userName || '—'}</p>
-			<p><strong>Date:</strong> {formatDate(activity.date)}</p>
-			<p><strong>Quantity:</strong> {formatQuantity(activity.quantity, activity.unit)}</p>
-			<p><strong>Status:</strong> {activity.applicationStatus || '—'}</p>
+			<p><strong>Sisestaja:</strong> {activity.userName || '—'}</p>
+			<p><strong>Kuupäev:</strong> {formatDate(activity.date)}</p>
+			<p><strong>Kogus:</strong> {formatQuantity(activity.quantity, activity.unit)}</p>
+			<p><strong>Staatus:</strong> {activity.applicationStatus || '—'}</p>
 			<p>
-				<strong>Target:</strong>
+				<strong>Siht:</strong>
 				{#if activity.cadasterId}
 					<a
 						href={resolve('/employee/[CompanyId]/cadaster/[CadasterId]', {
@@ -299,7 +299,7 @@
 							CadasterId: activity.cadasterId
 						})}
 					>
-						Cadaster {activity.cadasterCadastralNumber ?? activity.cadasterId}
+						Kataster {activity.cadasterCadastralNumber ?? activity.cadasterId}
 					</a>
 				{:else if activity.forestStandId}
 					<a
@@ -308,7 +308,7 @@
 							ForestStandId: activity.forestStandId
 						})}
 					>
-						Stand {activity.forestStandNumber || activity.forestStandId}
+						Eraldis {activity.forestStandNumber || activity.forestStandId}
 					</a>
 				{:else}
 					—
@@ -316,7 +316,7 @@
 			</p>
 			{#if activity.landPropertyId}
 				<p>
-					<strong>Land property:</strong>
+					<strong>Kinnistu:</strong>
 					<a
 						href={resolve('/employee/[CompanyId]/landproperty/[LandPropertyId]', {
 							CompanyId: companyId,
@@ -331,11 +331,11 @@
 	</section>
 
 	<form onsubmit={saveActivity} class="employee-card detail-form">
-		<h2>Edit activity</h2>
+		<h2>Muuda tegevust</h2>
 
 		<div class="form-grid">
 			<label>
-				<span>Activity type</span>
+				<span>Tegevuse tüüp</span>
 				<select bind:value={form.activityTypeId} disabled={!isEditMode}>
 					{#each activityTypes as type (type.id)}
 						<option value={type.id}>{type.activityTypeName}</option>
@@ -344,34 +344,34 @@
 			</label>
 
 			<label>
-				<span>Date</span>
+				<span>Kuupäev</span>
 				<input type="datetime-local" bind:value={form.date} readonly={!isEditMode} />
 			</label>
 
 			<label>
-				<span>Quantity</span>
+				<span>Kogus</span>
 				<input type="number" step="any" bind:value={form.quantity} readonly={!isEditMode} />
 			</label>
 
 			<label>
-				<span>Unit</span>
+				<span>Ühik</span>
 				<input type="text" bind:value={form.unit} readonly={!isEditMode} />
 			</label>
 
 			<label class="full-width">
-				<span>Description</span>
+				<span>Kirjeldus</span>
 				<textarea bind:value={form.description} rows="4" readonly={!isEditMode}></textarea>
 			</label>
 
 			<label class="full-width">
-				<span>Notes</span>
+				<span>Märkused</span>
 				<textarea bind:value={form.notes} rows="4" readonly={!isEditMode}></textarea>
 			</label>
 		</div>
 
 		<div class="form-actions">
 			<button class="btn-save" type="submit" disabled={isSaving || !isEditMode}>
-				{isSaving ? 'Saving...' : 'Save changes'}
+				{isSaving ? 'Salvestamine...' : 'Salvesta muudatused'}
 			</button>
 		</div>
 	</form>

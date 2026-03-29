@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
@@ -71,6 +70,13 @@
 		return statusLabel(status) === 'Active';
 	}
 
+	function statusText(status: LandPropertyListDto['status']): string {
+		const normalized = statusLabel(status);
+		if (normalized === 'Active') return 'Aktiivne';
+		if (normalized === 'Sold') return 'Müüdud';
+		return 'Mitteaktiivne';
+	}
+
 	function cadastersForProperty(property: LandPropertyListDto): PropertyCadasterLinkDto[] {
 		const fromDto = Array.isArray(property.cadasters)
 			? property.cadasters.filter((item) => Boolean(item?.cadastralNumber))
@@ -89,25 +95,9 @@
 		return [...new Set([...fromDto, ...fromLookup].filter(Boolean))];
 	}
 
-	function openPropertyDetails(propertyId: string): void {
-		void goto(
-			resolve('/employee/[CompanyId]/landproperty/[LandPropertyId]', {
-				CompanyId: companyId,
-				LandPropertyId: propertyId
-			})
-		);
-	}
-
-	function handleRowKeydown(event: KeyboardEvent, propertyId: string): void {
-		if (event.key === 'Enter' || event.key === ' ') {
-			event.preventDefault();
-			openPropertyDetails(propertyId);
-		}
-	}
-
 	async function loadData() {
 		if (!companyId) {
-			errorMessage = 'Missing company id.';
+			errorMessage = 'Puudub ettevõtte ID.';
 			isLoading = false;
 			return;
 		}
@@ -130,11 +120,11 @@
 			if (!response.ok) {
 				if (response.status === 401) {
 					isUnauthorized = true;
-					errorMessage = 'Unauthorized. Please sign in again.';
+					errorMessage = 'Lubatud pääs puudub. Logige uuesti sisse.';
 					return;
 				}
 
-				errorMessage = 'Failed to load properties.';
+				errorMessage = 'Ettevõtteid ei õnnestunud laadida.';
 				return;
 			}
 
@@ -155,7 +145,7 @@
 			// Enforce employee visibility for active properties only on client side too.
 			properties = receivedProperties.filter((item) => isActiveStatus(item.status));
 		} catch {
-			errorMessage = 'Failed to load properties.';
+			errorMessage = 'Ettevõtteid ei õnnestunud laadida.';
 		} finally {
 			isLoading = false;
 		}
@@ -165,55 +155,64 @@
 </script>
 
 <section class="employee-card page-intro">
-	<p class="kicker">Properties</p>
-	<h1>Active land properties</h1>
-	<p>Search by name, registration number, or cadastral number.</p>
+	<p class="kicker">Kinnistud</p>
+	<h1>Aktiivsed kinnistud</h1>
+	<p>Otsi nime, reg. nr või katastri nr järgi.</p>
 </section>
 
 {#if isLoading}
-	<div class="employee-state-block is-loading">Loading properties…</div>
+	<div class="employee-state-block is-loading">Laetakse kinnistu…</div>
 {:else if errorMessage}
-	<div class="employee-state-block is-error">
-		{errorMessage}
-		{#if isUnauthorized}
-			<span class="inline-note">Your session may have expired.</span>
-		{/if}
-	</div>
+		<div class="employee-state-block is-error">
+			{errorMessage}
+			{#if isUnauthorized}
+				<span class="inline-note">Sessioon võib olla lõppenud.</span>
+			{/if}
+		</div>
 {:else}
-	<section class="filters employee-card" aria-label="Property filters">
-		<label for="property-search" class="filter-label">Search</label>
+	<section class="filters employee-card" aria-label="Kinnistute filtrid">
+		<label for="property-search" class="filter-label">Otsi</label>
 		<input
 			id="property-search"
 			type="search"
 			bind:value={searchQuery}
-			placeholder="Name, registration number, cadastral number"
+			placeholder="Nimi, reg. nr, katasteri nr"
 		/>
 	</section>
 
 	{#if filteredProperties.length === 0}
-		<div class="employee-state-block is-empty">No properties match the current search.</div>
+		<div class="employee-state-block is-empty">Praeguse otsingu järgi kinnistuid ei leitud.</div>
 	{:else}
-		<section class="mobile-list employee-stack-cards" aria-label="Property list cards">
+		<section class="mobile-list employee-stack-cards" aria-label="Kinnistute kaardid">
 			{#each filteredProperties as property (property.id)}
-				<article
-					class="employee-card property-card"
-					tabindex="0"
-					role="link"
-					onclick={() => openPropertyDetails(property.id)}
-					onkeydown={(event) => handleRowKeydown(event, property.id)}
-					aria-label={`Open property ${property.name}`}
-				>
+				<article class="employee-card property-card" aria-label={`Kinnistu ${property.name}`}>
 					<div class="card-top">
-						<h2>{property.name}</h2>
-						<span class={`status ${statusClass(property.status)}`}>{statusLabel(property.status)}</span>
+						<h2>
+							<a
+								href={resolve('/employee/[CompanyId]/landproperty/[LandPropertyId]', {
+									CompanyId: companyId,
+									LandPropertyId: property.id
+								})}
+							>
+								{property.name}
+							</a>
+						</h2>
+						<span class={`status ${statusClass(property.status)}`}>{statusText(property.status)}</span>
 					</div>
-					<p><strong>Registration:</strong> {property.registrationNumber}</p>
-					<p><strong>County:</strong> {property.county || '—'}</p>
-					<p><strong>Cadasters:</strong></p>
+					<div class="property-meta" aria-label="Kinnistu detailid">
+						<p class="meta-item">
+							<span class="meta-label">Registrinumber</span>
+							<span class="meta-value">{property.registrationNumber}</span>
+						</p>
+						<p class="meta-item">
+							<span class="meta-label">Maakond</span>
+							<span class="meta-value">{property.county || '—'}</span>
+						</p>
+					</div>
 					{#if cadastersForProperty(property).length === 0}
-						<p class="muted">No cadasters found.</p>
+						<p class="muted kataster-empty">Katastrid puuduvad.</p>
 					{:else}
-						<div class="cadaster-links">
+						<div class="kataster-links card-kataster-links" aria-label="Katastriüksused">
 							{#each cadastersForProperty(property) as cadaster (`${property.id}:${cadaster.id || cadaster.cadastralNumber}`)}
 								{#if cadaster.id}
 									<a
@@ -236,70 +235,6 @@
 			{/each}
 		</section>
 
-		<div class="desktop-table employee-table-wrap" aria-label="Property list table">
-			<table>
-				<thead>
-					<tr>
-						<th>Property</th>
-						<th>Registration</th>
-						<th>County</th>
-						<th>Status</th>
-						<th>Cadastral numbers</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each filteredProperties as property (property.id)}
-						<tr
-							class="clickable-row"
-							tabindex="0"
-							role="link"
-							onclick={() => openPropertyDetails(property.id)}
-							onkeydown={(event) => handleRowKeydown(event, property.id)}
-							aria-label={`Open property ${property.name}`}
-						>
-							<td>
-								<a
-									href={resolve('/employee/[CompanyId]/landproperty/[LandPropertyId]', {
-										CompanyId: companyId,
-										LandPropertyId: property.id
-									})}
-								>
-									{property.name}
-								</a>
-							</td>
-							<td>{property.registrationNumber}</td>
-							<td>{property.county || '—'}</td>
-							<td>
-							<span class={`status ${statusClass(property.status)}`}>{statusLabel(property.status)}</span>
-							</td>
-							<td>
-								{#if cadastersForProperty(property).length === 0}
-									—
-								{:else}
-									<div class="cadaster-links">
-										{#each cadastersForProperty(property) as cadaster (`${property.id}:${cadaster.id || cadaster.cadastralNumber}`)}
-											{#if cadaster.id}
-												<a
-													onclick={(event) => event.stopPropagation()}
-													href={resolve('/employee/[CompanyId]/cadaster/[CadasterId]', {
-														CompanyId: companyId,
-														CadasterId: cadaster.id
-													})}
-												>
-													{cadaster.cadastralNumber}
-												</a>
-											{:else}
-												<span>{cadaster.cadastralNumber}</span>
-											{/if}
-										{/each}
-									</div>
-								{/if}
-							</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		</div>
 	{/if}
 {/if}
 
@@ -375,7 +310,7 @@
 
 	.property-card {
 		display: grid;
-		gap: 0.45rem;
+		gap: 0.55rem;
 		border: 2px solid #4f8b70;
 		border-radius: 0.9rem;
 		background: #ffffff;
@@ -404,6 +339,35 @@
 		justify-content: space-between;
 		align-items: center;
 		gap: 0.5rem;
+	}
+
+	.property-meta {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.5rem;
+	}
+
+	.meta-item {
+		display: grid;
+		gap: 0.1rem;
+		padding: 0.45rem 0.55rem;
+		background: #f3f8f5;
+		border: 1px solid #d4e4dc;
+		border-radius: 0.6rem;
+	}
+
+	.meta-label {
+		font-size: 0.73rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+		color: #507061;
+	}
+
+	.meta-value {
+		font-size: 0.95rem;
+		font-weight: 600;
+		color: #1f382d;
 	}
 
 	.status {
@@ -439,130 +403,28 @@
 		color: #587265;
 	}
 
-	.cadaster-links {
+	.kataster-empty {
+		padding: 0.35rem 0.15rem 0;
+	}
+
+	.kataster-links {
 		display: flex;
 		flex-direction: column;
-		align-items: flex-start;
+		align-items: center;
 		gap: 0.38rem;
 	}
 
-	.cadaster-links a {
+	.kataster-links a {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		min-height: 48px;
 		min-width: 48px;
-		padding: 0.5rem 1.5rem;
+		padding: 0.45rem 0.85rem;
 		border: 2px solid #1f5a42;
-		border-radius: 0.75rem;
+		border-radius: 12px;
 		background: #1f5a42;
 		text-decoration: none;
 		color: #ffffff;
-		font-size: 1.1rem;
-		font-weight: 600;
-		letter-spacing: 0.02em;
-		box-shadow: 0 4px 12px rgba(31, 90, 66, 0.3);
-		cursor: pointer;
-
-		/* Touch-specific */
-		touch-action: manipulation;
-		-webkit-tap-highlight-color: transparent;
-		user-select: none;
-	}
-
-	.cadaster-links a:active {
-		background: #174d38;
-		box-shadow: 0 2px 6px rgba(31, 90, 66, 0.2);
-		transform: scale(0.97);
-	}
-
-	.desktop-table {
-		display: none;
-	}
-
-	:global(.employee-table-wrap table) {
-		width: 100%;
-		border-collapse: separate;
-		border-spacing: 0 0.55rem;
-	}
-
-	:global(.employee-table-wrap table thead th) {
-		padding: 0.2rem 0.75rem 0.35rem;
-	}
-
-	:global(.employee-table-wrap table tbody td) {
-		background: #ffffff;
-		padding: 0.78rem 0.75rem;
-		border-top: 2px solid #a9c8b9;
-		border-bottom: 2px solid #a9c8b9;
-	}
-
-	:global(.employee-table-wrap table tbody tr td:first-child) {
-		border-left: 2px solid #a9c8b9;
-		border-radius: 0.8rem 0 0 0.8rem;
-	}
-
-	:global(.employee-table-wrap table tbody tr td:last-child) {
-		border-right: 2px solid #a9c8b9;
-		border-radius: 0 0.8rem 0.8rem 0;
-	}
-
-	:global(.employee-table-wrap table tbody tr.clickable-row) {
-		cursor: pointer;
-		transition:
-			background-color 0.18s ease,
-			box-shadow 0.18s ease,
-			transform 0.18s ease;
-	}
-
-	:global(.employee-table-wrap table tbody tr.clickable-row:active td) {
-		background: #edf7f2;
-		border-top-color: #4f8b70;
-		border-bottom-color: #4f8b70;
-	}
-
-	:global(.employee-table-wrap table tbody tr.clickable-row:active td:first-child) {
-		border-left-color: #4f8b70;
-		box-shadow: inset 4px 0 0 #2e6d52;
-	}
-
-	:global(.employee-table-wrap table tbody tr.clickable-row:active td:last-child) {
-		border-right-color: #4f8b70;
-	}
-
-	:global(.employee-table-wrap table tbody tr.clickable-row:focus-visible) {
-		outline: none;
-	}
-
-	:global(.employee-table-wrap table tbody tr.clickable-row:focus-visible td) {
-		background: #edf7f2;
-		border-top-color: #9fc5b2;
-		border-bottom-color: #9fc5b2;
-	}
-
-	:global(.employee-table-wrap table tbody tr.clickable-row:focus-visible td:first-child) {
-		border-left-color: #9fc5b2;
-		box-shadow:
-			inset 4px 0 0 #2e6d52,
-			0 0 0 2px rgba(31, 90, 66, 0.22);
-	}
-
-	:global(.employee-table-wrap table tbody tr.clickable-row:focus-visible td:last-child) {
-		border-right-color: #9fc5b2;
-		box-shadow: 0 0 0 2px rgba(31, 90, 66, 0.22);
-	}
-
-	@media (min-width: 768px) {
-		.mobile-list {
-			display: none;
-		}
-
-		.desktop-table {
-			display: block;
-		}
-
-		h1 {
-			font-size: 1.38rem;
-		}
 	}
 </style>

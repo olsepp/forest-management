@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
 	import type { CompanyListDto } from '$lib/types/company';
 	import { onMount } from 'svelte';
@@ -13,16 +14,16 @@
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
 	const adminRootItems: MenuItem[] = [
-		{ label: 'Company selection', href: '/admin' },
-		{ label: 'Users', href: '/admin/user' },
-		{ label: 'Activity types', href: '/admin/activity-types' }
+		{ label: 'Ettevõtte valik', href: '/admin' },
+		{ label: 'Kasutajad', href: '/admin/user' },
+		{ label: 'Tegevuste tüübid', href: '/admin/activity-types' }
 	];
 
 	function getCompanyItems(companyId: string): MenuItem[] {
 		return [
-			{ label: 'Activities', href: `/admin/${companyId}/activity` },
-			{ label: 'Dashboard', href: `/admin/${companyId}/dashboard` },
-			{ label: 'Land properties', href: `/admin/${companyId}/landproperty` }
+			{ label: 'Tegevused', href: `/admin/${companyId}/activity` },
+			{ label: 'Töölaud', href: `/admin/${companyId}/dashboard` },
+			{ label: 'Kinnistud', href: `/admin/${companyId}/landproperty` }
 		];
 	}
 
@@ -76,31 +77,31 @@
 
 <aside class="admin-sidebar sticky top-4 h-[calc(100vh-2rem)] w-64 shrink-0 p-4">
 	<div class="mb-6">
-		<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Admin panel</p>
+		<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Adminpaneel</p>
 		<p class="mt-1 text-sm text-slate-700">
 			{#if companyId}
-				Company scope: {companyName}
+				Ettevõtte vaade: {companyName}
 			{:else}
-				Global scope
+				Üldvaade
 			{/if}
 		</p>
 	</div>
 
 	<nav class="space-y-1">
 		<a
-			href="/admin"
+			href={resolve('/admin')}
 			class={`home-link nav-item mb-3 block rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
 				$page.url.pathname === '/admin'
 					? 'nav-item-active border-slate-400 bg-slate-100 text-slate-800'
 					: 'border-slate-200 text-slate-700 hover:bg-slate-100'
 			}`}
 		>
-			Home
+			Avaleht
 		</a>
 
-		{#each menuItems as item}
+		{#each menuItems as item (item.href)}
 			<a
-				href={item.href}
+				href={resolve(item.href as unknown as '/')}
 				class={`nav-item block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
 					isActive($page.url.pathname, item.href)
 						? 'nav-item-active bg-emerald-50 text-emerald-700'

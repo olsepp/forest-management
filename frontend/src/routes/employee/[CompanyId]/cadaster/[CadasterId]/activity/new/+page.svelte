@@ -19,6 +19,8 @@
 	let isLoading = $state(true);
 	let errorMessage = $state('');
 	let isUnauthorized = $state(false);
+	const companyId = $derived($page.params.CompanyId ?? '');
+	const cadasterId = $derived($page.params.CadasterId ?? '');
 
 	async function loadCadasterSummary() {
 		try {
@@ -28,7 +30,7 @@
 
 			const cadasterId = $page.params.CadasterId;
 			if (!cadasterId) {
-				errorMessage = 'Missing cadaster id.';
+				errorMessage = 'Puudub katastri ID.';
 				return;
 			}
 
@@ -40,11 +42,11 @@
 			if (!response.ok) {
 				if (response.status === 401) {
 					isUnauthorized = true;
-					errorMessage = 'Unauthorized. Please sign in again.';
+					errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
 					return;
 				}
 
-				errorMessage = response.status === 404 ? 'Cadaster not found.' : 'Failed to load cadaster.';
+				errorMessage = response.status === 404 ? 'Katasterit ei leitud.' : 'Katastri laadimine ebaõnnestus.';
 				return;
 			}
 
@@ -56,7 +58,7 @@
 				landPropertyName: dto.landPropertyName
 			};
 		} catch {
-			errorMessage = 'Failed to load cadaster.';
+			errorMessage = 'Katastri laadimine ebaõnnestus.';
 		} finally {
 			isLoading = false;
 		}
@@ -65,35 +67,35 @@
 	onMount(loadCadasterSummary);
 </script>
 
-<h1>Log activity for cadaster</h1>
+<h1>Logi tegevus katastri jaoks</h1>
 
 <p class="breadcrumb">
 	<a
 		href={resolve('/employee/[CompanyId]/cadaster/[CadasterId]', {
-			CompanyId: $page.params.CompanyId,
-			CadasterId: $page.params.CadasterId
-		})}>← Back to cadaster details</a
+			CompanyId: companyId,
+			CadasterId: cadasterId
+		})}>← Tagasi katastri detailidesse</a
 	>
 </p>
 
 {#if isLoading}
-	<div class="employee-state-block is-loading">Loading cadaster…</div>
+	<div class="employee-state-block is-loading">Laetakse katastrit…</div>
 {:else if errorMessage}
 	<div class="employee-state-block is-error">
 		{errorMessage}
 		{#if isUnauthorized}
-			<span class="inline-note">Your session may have expired.</span>
+			<span class="inline-note">Teie sessioon võib olla aegunud.</span>
 		{/if}
 	</div>
 {:else if cadaster}
 	<section class="employee-card summary">
-		<h2>Cadaster context</h2>
-		<p><strong>Cadastral number:</strong> {cadaster.cadastralNumber}</p>
+		<h2>Katastri kontekst</h2>
+		<p><strong>Katastritunnus:</strong> {cadaster.cadastralNumber}</p>
 		<p>
-			<strong>Land property:</strong>
+			<strong>Kinnistu:</strong>
 			<a
 				href={resolve('/employee/[CompanyId]/landproperty/[LandPropertyId]', {
-					CompanyId: $page.params.CompanyId,
+					CompanyId: companyId,
 					LandPropertyId: cadaster.landPropertyId
 				})}
 				>{cadaster.landPropertyName}</a
@@ -102,13 +104,13 @@
 	</section>
 
 	<ActivityForm
-		companyId={$page.params.CompanyId}
+		companyId={companyId}
 		cadasterId={cadaster.id}
 		cadasterLabel={cadaster.cadastralNumber}
 		lockCadaster={true}
-		cancelHref={`/employee/${$page.params.CompanyId}/cadaster/${cadaster.id}`}
-		redirectHref={`/employee/${$page.params.CompanyId}/cadaster/${cadaster.id}`}
-		submitLabel="Log activity"
+		cancelHref={`/employee/${companyId}/cadaster/${cadaster.id}`}
+		redirectHref={`/employee/${companyId}/cadaster/${cadaster.id}`}
+		submitLabel="Logi tegevus"
 	/>
 {/if}
 

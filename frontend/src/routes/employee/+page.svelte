@@ -27,14 +27,14 @@
 			if (!response.ok) {
 				errorMessage =
 					response.status === 401
-						? 'Unauthorized. Please sign in again.'
-						: 'Failed to load companies.';
+						? 'Lubatud pääs puudub. Logige uuesti sisse.'
+						: 'Ettevõtteid ei õnnestunud laadida.';
 				return;
 			}
 
 			companies = (await response.json()) as CompanyListDto[];
 		} catch {
-			errorMessage = 'Failed to load companies.';
+			errorMessage = 'Ettevõtteid ei õnnestunud laadida.';
 		} finally {
 			isLoading = false;
 		}
@@ -46,24 +46,24 @@
 </script>
 
 <section class="employee-card hero">
-	<p class="kicker">Company selection</p>
-	<h1>Choose your company</h1>
-	<p>Select a company to open your employee workspace.</p>
+	<p class="kicker">Ettevõtte valik</p>
+	<h1>Valige oma ettevõte</h1>
+	<p>Valige ettevõte, et avada oma töötajate tööruum.</p>
 </section>
 
 {#if isLoading}
-	<div class="employee-state-block is-loading">Loading companies…</div>
+	<div class="employee-state-block is-loading">Laetakse ettevõtteid…</div>
 {:else if errorMessage}
 	<div class="employee-state-block is-error">{errorMessage}</div>
 {:else if companies.length === 0}
-	<div class="employee-state-block is-empty">No companies found.</div>
+	<div class="employee-state-block is-empty">Ettevõtteid ei leitud.</div>
 {:else}
-	<div class="company-grid" role="list" aria-label="Available companies">
+	<div class="company-grid" role="list" aria-label="Saadaval olevad ettevõtted">
 		{#each companies as company (company.id)}
 			<button class="company-card" type="button" onclick={() => openCompany(company.id)}>
 				<span class="company-name">{company.name}</span>
-				<span class="company-meta">Reg. no: {company.registrationNumber}</span>
-				<span class="company-action">Open company</span>
+				<span class="company-meta">Reg. nr: {company.registrationNumber}</span>
+				<span class="company-action">Avage ettevõte</span>
 			</button>
 		{/each}
 	</div>
@@ -72,11 +72,14 @@
 <style>
 	.hero {
 		margin-bottom: 0.9rem;
+		padding: 1rem;
+		background: linear-gradient(180deg, #ffffff 0%, #f3f8f5 100%);
+		border-color: #d2e1d8;
 	}
 
 	.kicker {
 		margin: 0;
-		font-size: 0.78rem;
+		font-size: 0.72rem;
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 0.03em;
@@ -85,7 +88,7 @@
 
 	h1 {
 		margin: 0.3rem 0 0.4rem;
-		font-size: 1.25rem;
+		font-size: 1.15rem;
 		line-height: 1.2;
 		color: #17251e;
 	}
@@ -98,18 +101,19 @@
 	.company-grid {
 		display: grid;
 		grid-template-columns: 1fr;
-		gap: 0.7rem;
+		gap: 0.75rem;
 	}
 
 	.company-card {
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
-		gap: 0.35rem;
+		gap: 0.4rem;
 		width: 100%;
-		padding: 0.9rem;
-		border: 1px solid #d5e2db;
-		border-radius: 0.85rem;
+		min-height: 2.75rem;
+		padding: 0.92rem;
+		border: 1px solid #d2e0d8;
+		border-radius: 1rem;
 		background: #fff;
 		text-align: left;
 		cursor: pointer;
@@ -120,9 +124,13 @@
 	}
 
 	.company-card:hover {
-		border-color: #9eb8ab;
+		border-color: #99b8a9;
 		box-shadow: 0 6px 16px rgba(25, 53, 40, 0.12);
 		transform: translateY(-1px);
+	}
+
+	.company-card:active {
+		transform: translateY(1px);
 	}
 
 	.company-card:focus-visible {
@@ -133,7 +141,7 @@
 	.company-name {
 		font-size: 1rem;
 		font-weight: 700;
-		color: #173f2f;
+		color: #173b2d;
 	}
 
 	.company-meta {
@@ -142,13 +150,17 @@
 	}
 
 	.company-action {
-		margin-top: 0.2rem;
-		font-size: 0.88rem;
+		margin-top: 0.28rem;
+		font-size: 0.84rem;
 		font-weight: 700;
 		color: #1f5a42;
 	}
 
 	@media (min-width: 640px) {
+		h1 {
+			font-size: 1.25rem;
+		}
+
 		.company-grid {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
 		}

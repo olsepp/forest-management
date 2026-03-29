@@ -31,6 +31,7 @@
 	let errorMessage = $state('');
 	let activities = $state<ActivityDto[]>([]);
 	let expandedActivityIds = $state<string[]>([]);
+	const companyId = $derived($page.params.CompanyId ?? '');
 
 	function isExpanded(activityId: string): boolean {
 		return expandedActivityIds.includes(activityId);
@@ -70,9 +71,9 @@
 
 	function applicationStatusLabel(status: number | null): string {
 		if (status === null || typeof status !== 'number') return '—';
-		if (status === 0) return 'Pending';
-		if (status === 1) return 'Approved';
-		if (status === 2) return 'Rejected';
+		if (status === 0) return 'Ootel';
+		if (status === 1) return 'Kinnitatud';
+		if (status === 2) return 'Tagasi lükatud';
 		return String(status);
 	}
 
@@ -83,7 +84,7 @@
 
 			const companyId = $page.params.CompanyId;
 			if (!companyId) {
-				errorMessage = 'Missing company id';
+				errorMessage = 'Puudub ettevõtte ID.';
 				return;
 			}
 
@@ -97,8 +98,8 @@
 			if (!response.ok) {
 				errorMessage =
 					response.status === 401 || response.status === 403
-						? 'Unauthorized. Please sign in again.'
-						: 'Failed to load activities.';
+						? 'Ligipääs puudub. Logige uuesti sisse.'
+						: 'Tegevuste laadimine ebaõnnestus.';
 				return;
 			}
 
@@ -106,32 +107,32 @@
 				.filter((item) => Boolean(item?.id))
 				.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 		} catch {
-			errorMessage = 'Failed to load activities.';
+			errorMessage = 'Tegevuste laadimine ebaõnnestus.';
 		} finally {
 			isLoading = false;
 		}
 	});
 </script>
 
-<h1>Activities</h1>
+<h1>Tegevused</h1>
 
 {#if isLoading}
-	<p>Loading activities...</p>
+	<p>Laetakse tegevusi...</p>
 {:else if errorMessage}
 	<p class="error">{errorMessage}</p>
 {:else if activities.length === 0}
-	<p>No activities found for this company.</p>
+	<p>Selle ettevõtte jaoks tegevusi ei leitud.</p>
 {:else}
 	<div class="table-wrapper">
 		<table>
 			<thead>
 				<tr>
-					<th>Date</th>
-					<th>Type</th>
-					<th>Cadaster</th>
-					<th>Forest stand</th>
-					<th>User</th>
-					<th class="actions">Actions</th>
+					<th>Kuupäev</th>
+					<th>Tüüp</th>
+					<th>Kataster</th>
+					<th>Eraldis</th>
+					<th>Kasutaja</th>
+					<th class="actions">Toimingud</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -144,10 +145,10 @@
 						<td>{item.userName}</td>
 					<td class="actions">
 								<button
-									type="button"
-									class="expand-toggle"
-									onclick={() => toggleExpand(item.id)}
-							aria-label={isExpanded(item.id) ? 'Collapse activity details' : 'Expand activity details'}
+								type="button"
+								class="expand-toggle"
+								onclick={() => toggleExpand(item.id)}
+							aria-label={isExpanded(item.id) ? 'Peida tegevuse detailid' : 'Näita tegevuse detaile'}
 							aria-expanded={isExpanded(item.id)}
 						>
 							<svg
@@ -173,23 +174,23 @@
 									<a
 										class="details-open-btn"
 										href={resolve('/admin/[CompanyId]/activity/[ActivityId]', {
-											CompanyId: $page.params.CompanyId,
-											ActivityId: item.id
-										})}
-										>Open single activity page</a
+										CompanyId: companyId,
+										ActivityId: item.id
+									})}
+										>Ava tegevuse leht</a
 									>
 								</div>
 								<p><strong>ID:</strong> {item.id}</p>
-								<p><strong>Date:</strong> {formatDate(item.date)}</p>
-								<p><strong>Activity type:</strong> {item.activityTypeName}</p>
-								<p><strong>Cadaster:</strong> {cadasterLabel(item)}</p>
-									<p><strong>Forest stand:</strong> {forestStandLabel(item)}</p>
-									<p><strong>Land property:</strong> {item.landPropertyName || '—'}</p>
-									<p><strong>User:</strong> {item.userName}</p>
-									<p><strong>Description:</strong> {item.description || '—'}</p>
-									<p><strong>Quantity:</strong> {formatQuantity(item)}</p>
-									<p><strong>Unit:</strong> {item.unit || '—'}</p>
-									<p><strong>Status:</strong> {applicationStatusLabel(item.applicationStatus)}</p>
+								<p><strong>Kuupäev:</strong> {formatDate(item.date)}</p>
+								<p><strong>Tegevuse tüüp:</strong> {item.activityTypeName}</p>
+								<p><strong>Kataster:</strong> {cadasterLabel(item)}</p>
+									<p><strong>Eraldis:</strong> {forestStandLabel(item)}</p>
+									<p><strong>Kinnistu:</strong> {item.landPropertyName || '—'}</p>
+									<p><strong>Kasutaja:</strong> {item.userName}</p>
+									<p><strong>Kirjeldus:</strong> {item.description || '—'}</p>
+									<p><strong>Kogus:</strong> {formatQuantity(item)}</p>
+									<p><strong>Ühik:</strong> {item.unit || '—'}</p>
+									<p><strong>Staatus:</strong> {applicationStatusLabel(item.applicationStatus)}</p>
 								</div>
 							</td>
 						</tr>

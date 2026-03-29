@@ -2,13 +2,7 @@
 	import { user } from '$lib/stores/auth.store';
 	import { authService } from '$lib/services/auth';
 	import { goto } from '$app/navigation';
-	import type { PageData } from './$types';
-
-	interface Props {
-		data: PageData;
-	}
-
-	let { data }: Props = $props();
+	import { resolve } from '$app/paths';
 
 	// The auth state is available from the server-side data
 	// For client-side interactivity, we use the auth store
@@ -22,7 +16,7 @@
 		try {
 			await authService.logout();
 			// Redirect to sign-in page using SvelteKit navigation
-			goto('/sign-in');
+			goto(resolve('/sign-in'));
 		} catch (error) {
 			console.error('Logout failed:', error);
 			isLoggingOut = false;
@@ -31,7 +25,7 @@
 </script>
 
 <svelte:head>
-	<title>Home - Forest Management</title>
+	<title>Avaleht - Metsandussüsteem</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gray-100">
@@ -42,7 +36,7 @@
 				<div class="flex">
 					<div class="flex-shrink-0 flex items-center">
 						<h1 class="text-xl font-bold text-gray-900">
-							Forest Management
+							Metsandussüsteem
 						</h1>
 					</div>
 				</div>
@@ -58,7 +52,7 @@
 								disabled={isLoggingOut}
 								class="text-sm text-red-600 hover:text-red-800 disabled:opacity-50"
 							>
-								{isLoggingOut ? 'Signing out...' : 'Sign out'}
+								{isLoggingOut ? 'Logitakse välja...' : 'Logi välja'}
 							</button>
 						</div>
 					{/if}
@@ -76,14 +70,14 @@
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
 					</svg>
 					<h3 class="mt-2 text-sm font-medium text-gray-900">
-						Company Selection
+						Ettevõtte valik
 					</h3>
 					<p class="mt-1 text-sm text-gray-500">
-						Select a company to manage its forest data
+						Valige ettevõte, mille metsaandmeid soovite hallata
 					</p>
 					<div class="mt-6">
 						<p class="text-sm text-gray-500">
-							Company selection interface will be implemented here
+							Ettevõtte valiku vaade lisatakse siia
 						</p>
 					</div>
 				</div>
