@@ -8,7 +8,7 @@ namespace App.DAL.Repositories.Interfaces;
 public interface IRefreshTokenRepository : IRepository<RefreshToken>
 {
     /// <summary>
-    /// Load a refresh token by its opaque string value, including the owning <see cref="AppUser"/>.
+    /// Load a refresh token by its SHA-256 hash, including the owning <see cref="AppUser"/>.
     /// </summary>
-    Task<RefreshToken?> GetByTokenAsync(string token);
+    Task<RefreshToken?> GetByTokenHashAsync(string tokenHash);
 }

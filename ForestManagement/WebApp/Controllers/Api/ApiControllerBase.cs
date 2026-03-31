@@ -1,3 +1,5 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,4 +15,13 @@ namespace WebApp.Controllers.Api;
 /// </summary>
 [ApiController]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-public abstract class ApiControllerBase : ControllerBase;
+public abstract class ApiControllerBase : ControllerBase
+{
+    protected bool TryGetCurrentUserId(out Guid userId)
+    {
+        var claimValue = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                         ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+
+        return Guid.TryParse(claimValue, out userId);
+    }
+}

@@ -17,5 +17,5 @@ public interface IAuthService
     /// Revoke the supplied refresh token (logout).
     /// Returns <c>false</c> if the token was not found or is already inactive.
     /// </summary>
-    Task<bool> LogoutAsync(string refreshToken);
+    Task<bool> LogoutAsync(string refreshToken, Guid currentUserId);
 }

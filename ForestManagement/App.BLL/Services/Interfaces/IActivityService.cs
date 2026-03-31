@@ -14,7 +14,7 @@ public interface IActivityService
     Task<IEnumerable<ActivityDto>> GetByLandPropertyIdAndUserIdAsync(Guid landPropertyId, Guid userId);
     Task<IEnumerable<RecentActivityDto>> GetRecentAsync(int count);
     Task<ActivityDto> CreateAsync(ActivityCreateDto dto, Guid userId);
-    Task<ActivityDto?> UpdateAsync(Guid id, ActivityUpdateDto dto);
-    Task<bool> DeleteAsync(Guid id);
+    Task<ActivityDto?> UpdateAsync(Guid id, ActivityUpdateDto dto, Guid currentUserId, bool isAdmin);
+    Task<bool> DeleteAsync(Guid id, Guid currentUserId, bool isAdmin);
     Task<bool> ExistsAsync(Guid id);
 }

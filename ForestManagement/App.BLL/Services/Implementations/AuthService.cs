@@ -55,7 +55,7 @@ public class AuthService : IAuthService
         }
 
         var roles = await _userManager.GetRolesAsync(user);
-        return await BuildAuthResponseAsync(user, roles.FirstOrDefault() ?? string.Empty);
+        return await BuildAuthResponseAsync(user, roles);
     }
 
     public async Task<LoginResponseDto?> RegisterAsync(RegisterRequestDto dto)
@@ -77,12 +77,14 @@ public class AuthService : IAuthService
             return null;
         }
 
-        return await BuildAuthResponseAsync(user, string.Empty);
+        var roles = await _userManager.GetRolesAsync(user);
+        return await BuildAuthResponseAsync(user, roles);
     }
 
     public async Task<LoginResponseDto?> RefreshTokenAsync(string refreshToken)
     {
-        var stored = await _uow.RefreshTokens.GetByTokenAsync(refreshToken);
+        var tokenHash = ComputeTokenHash(refreshToken);
+        var stored = await _uow.RefreshTokens.GetByTokenHashAsync(tokenHash);
 
         if (stored == null || !stored.IsActive)
         {
@@ -94,18 +96,19 @@ public class AuthService : IAuthService
         stored.RevokedAt = DateTime.UtcNow;
 
         var roles = await _userManager.GetRolesAsync(stored.User);
-        var response = await BuildAuthResponseAsync(stored.User, roles.FirstOrDefault() ?? string.Empty);
+        var response = await BuildAuthResponseAsync(stored.User, roles);
 
         // SaveChangesAsync is called inside BuildAuthResponseAsync (when it inserts the new refresh token).
         // The revocation of the old token is also flushed at that point because the DbContext tracks it.
         return response;
     }
 
-    public async Task<bool> LogoutAsync(string refreshToken)
+    public async Task<bool> LogoutAsync(string refreshToken, Guid currentUserId)
     {
-        var stored = await _uow.RefreshTokens.GetByTokenAsync(refreshToken);
+        var tokenHash = ComputeTokenHash(refreshToken);
+        var stored = await _uow.RefreshTokens.GetByTokenHashAsync(tokenHash);
 
-        if (stored == null || !stored.IsActive)
+        if (stored == null || !stored.IsActive || stored.UserId != currentUserId)
             return false;
 
         stored.RevokedAt = DateTime.UtcNow;
@@ -117,25 +120,26 @@ public class AuthService : IAuthService
     // Private helpers
     // -----------------------------------------------------------------------
 
-    private async Task<LoginResponseDto> BuildAuthResponseAsync(AppUser user, string role)
+    private async Task<LoginResponseDto> BuildAuthResponseAsync(AppUser user, IEnumerable<string> roles)
     {
-        var (accessToken, tokenExpiry) = GenerateAccessToken(user, role);
-        var refreshToken = await GenerateAndStoreRefreshTokenAsync(user.Id);
+        var roleList = roles.Where(r => !string.IsNullOrWhiteSpace(r)).Distinct().ToList();
+        var (accessToken, tokenExpiry) = GenerateAccessToken(user, roleList);
+        var (rawRefreshToken, refreshToken) = await GenerateAndStoreRefreshTokenAsync(user.Id);
 
         return new LoginResponseDto
         {
             UserId = user.Id,
             Username = user.UserName ?? string.Empty,
             Email = user.Email ?? string.Empty,
-            Role = role,
+            Role = roleList.FirstOrDefault() ?? string.Empty,
             Token = accessToken,
             TokenExpiresAt = tokenExpiry,
-            RefreshToken = refreshToken.Token,
+            RefreshToken = rawRefreshToken,
             RefreshTokenExpiresAt = refreshToken.ExpiresAt
         };
     }
 
-    private (string token, DateTime expiresAt) GenerateAccessToken(AppUser user, string role)
+    private (string token, DateTime expiresAt) GenerateAccessToken(AppUser user, IReadOnlyCollection<string> roles)
     {
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwt.Key));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -146,11 +150,14 @@ public class AuthService : IAuthService
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
             new(JwtRegisteredClaimNames.UniqueName, user.UserName ?? string.Empty),
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
-        if (!string.IsNullOrEmpty(role))
+        foreach (var role in roles)
+        {
             claims.Add(new Claim(ClaimTypes.Role, role));
+        }
 
         var token = new JwtSecurityToken(
             issuer: _jwt.Issuer,
@@ -162,12 +169,14 @@ public class AuthService : IAuthService
         return (new JwtSecurityTokenHandler().WriteToken(token), expiresAt);
     }
 
-    private async Task<RefreshToken> GenerateAndStoreRefreshTokenAsync(Guid userId)
+    private async Task<(string rawToken, RefreshToken storedToken)> GenerateAndStoreRefreshTokenAsync(Guid userId)
     {
         var tokenBytes = RandomNumberGenerator.GetBytes(64);
+        var rawToken = Convert.ToBase64String(tokenBytes);
+
         var refreshToken = new RefreshToken
         {
-            Token = Convert.ToBase64String(tokenBytes),
+            TokenHash = ComputeTokenHash(rawToken),
             ExpiresAt = DateTime.UtcNow.AddDays(_jwt.RefreshTokenExpiresInDays),
             CreatedAt = DateTime.UtcNow,
             UserId = userId
@@ -175,6 +184,12 @@ public class AuthService : IAuthService
 
         await _uow.RefreshTokens.AddAsync(refreshToken);
         await _uow.SaveChangesAsync();
-        return refreshToken;
+        return (rawToken, refreshToken);
+    }
+
+    private static string ComputeTokenHash(string token)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));
+        return Convert.ToHexString(bytes);
     }
 }

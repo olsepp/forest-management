@@ -11,10 +11,10 @@ public class RefreshTokenRepository : Repository<RefreshToken>, IRefreshTokenRep
     {
     }
 
-    public async Task<RefreshToken?> GetByTokenAsync(string token)
+    public async Task<RefreshToken?> GetByTokenHashAsync(string tokenHash)
     {
         return await _dbSet
             .Include(t => t.User)
-            .FirstOrDefaultAsync(t => t.Token == token);
+            .FirstOrDefaultAsync(t => t.TokenHash == tokenHash);
     }
 }

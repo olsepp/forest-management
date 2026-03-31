@@ -76,7 +76,10 @@ public class AccountController : ApiControllerBase
     [HttpPost("logout")]
     public async Task<IActionResult> Logout([FromBody] RefreshTokenRequestDto dto)
     {
-        await _authService.LogoutAsync(dto.RefreshToken);
+        if (!TryGetCurrentUserId(out var userId))
+            return Unauthorized();
+
+        await _authService.LogoutAsync(dto.RefreshToken, userId);
         // Always return 204 — don't leak whether the token existed
         return NoContent();
     }

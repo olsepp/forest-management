@@ -1,5 +1,6 @@
 using App.BLL.Services.Interfaces;
 using App.DTO.ForestStand;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApp.Controllers.Api;
@@ -41,6 +42,7 @@ public class ForestStandsController : ApiControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ForestStandDto>> Create([FromBody] ForestStandCreateDto dto)
     {
         var created = await _service.CreateAsync(dto);
@@ -48,6 +50,7 @@ public class ForestStandsController : ApiControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ForestStandDto>> Update(Guid id, [FromBody] ForestStandUpdateDto dto)
     {
         if (id != dto.Id) return BadRequest(new { message = "Route id does not match body id." });
@@ -58,6 +61,7 @@ public class ForestStandsController : ApiControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var deleted = await _service.DeleteAsync(id);

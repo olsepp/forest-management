@@ -1,5 +1,6 @@
 using App.BLL.Services.Interfaces;
 using App.DTO.LandProperty;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApp.Controllers.Api;
@@ -35,6 +36,7 @@ public class LandPropertiesController : ApiControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<LandPropertyDto>> Create([FromBody] LandPropertyCreateDto dto)
     {
         var created = await _service.CreateAsync(dto);
@@ -42,6 +44,7 @@ public class LandPropertiesController : ApiControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<LandPropertyDto>> Update(Guid id, [FromBody] LandPropertyUpdateDto dto)
     {
         if (id != dto.Id) return BadRequest(new { message = "Route id does not match body id." });
@@ -52,6 +55,7 @@ public class LandPropertiesController : ApiControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var deleted = await _service.DeleteAsync(id);

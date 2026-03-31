@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using App.BLL.Services.Interfaces;
 using App.DTO.Activity;
 using Microsoft.AspNetCore.Authorization;
@@ -54,8 +53,7 @@ public class ActivitiesController : ApiControllerBase
     [Authorize(Roles = "Admin,Employee")]
     public async Task<ActionResult<IEnumerable<ActivityDto>>> GetByCompanyMy(Guid companyId)
     {
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var userId))
+        if (!TryGetCurrentUserId(out var userId))
             return Unauthorized();
 
         var items = await _service.GetByCompanyIdAndUserIdAsync(companyId, userId);
@@ -74,8 +72,7 @@ public class ActivitiesController : ApiControllerBase
     [Authorize(Roles = "Admin,Employee")]
     public async Task<ActionResult<IEnumerable<ActivityDto>>> GetByPropertyMy(Guid landPropertyId)
     {
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var userId))
+        if (!TryGetCurrentUserId(out var userId))
             return Unauthorized();
 
         var items = await _service.GetByLandPropertyIdAndUserIdAsync(landPropertyId, userId);
@@ -90,10 +87,10 @@ public class ActivitiesController : ApiControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin,Employee")]
     public async Task<ActionResult<ActivityDto>> Create([FromBody] ActivityCreateDto dto)
     {
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var userId))
+        if (!TryGetCurrentUserId(out var userId))
             return Unauthorized();
 
         var created = await _service.CreateAsync(dto, userId);
@@ -101,19 +98,27 @@ public class ActivitiesController : ApiControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "Admin,Employee")]
     public async Task<ActionResult<ActivityDto>> Update(Guid id, [FromBody] ActivityUpdateDto dto)
     {
         if (id != dto.Id) return BadRequest(new { message = "Route id does not match body id." });
 
-        var updated = await _service.UpdateAsync(id, dto);
+        if (!TryGetCurrentUserId(out var currentUserId))
+            return Unauthorized();
+
+        var updated = await _service.UpdateAsync(id, dto, currentUserId, User.IsInRole("Admin"));
         if (updated == null) return NotFound();
         return Ok(updated);
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Admin,Employee")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var deleted = await _service.DeleteAsync(id);
+        if (!TryGetCurrentUserId(out var currentUserId))
+            return Unauthorized();
+
+        var deleted = await _service.DeleteAsync(id, currentUserId, User.IsInRole("Admin"));
         if (!deleted) return NotFound();
         return NoContent();
     }

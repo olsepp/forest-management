@@ -87,10 +87,13 @@ public class ActivityService : IActivityService
         return MapToDto(created!);
     }
 
-    public async Task<ActivityDto?> UpdateAsync(Guid id, ActivityUpdateDto dto)
+    public async Task<ActivityDto?> UpdateAsync(Guid id, ActivityUpdateDto dto, Guid currentUserId, bool isAdmin)
     {
         var entity = await _uow.Activities.GetByIdAsync(id);
         if (entity == null) return null;
+
+        if (!isAdmin && entity.UserId != currentUserId)
+            return null;
 
         entity.Description = dto.Description;
         entity.Quantity = dto.Quantity;
@@ -109,9 +112,14 @@ public class ActivityService : IActivityService
         return MapToDto(updated!);
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
+    public async Task<bool> DeleteAsync(Guid id, Guid currentUserId, bool isAdmin)
     {
-        if (!await _uow.Activities.ExistsAsync(id)) return false;
+        var entity = await _uow.Activities.GetByIdAsync(id);
+        if (entity == null) return false;
+
+        if (!isAdmin && entity.UserId != currentUserId)
+            return false;
+
         await _uow.Activities.DeleteAsync(id);
         await _uow.SaveChangesAsync();
         return true;

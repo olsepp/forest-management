@@ -1,14 +1,11 @@
-using System.Security.Claims;
 using App.BLL.Services.Interfaces;
 using App.DTO.Users;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApp.Controllers.Api;
 
 [Route("api/[controller]")]
-[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public class UsersController : ApiControllerBase
 {
     private readonly IUserService _service;
@@ -33,11 +30,9 @@ public class UsersController : ApiControllerBase
     }
 
     [HttpGet("profile")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<ActionResult<UserProfileDto>> GetProfile()
     {
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var userId))
+        if (!TryGetCurrentUserId(out var userId))
             return Unauthorized();
 
         var profile = await _service.GetProfileAsync(userId);

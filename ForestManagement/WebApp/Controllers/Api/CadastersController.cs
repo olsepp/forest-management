@@ -1,5 +1,6 @@
 using App.BLL.Services.Interfaces;
 using App.DTO.Cadaster;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApp.Controllers.Api;
@@ -34,6 +35,7 @@ public class CadastersController : ApiControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<CadasterDto>> Create([FromBody] CadasterCreateDto dto)
     {
         var created = await _service.CreateAsync(dto);
@@ -41,6 +43,7 @@ public class CadastersController : ApiControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<CadasterDto>> Update(Guid id, [FromBody] CadasterUpdateDto dto)
     {
         if (id != dto.Id) return BadRequest(new { message = "Route id does not match body id." });
@@ -51,6 +54,7 @@ public class CadastersController : ApiControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var deleted = await _service.DeleteAsync(id);

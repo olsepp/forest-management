@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using Base.Domain;
 
 namespace App.Domain.Identity;
@@ -8,8 +9,12 @@ namespace App.Domain.Identity;
 /// </summary>
 public class RefreshToken : BaseEntity
 {
-    /// <summary>Opaque, cryptographically-random token string (base64).</summary>
-    public string Token { get; set; } = string.Empty;
+    /// <summary>
+    /// SHA-256 hash of the opaque refresh token value.
+    /// Raw token is returned only once to client and is never persisted.
+    /// </summary>
+    [Column("Token")]
+    public string TokenHash { get; set; } = string.Empty;
 
     public DateTime ExpiresAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

@@ -1,5 +1,6 @@
 using App.BLL.Services.Interfaces;
 using App.DTO.Company;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApp.Controllers.Api;
@@ -27,6 +28,7 @@ public class CompaniesController : ApiControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<CompanyDto>> Create([FromBody] CompanyCreateDto dto)
     {
         var created = await _service.CreateAsync(dto);
@@ -34,6 +36,7 @@ public class CompaniesController : ApiControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<CompanyDto>> Update(Guid id, [FromBody] CompanyUpdateDto dto)
     {
         if (id != dto.Id) return BadRequest(new { message = "Route id does not match body id." });
@@ -44,6 +47,7 @@ public class CompaniesController : ApiControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var deleted = await _service.DeleteAsync(id);
