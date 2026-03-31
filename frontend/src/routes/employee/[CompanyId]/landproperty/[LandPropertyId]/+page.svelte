@@ -161,13 +161,16 @@
 		{/if}
 	</div>
 {:else if property}
-	<p class="back-link">
-		<a href={resolve('/employee/[CompanyId]/landproperty', { CompanyId: companyId })}>← Tagasi kinnistute juurde</a>
+	<p class="employee-back-link">
+		<a class="employee-back-link-button" href={resolve('/employee/[CompanyId]/landproperty', { CompanyId: companyId })}>
+			<span aria-hidden="true">←</span>
+			<span>Tagasi kinnistute juurde</span>
+		</a>
 	</p>
 
 	<section class="employee-card summary">
-		<p class="kicker">Kinnistu detailid</p>
-		<h1>{property.name}</h1>
+		<p class="kicker">Kinnistu</p>
+		<h1 class="employee-page-title">{property.name}</h1>
 		<p class="status-line">Olek: <strong>{statusLabel(property.status)}</strong></p>
 		<div class="meta-grid">
 			<p><strong>Registrinumber:</strong> {property.registrationNumber}</p>
@@ -180,19 +183,28 @@
 	</section>
 
 	<section class="employee-card">
-		<h2>Seotud katastrid</h2>
+		<h2>Katastrid</h2>
 		{#if cadasters.length === 0}
-			<div class="employee-state-block is-empty">Selle kinnistuga pole seotud ühtegi katastrit.</div>
+			<div class="employee-state-block is-empty">Ei leitud.</div>
 		{:else}
-			<div class="cadaster-links">
+			<div class="cadaster-list" role="list" aria-label="Seotud katastrid">
 				{#each cadasters as cadaster (cadaster.id)}
 					<a
+						class="cadaster-row"
 						href={resolve('/employee/[CompanyId]/cadaster/[CadasterId]', {
 							CompanyId: companyId,
 							CadasterId: cadaster.id
 						})}
 					>
-						{cadaster.cadastralNumber || cadaster.id}
+						<div class="cadaster-row-main">
+							<p class="cadaster-row-kicker">Kataster</p>
+							<p class="cadaster-row-number">{cadaster.cadastralNumber || cadaster.id}</p>
+							<div class="cadaster-row-meta">
+								{#if typeof cadaster.forestArea === 'number'}
+									<span>Metsamaa: {cadaster.forestArea}</span>
+								{/if}
+							</div>
+						</div>
 					</a>
 				{/each}
 			</div>
@@ -200,9 +212,9 @@
 	</section>
 
 	<section class="employee-card">
-		<h2>Sinu tegevuste ajalugu sellel kinnistul</h2>
+		<h2>Sinu tegevused sellel kinnistul</h2>
 		{#if activities.length === 0}
-			<div class="employee-state-block is-empty">Sellel kinnistul ei leitud sinu konto tegevusi.</div>
+			<div class="employee-state-block is-empty">Ei leitud.</div>
 		{:else}
 			<div class="employee-stack-cards">
 				{#each activities as activity (activity.id)}
@@ -221,6 +233,15 @@
 									? `Eraldis ${activity.forestStandNumber}`
 									: '—'}
 						</p>
+						<a
+							class="activity-link"
+							href={resolve('/employee/[CompanyId]/activity/[ActivityId]', {
+								CompanyId: companyId,
+								ActivityId: activity.id
+							})}
+						>
+							Ava tegevus
+						</a>
 					</article>
 				{/each}
 			</div>
@@ -233,17 +254,6 @@
 {/if}
 
 <style>
-	.back-link {
-		margin: 0 0 0.75rem;
-	}
-
-	.back-link a {
-		font-size: 0.9rem;
-		font-weight: 700;
-		text-decoration: none;
-		color: #1f5a42;
-	}
-
 	.summary {
 		margin-bottom: 0.75rem;
 	}
@@ -258,20 +268,21 @@
 	}
 
 	h1 {
-		margin: 0.3rem 0;
-		font-size: 1.2rem;
+		margin: 0;
+		font-size: 1.28rem;
 		line-height: 1.2;
-		color: #17251e;
+		color: #0f172a;
 	}
 
 	h2 {
 		margin: 0 0 0.65rem;
 		font-size: 1.05rem;
-		color: #1a3228;
+		color: #1f2937;
 	}
 
 	.status-line {
 		margin: 0 0 0.55rem;
+		color: #334155;
 	}
 
 	.inline-note {
@@ -285,54 +296,113 @@
 		gap: 0.45rem;
 	}
 
-	.cadaster-links {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.45rem;
+	.meta-grid p {
+		margin: 0;
+		color: #334155;
 	}
 
-	.cadaster-links a {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 48px;
-    min-width: 48px;
-    padding: 1rem 2.5rem;
-    border: 2px solid #1f5a42;
-    border-radius: 0.75rem;
-    background: #1f5a42;
-    text-decoration: none;
-    color: #ffffff;
-    font-size: 1.1rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    box-shadow: 0 4px 12px rgba(31, 90, 66, 0.3);
-    cursor: pointer;
+	.cadaster-list {
+		display: grid;
+		gap: 0.55rem;
+	}
 
-    /* Touch-specific */
-    touch-action: manipulation;        /* prevents double-tap zoom delay */
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-}
+	.cadaster-row {
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+		gap: 0.65rem;
+		min-height: 3.15rem;
+		padding: 0.8rem 0.9rem;
+		border: 1px solid #9ec6b0;
+		border-radius: 0.95rem;
+		background: linear-gradient(180deg, #eef8f2 0%, #e6f4ec 100%);
+		text-decoration: none;
+		color: #173328;
+		box-shadow: 0 4px 14px rgba(15, 40, 30, 0.12);
+		position: relative;
+		overflow: hidden;
+	}
 
-.cadaster-links a:active {
-    background: #174d38;
-    box-shadow: 0 2px 6px rgba(31, 90, 66, 0.2);
-    transform: scale(0.97);            /* subtle "press" feel */
-}
+	.cadaster-row::before {
+		content: '';
+		position: absolute;
+		left: 0;
+		top: 0;
+		bottom: 0;
+		width: 0.34rem;
+		background: linear-gradient(180deg, #4f8b70 0%, #2d6b4f 100%);
+	}
+
+	.cadaster-row-main {
+		display: grid;
+		gap: 0.14rem;
+		min-width: 0;
+		padding-left: 0.3rem;
+	}
+
+	.cadaster-row-kicker {
+		margin: 0;
+		font-size: 0.72rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+		color: #537666;
+	}
+
+	.cadaster-row-number {
+		margin: 0;
+		font-size: 1rem;
+		font-weight: 700;
+		line-height: 1.2;
+		color: #173328;
+	}
+
+	.cadaster-row-meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+	}
+
+	.cadaster-row-meta span {
+		font-size: 0.83rem;
+		font-weight: 600;
+		color: #456657;
+	}
+
+	.cadaster-row:active {
+		transform: translateY(1px);
+		background: #edf6f1;
+	}
 
 	.activity-card {
-		border: 1px solid #d9e4de;
+		border: 1px solid #d8e0dc;
 		border-radius: 0.8rem;
-		padding: 0.8rem;
+		padding: 0.9rem;
 		background: #ffffff;
 		display: grid;
-		gap: 0.35rem;
+		gap: 0.42rem;
 	}
 
 	.activity-card p {
 		margin: 0;
-		color: #3f564a;
+		color: #334155;
+	}
+
+	.activity-link {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		align-self: start;
+		min-height: 2.75rem;
+		margin-top: 0.2rem;
+		padding: 0.45rem 0.8rem;
+		border: 1px solid #bfd0c8;
+		border-radius: 0.75rem;
+		background: #f8fbf9;
+		font-size: 0.95rem;
+		font-weight: 700;
+		color: #184334;
+		text-decoration: none;
 	}
 
 	.activity-head {

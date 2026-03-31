@@ -186,16 +186,17 @@
 		<section class="mobile-list employee-stack-cards" aria-label="Kinnistute kaardid">
 			{#each filteredProperties as property (property.id)}
 				<article class="employee-card property-card" aria-label={`Kinnistu ${property.name}`}>
+					<a
+						class="property-card-hit-area"
+						href={resolve('/employee/[CompanyId]/landproperty/[LandPropertyId]', {
+							CompanyId: companyId,
+							LandPropertyId: property.id
+						})}
+						aria-label={`Ava kinnistu ${property.name}`}
+					></a>
 					<div class="card-top">
 						<h2>
-							<a
-								href={resolve('/employee/[CompanyId]/landproperty/[LandPropertyId]', {
-									CompanyId: companyId,
-									LandPropertyId: property.id
-								})}
-							>
-								{property.name}
-							</a>
+							{property.name}
 						</h2>
 						<span class={`status ${statusClass(property.status)}`}>{statusText(property.status)}</span>
 					</div>
@@ -209,27 +210,31 @@
 							<span class="meta-value">{property.county || '—'}</span>
 						</p>
 					</div>
-					{#if cadastersForProperty(property).length === 0}
-						<p class="muted kataster-empty">Katastrid puuduvad.</p>
-					{:else}
-						<div class="kataster-links card-kataster-links" aria-label="Katastriüksused">
-							{#each cadastersForProperty(property) as cadaster (`${property.id}:${cadaster.id || cadaster.cadastralNumber}`)}
-								{#if cadaster.id}
-									<a
-										onclick={(event) => event.stopPropagation()}
-										href={resolve('/employee/[CompanyId]/cadaster/[CadasterId]', {
-											CompanyId: companyId,
-											CadasterId: cadaster.id
-										})}
-									>
-										{cadaster.cadastralNumber}
-									</a>
-								{:else}
-									<span>{cadaster.cadastralNumber}</span>
-								{/if}
-							{/each}
-						</div>
-					{/if}
+					<div class="cadaster-section" aria-label="Katastriüksused">
+						<p class="cadaster-label">Katastrid</p>
+						{#if cadastersForProperty(property).length === 0}
+							<p class="muted cadaster-empty">Katastrid puuduvad.</p>
+						{:else}
+							<div class="cadaster-chip-list">
+								{#each cadastersForProperty(property) as cadaster (`${property.id}:${cadaster.id || cadaster.cadastralNumber}`)}
+									{#if cadaster.id}
+										<a
+											class="cadaster-chip"
+											onclick={(event) => event.stopPropagation()}
+											href={resolve('/employee/[CompanyId]/cadaster/[CadasterId]', {
+												CompanyId: companyId,
+												CadasterId: cadaster.id
+											})}
+										>
+											{cadaster.cadastralNumber}
+										</a>
+									{:else}
+										<span class="cadaster-chip is-static">{cadaster.cadastralNumber}</span>
+									{/if}
+								{/each}
+							</div>
+						{/if}
+					</div>
 
 				</article>
 			{/each}
@@ -311,14 +316,37 @@
 	.property-card {
 		display: grid;
 		gap: 0.55rem;
-		border: 2px solid #4f8b70;
+		border: 1px solid #cfd8e3;
 		border-radius: 0.9rem;
 		background: #ffffff;
-		box-shadow: 0 2px 10px rgba(20, 53, 40, 0.1);
+		box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+		position: relative;
+		overflow: hidden;
 		transition:
 			border-color 0.18s ease,
 			box-shadow 0.18s ease,
 			transform 0.18s ease;
+	}
+
+	.property-card-hit-area {
+		position: absolute;
+		inset: 0;
+		z-index: 2;
+		border-radius: inherit;
+		display: block;
+	}
+
+	.property-card .card-top,
+	.property-card .property-meta,
+	.property-card .cadaster-section {
+		pointer-events: none;
+	}
+
+	.property-card .cadaster-chip-list,
+	.property-card .cadaster-chip {
+		position: relative;
+		z-index: 3;
+		pointer-events: auto;
 	}
 
 	.property-card:focus-visible {
@@ -403,28 +431,55 @@
 		color: #587265;
 	}
 
-	.kataster-empty {
-		padding: 0.35rem 0.15rem 0;
+	.cadaster-section {
+		display: grid;
+		gap: 0.35rem;
+		padding-top: 0.2rem;
+		border-top: 1px solid #e3e9f0;
 	}
 
-	.kataster-links {
+	.cadaster-label {
+		font-size: 0.78rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+		color: #4b6358;
+	}
+
+	.cadaster-empty {
+		padding: 0.1rem 0;
+	}
+
+	.cadaster-chip-list {
 		display: flex;
-		flex-direction: column;
-		align-items: center;
+		flex-wrap: wrap;
+		align-items: flex-start;
 		gap: 0.38rem;
 	}
 
-	.kataster-links a {
+	.cadaster-chip {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		min-height: 48px;
 		min-width: 48px;
-		padding: 0.45rem 0.85rem;
-		border: 2px solid #1f5a42;
+		padding: 0.45rem 0.72rem;
+		border: 1px solid #b9c8da;
 		border-radius: 12px;
-		background: #1f5a42;
+		background: #f5f8fc;
 		text-decoration: none;
-		color: #ffffff;
+		color: #1f334a;
+		font-size: 0.9rem;
+		font-weight: 600;
+	}
+
+	.cadaster-chip.is-static {
+		background: #f8fafc;
+		color: #475569;
+	}
+
+	.cadaster-chip:hover {
+		background: #ebf1f8;
+		border-color: #95abc4;
 	}
 </style>

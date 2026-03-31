@@ -4,17 +4,19 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
+	import { get } from 'svelte/store';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
 	import { user } from '$lib/stores/auth.store';
 	import { getDefaultRouteForRole } from '$lib/services/auth';
+	import ToastMessage from '$lib/components/shared/ToastMessage.svelte';
+	import { toastStore } from '$lib/stores/toast.store';
 
 	type AppRoleRoute = '/' | '/admin' | '/employee' | '/sign-in';
 
 	let { children } = $props();
 	let pathname = $derived($page.url.pathname);
 	let employeeDisplayName = $state('Metsandus');
-	let currentUserId = $derived($user?.userId?.trim() ?? '');
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
 	type UserProfileDto = {
@@ -33,16 +35,57 @@
 		return candidate.toLowerCase() === 'user' ? null : candidate;
 	});
 
-	let hasProfileId = $derived(currentUserId.length > 0);
 	let navCompanyId = $derived(currentCompanyId ?? '');
 
-	$effect(() => {
-		if (!browser) return;
+	type NavIcon = 'overview' | 'property' | 'activity' | 'companies';
+	type NavItem = {
+		key: 'overview' | 'landproperty' | 'activity' | 'companies';
+		label: string;
+		route: '/employee/[CompanyId]' | '/employee/[CompanyId]/landproperty' | '/employee/[CompanyId]/activity' | '/employee';
+		isCompanyRoute: boolean;
+		icon: NavIcon;
+		isActive: boolean;
+	};
 
-		const role = $user?.role?.trim().toLowerCase();
-		if (role && role !== 'employee') {
-			goto(resolve(getDefaultRouteForRole(role) as AppRoleRoute));
-		}
+	let navItems = $derived.by(() => {
+		if (!navCompanyId) return [] as NavItem[];
+
+		const companyRootPath = resolve('/employee/[CompanyId]', { CompanyId: navCompanyId });
+
+		return [
+			{
+				key: 'overview',
+				label: 'Ülevaade',
+				route: '/employee/[CompanyId]',
+				isCompanyRoute: true,
+				icon: 'overview',
+				isActive: pathname === companyRootPath
+			},
+			{
+				key: 'landproperty',
+				label: 'Kinnistud',
+				route: '/employee/[CompanyId]/landproperty',
+				isCompanyRoute: true,
+				icon: 'property',
+				isActive: pathname.includes(`/employee/${navCompanyId}/landproperty`)
+			},
+			{
+				key: 'activity',
+				label: 'Tegevused',
+				route: '/employee/[CompanyId]/activity',
+				isCompanyRoute: true,
+				icon: 'activity',
+				isActive: pathname.includes(`/employee/${navCompanyId}/activity`)
+			},
+			{
+				key: 'companies',
+				label: 'Ettevõtted',
+				route: '/employee',
+				isCompanyRoute: false,
+				icon: 'companies',
+				isActive: pathname === '/employee'
+			}
+		] satisfies NavItem[];
 	});
 
 	async function handleSignOut() {
@@ -80,6 +123,12 @@
 	}
 
 	onMount(() => {
+		const role = get(user)?.role?.trim().toLowerCase();
+		if (role && role !== 'employee') {
+			goto(resolve(getDefaultRouteForRole(role) as AppRoleRoute));
+			return;
+		}
+
 		loadEmployeeDisplayName();
 	});
 </script>
@@ -87,106 +136,146 @@
 <div class="employee-layout mx-auto min-h-screen w-full max-w-6xl px-3 pt-0 sm:px-4 sm:pt-0 md:px-5">
 	<header class="employee-appbar">
 		<div>
-			<p class="employee-kicker">Töötajate tööruum</p>
+			<p class="employee-kicker">Töötaja tööruum</p>
 			<h1 class="employee-title">{employeeDisplayName}</h1>
 		</div>
 
 		<button type="button" onclick={handleSignOut} class="employee-signout">Logi välja</button>
 	</header>
 
-	{#if navCompanyId}
+	{#if navItems.length > 0}
 		<nav class="employee-top-nav" aria-label="Employee section navigation">
-			<a href={resolve('/employee')} class="employee-nav-link" class:is-active={pathname === '/employee'}>
-				Avaleht
-			</a>
-			<a
-				href={resolve('/employee/[CompanyId]/landproperty', { CompanyId: navCompanyId })}
-				class="employee-nav-link"
-				class:is-active={pathname.includes(`/employee/${navCompanyId}/landproperty`)}
-			>
-				Kinnistud
-			</a>
-			<a
-				href={resolve('/employee/[CompanyId]/activity', { CompanyId: navCompanyId })}
-				class="employee-nav-link"
-				class:is-active={pathname.includes(`/employee/${navCompanyId}/activity`)}
-			>
-				Tegevused
-			</a>
-
-			{#if hasProfileId}
-				<a
-					href={resolve('/employee/user/[userId]', { userId: currentUserId })}
-					class="employee-nav-link"
-					class:is-active={pathname.startsWith('/employee/user/')}
-				>
-					Profiil
-				</a>
-			{:else}
-				<a href={resolve('/employee')} class="employee-nav-link" class:is-active={pathname === '/employee'}>
-					Profiil
-				</a>
-			{/if}
+			{#each navItems as item (item.key)}
+				{#if item.isCompanyRoute}
+					<a
+						href={resolve(item.route as '/employee/[CompanyId]' | '/employee/[CompanyId]/landproperty' | '/employee/[CompanyId]/activity', { CompanyId: navCompanyId })}
+						class="employee-nav-link"
+						class:is-active={item.isActive}
+					>
+						<span class="employee-nav-icon" aria-hidden="true">
+							{#if item.icon === 'overview'}
+								<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+									<path d="M4 11.25 12 5l8 6.25V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1v-8.75Z" />
+								</svg>
+							{:else if item.icon === 'property'}
+								<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+									<path d="M4 7.5h16v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-12Zm2 2v9h12v-9H6Zm2-6h8l2 3H6l2-3Z" />
+								</svg>
+							{:else if item.icon === 'activity'}
+								<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+									<path d="M4 12.5h3.5l2-4 3.5 8 2.5-5H20" />
+									<path d="M4 5h16v14H4z" fill="none" stroke-width="1.8" />
+								</svg>
+							{:else}
+								<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+									<path d="M3 7h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7Zm4-3h10v2H7V4Zm2 6h2v2H9v-2Zm0 4h2v2H9v-2Zm4-4h6v2h-6v-2Zm0 4h6v2h-6v-2Z" />
+								</svg>
+							{/if}
+						</span>
+						<span>{item.label}</span>
+					</a>
+				{:else}
+					<a href={resolve('/employee')} class="employee-nav-link" class:is-active={item.isActive}>
+						<span class="employee-nav-icon" aria-hidden="true">
+							<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+								<path d="M3 7h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7Zm4-3h10v2H7V4Zm2 6h2v2H9v-2Zm0 4h2v2H9v-2Zm4-4h6v2h-6v-2Zm0 4h6v2h-6v-2Z" />
+							</svg>
+						</span>
+						<span>{item.label}</span>
+					</a>
+				{/if}
+			{/each}
 		</nav>
 	{/if}
 
-	<div class="employee-content">
-		{@render children()}
-	</div>
+	<ToastMessage
+		message={$toastStore.message}
+		variant={$toastStore.variant}
+		visible={$toastStore.visible}
+	/>
 
-	{#if navCompanyId}
+	<main class="employee-main">
+		<div class="employee-content-frame">
+			<div class="employee-content">
+				{@render children()}
+			</div>
+		</div>
+	</main>
+
+	{#if navItems.length > 0}
 		<nav class="employee-bottom-nav" aria-label="Employee mobile navigation">
-			<a href={resolve('/employee')} class="employee-tab-link" class:is-active={pathname === '/employee'}>
-				Avaleht
-			</a>
-			<a
-				href={resolve('/employee/[CompanyId]/landproperty', { CompanyId: navCompanyId })}
-				class="employee-tab-link"
-				class:is-active={pathname.includes(`/employee/${navCompanyId}/landproperty`)}
-			>
-				Kinnistud
-			</a>
-			<a
-				href={resolve('/employee/[CompanyId]/activity', { CompanyId: navCompanyId })}
-				class="employee-tab-link"
-				class:is-active={pathname.includes(`/employee/${navCompanyId}/activity`)}
-			>
-				Tegevused
-			</a>
-			{#if hasProfileId}
-				<a
-					href={resolve('/employee/user/[userId]', { userId: currentUserId })}
-					class="employee-tab-link"
-					class:is-active={pathname.startsWith('/employee/user/')}
-				>
-					Profiil
-				</a>
-			{:else}
-				<a href={resolve('/employee')} class="employee-tab-link" class:is-active={pathname === '/employee'}>
-					Profiil
-				</a>
-			{/if}
+			{#each navItems as item (item.key)}
+				{#if item.isCompanyRoute}
+					<a
+						href={resolve(item.route as '/employee/[CompanyId]' | '/employee/[CompanyId]/landproperty' | '/employee/[CompanyId]/activity', { CompanyId: navCompanyId })}
+						class="employee-tab-link"
+						class:is-active={item.isActive}
+					>
+						<span class="employee-tab-icon" aria-hidden="true">
+							{#if item.icon === 'overview'}
+								<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+									<path d="M4 11.25 12 5l8 6.25V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1v-8.75Z" />
+								</svg>
+							{:else if item.icon === 'property'}
+								<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+									<path d="M4 7.5h16v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-12Zm2 2v9h12v-9H6Zm2-6h8l2 3H6l2-3Z" />
+								</svg>
+							{:else if item.icon === 'activity'}
+								<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+									<path d="M4 12.5h3.5l2-4 3.5 8 2.5-5H20" />
+									<path d="M4 5h16v14H4z" fill="none" stroke-width="1.8" />
+								</svg>
+							{:else}
+								<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+									<path d="M3 7h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7Zm4-3h10v2H7V4Zm2 6h2v2H9v-2Zm0 4h2v2H9v-2Zm4-4h6v2h-6v-2Zm0 4h6v2h-6v-2Z" />
+								</svg>
+							{/if}
+						</span>
+						<span>{item.label}</span>
+					</a>
+				{:else}
+					<a href={resolve('/employee')} class="employee-tab-link" class:is-active={item.isActive}>
+						<span class="employee-tab-icon" aria-hidden="true">
+							<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+								<path d="M3 7h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7Zm4-3h10v2H7V4Zm2 6h2v2H9v-2Zm0 4h2v2H9v-2Zm4-4h6v2h-6v-2Zm0 4h6v2h-6v-2Z" />
+							</svg>
+						</span>
+						<span>{item.label}</span>
+					</a>
+				{/if}
+			{/each}
 		</nav>
 	{/if}
 </div>
 
 <style>
 	:global(:root) {
-		--employee-shell-bg: #eef4f0;
+		--employee-shell-bg: #edf2ef;
 		--employee-surface: #ffffff;
+		--employee-surface-alt: #f6faf7;
 		--employee-accent: #1f5a42;
-		--employee-border: #d7e2dc;
+		--employee-accent-strong: #174632;
+		--employee-border: #d6e2da;
+		--employee-ink: #12221b;
+		--employee-ink-soft: #42584c;
+		--employee-focus-ring: rgba(31, 90, 66, 0.24);
 		--employee-radius-md: 0.9rem;
-		--employee-radius-lg: 1rem;
-		--employee-shadow-1: 0 6px 20px rgba(20, 41, 31, 0.08);
-		--employee-shadow-2: 0 10px 26px rgba(20, 41, 31, 0.12);
+		--employee-radius-lg: 1.1rem;
+		--employee-shadow-soft: 0 4px 14px rgba(15, 30, 22, 0.08);
+		--employee-shadow-strong: 0 10px 28px rgba(15, 30, 22, 0.16);
 		--employee-bottom-nav-height: 4.4rem;
 		--employee-safe-bottom: max(0.55rem, env(safe-area-inset-bottom));
 		--employee-shell-pad-x: 0.75rem;
 	}
 
 	.employee-layout {
-		color: #1f2a24;
+		color: var(--employee-ink);
+		background:
+			linear-gradient(180deg, #f4f8f5 0%, #ebf2ee 100%);
+		background-color: var(--employee-shell-bg);
+		display: grid;
+		grid-template-rows: auto auto 1fr;
+		gap: 0.8rem;
 		padding-bottom: calc(var(--employee-bottom-nav-height) + var(--employee-safe-bottom) + 0.9rem);
 	}
 
@@ -198,38 +287,38 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 0.75rem;
-		margin-bottom: 0.75rem;
-		padding: 0.78rem 0.82rem;
-		background: linear-gradient(180deg, #265f48 0%, #1f5a42 100%);
-		box-shadow: var(--employee-shadow-2);
-		width: calc(100% + (var(--employee-shell-pad-x) * 2));
-		margin-left: calc(var(--employee-shell-pad-x) * -1);
-		margin-right: calc(var(--employee-shell-pad-x) * -1);
+		padding: 0.8rem 0.9rem;
+		background: linear-gradient(180deg, #275f47 0%, #1f5a42 100%);
+		border-radius: 0;
+		box-shadow: var(--employee-shadow-strong);
+		width: 100vw;
+		margin-left: calc(50% - 50vw);
+		margin-right: calc(50% - 50vw);
 	}
 
 	.employee-kicker {
 		margin: 0;
-		font-size: 0.7rem;
+		font-size: 0.72rem;
 		font-weight: 700;
 		letter-spacing: 0.03em;
 		text-transform: uppercase;
-		color: #d8e9df;
+		color: #d6e9df;
 	}
 
 	.employee-title {
 		margin: 0.16rem 0 0;
-		font-size: 1.02rem;
+		font-size: 1.05rem;
 		line-height: 1.25;
 		font-weight: 700;
-		color: #eef6f1;
+		color: #f2faf6;
 	}
 
 	.employee-signout {
-		border: 1px solid #c0d7cb;
-		background: #f8fbf9;
-		color: #1f352a;
+		border: 1px solid #d8e6de;
+		background: #f4f8f6;
+		color: #1b3a2d;
 		border-radius: var(--employee-radius-md);
-		min-height: 2.75rem;
+		min-height: 2.9rem;
 		padding: 0.68rem 0.92rem;
 		font-size: 0.86rem;
 		font-weight: 600;
@@ -244,8 +333,8 @@
 	}
 
 	.employee-signout:hover {
-		background: #f2f6f3;
-		border-color: #9fbcad;
+		background: #eaf2ee;
+		border-color: #b8d0c3;
 	}
 
 	.employee-signout:active {
@@ -254,7 +343,7 @@
 
 	.employee-signout:focus-visible {
 		outline: none;
-		box-shadow: 0 0 0 3px rgba(41, 94, 69, 0.24);
+		box-shadow: 0 0 0 3px var(--employee-focus-ring);
 	}
 
 	.employee-top-nav {
@@ -265,72 +354,106 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
+		gap: 0.44rem;
 		text-align: center;
 		text-decoration: none;
-		min-height: 2.8rem;
+		min-height: 3rem;
 		padding: 0.62rem 0.7rem;
 		border-radius: var(--employee-radius-md);
 		border: 1px solid var(--employee-border);
-		background: var(--employee-surface);
+		background: var(--employee-surface-alt);
 		font-size: 0.9rem;
 		font-weight: 600;
-		color: #1f4f39;
+		color: var(--employee-ink-soft);
 		transition:
 			background-color 0.18s ease,
 			border-color 0.18s ease,
 			color 0.18s ease;
 	}
 
+	.employee-nav-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 1rem;
+		height: 1rem;
+	}
+
+	.employee-nav-icon :global(svg) {
+		width: 1rem;
+		height: 1rem;
+		fill: currentColor;
+		stroke: currentColor;
+		stroke-width: 0;
+	}
+
 	.employee-nav-link:hover {
-		background: #f2f7f4;
-		border-color: #b8cbc1;
+		background: #eef5f1;
+		border-color: #b8cdc1;
 	}
 
 	.employee-nav-link.is-active {
-		background: var(--employee-accent);
-		border-color: var(--employee-accent);
-		color: #f6fbf8;
+		background: linear-gradient(180deg, var(--employee-accent) 0%, var(--employee-accent-strong) 100%);
+		border-color: var(--employee-accent-strong);
+		color: #f3fbf7;
+	}
+
+	.employee-main {
+		min-height: 0;
+	}
+
+	.employee-content-frame {
+		border: 1px solid var(--employee-border);
+		border-radius: calc(var(--employee-radius-lg) + 0.15rem);
+		background: linear-gradient(180deg, #ffffff 0%, #f8fbf9 100%);
+		padding: 0.85rem;
+		box-shadow: var(--employee-shadow-soft);
 	}
 
 	.employee-content {
-		border: 1px solid var(--employee-border);
-		background: var(--employee-shell-bg);
-		border-radius: var(--employee-radius-lg);
-		padding: 0.82rem;
-		box-shadow: var(--employee-shadow-1);
+		padding: 0;
+		background: transparent;
+		border: 0;
+		border-radius: 0;
+		box-shadow: none;
 	}
 
 	.employee-bottom-nav {
 		position: fixed;
-		left: 0;
-		right: 0;
+		left: 0.55rem;
+		right: 0.55rem;
 		bottom: 0;
 		z-index: 1200;
 		display: flex;
 		gap: 0.4rem;
 		height: calc(var(--employee-bottom-nav-height) + var(--employee-safe-bottom));
 		padding: 0.45rem 0.6rem calc(0.45rem + var(--employee-safe-bottom));
-		background: rgba(255, 255, 255, 0.96);
-		border-top: 1px solid #d4e1db;
-		box-shadow: 0 -8px 24px rgba(20, 40, 31, 0.15);
+		background: rgba(251, 253, 252, 0.95);
+		border: 1px solid #cfddd5;
+		border-bottom: 0;
+		border-top-left-radius: 1.15rem;
+		border-top-right-radius: 1.15rem;
+		box-shadow: 0 -8px 24px rgba(15, 34, 25, 0.16);
 		backdrop-filter: blur(8px);
 	}
 
 	.employee-tab-link {
 		flex: 1;
-		display: inline-grid;
+		display: inline-flex;
+		flex-direction: column;
 		align-items: center;
 		justify-content: center;
+		gap: 0.2rem;
 		text-align: center;
 		text-decoration: none;
-		min-height: 2.75rem;
+		min-height: 2.9rem;
 		padding: 0.55rem 0.35rem;
 		border-radius: var(--employee-radius-md);
 		border: 1px solid transparent;
 		background: transparent;
 		font-size: 0.8rem;
 		font-weight: 600;
-		color: #466055;
+		color: #496054;
 		transition:
 			background-color 0.18s ease,
 			border-color 0.18s ease,
@@ -343,28 +466,59 @@
 	}
 
 	.employee-tab-link.is-active {
-		background: #eaf3ee;
-		border-color: #c4d7ce;
-		color: #194934;
+		background: #e8f3ed;
+		border-color: #b7cec1;
+		color: #164c35;
 	}
 
 	.employee-tab-link:focus-visible {
 		outline: none;
-		box-shadow: 0 0 0 3px rgba(31, 90, 66, 0.24);
+		box-shadow: 0 0 0 3px var(--employee-focus-ring);
+	}
+
+	.employee-tab-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 1rem;
+		height: 1rem;
+	}
+
+	.employee-tab-icon :global(svg) {
+		width: 1rem;
+		height: 1rem;
+		fill: currentColor;
+		stroke: currentColor;
+		stroke-width: 0;
 	}
 
 	:global(.employee-stack-cards) {
 		display: grid;
-		gap: 0.75rem;
+		gap: 0.9rem;
 	}
 
 	:global(.employee-card) {
 		border: 1px solid var(--employee-border);
 		border-radius: var(--employee-radius-lg);
-		background: var(--employee-surface);
-		padding: 0.9rem;
+		background: linear-gradient(180deg, #ffffff 0%, #f8fbf9 100%);
+		padding: 1rem;
 		margin-bottom: 1rem;
-		box-shadow: 0 4px 14px rgba(18, 39, 29, 0.05);
+		box-shadow: var(--employee-shadow-soft);
+	}
+
+	:global(.employee-card:is(.hero, .intro, .summary, .page-intro)) {
+		position: relative;
+		overflow: hidden;
+	}
+
+	:global(.employee-card:is(.hero, .intro, .summary, .page-intro)::before) {
+		content: '';
+		position: absolute;
+		left: 0;
+		top: 0;
+		bottom: 0;
+		width: 0.3rem;
+		background: linear-gradient(180deg, #88b7a0 0%, #5e8f78 100%);
 	}
 
 	:global(.employee-table-wrap) {
@@ -372,7 +526,7 @@
 		max-width: 100%;
 		border: 1px solid var(--employee-border);
 		border-radius: var(--employee-radius-md);
-		background: #fff;
+		background: #ffffff;
 		-webkit-overflow-scrolling: touch;
 	}
 
@@ -391,13 +545,23 @@
 		white-space: nowrap;
 	}
 
+	:global(.employee-table-wrap th) {
+		background: #edf4f0;
+		color: #173728;
+		font-weight: 700;
+	}
+
+	:global(.employee-table-wrap td) {
+		color: #2c473b;
+	}
+
 	:global(.employee-state-block) {
 		border-radius: var(--employee-radius-md);
-		border: 1px solid #d9e5df;
-		background: #f7faf8;
+		border: 1px solid #cfddd5;
+		background: #f5faf7;
 		padding: 0.85rem;
-		font-size: 0.95rem;
-		color: #2d3e35;
+		font-size: 0.97rem;
+		color: #2d4a3d;
 	}
 
 	:global(.employee-state-block.is-error) {
@@ -407,9 +571,9 @@
 	}
 
 	:global(.employee-state-block.is-empty) {
-		border-color: #d6e2db;
-		background: #f8fbf9;
-		color: #3d5347;
+		border-color: #d6e0ea;
+		background: #f8fbff;
+		color: #334155;
 	}
 
 	:global(.employee-state-block.is-loading) {
@@ -422,10 +586,51 @@
 		min-height: 2.75rem;
 	}
 
+	:global(.employee-page-title) {
+		margin: 0 0 0.8rem;
+		font-size: 1.32rem;
+		line-height: 1.25;
+		color: #0f261c;
+	}
+
+	:global(.employee-back-link) {
+		margin: 0 0 0.9rem;
+	}
+
+	:global(.employee-back-link-button) {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45rem;
+		min-height: 3rem;
+		padding: 0.65rem 0.95rem;
+		border-radius: 0.85rem;
+		border: 1px solid #c8d3df;
+		background: #ffffff;
+		font-size: 0.97rem;
+		font-weight: 700;
+		text-decoration: none;
+		color: #1e293b;
+		box-shadow: 0 2px 8px rgba(15, 23, 42, 0.07);
+	}
+
+	:global(.employee-back-link-button:hover) {
+		background: #f4f7fb;
+		border-color: #b6c5d6;
+	}
+
+	:global(.employee-back-link-button:active) {
+		transform: translateY(1px);
+	}
+
+	:global(.employee-back-link-button:focus-visible) {
+		outline: none;
+		box-shadow: 0 0 0 3px var(--employee-focus-ring);
+	}
+
 	:global(.employee-content :is(button, a):focus-visible),
 	:global(.employee-content :is(input, select, textarea):focus-visible) {
 		outline: none;
-		box-shadow: 0 0 0 3px rgba(31, 90, 66, 0.22);
+		box-shadow: 0 0 0 3px var(--employee-focus-ring);
 	}
 
 	:global(.employee-content :is(button, a):active) {
@@ -438,12 +643,14 @@
 		}
 
 		.employee-layout {
-			padding-bottom: 2rem;
+			grid-template-rows: auto auto 1fr;
+			padding-bottom: 2.25rem;
 		}
 
 		.employee-appbar {
 			position: static;
 			padding: 0.9rem 1rem;
+			margin-bottom: 0;
 		}
 
 		.employee-title {
@@ -454,7 +661,11 @@
 			display: flex;
 			align-items: center;
 			gap: 0.55rem;
-			margin-bottom: 0.85rem;
+			padding: 0.5rem;
+			background: #ffffff;
+			border: 1px solid var(--employee-border);
+			border-radius: calc(var(--employee-radius-lg) + 0.05rem);
+			box-shadow: var(--employee-shadow-soft);
 		}
 
 		.employee-bottom-nav {
@@ -462,7 +673,11 @@
 		}
 
 		.employee-content {
-			padding: 1rem;
+			padding: 0;
+		}
+
+		.employee-content-frame {
+			padding: 1.05rem;
 		}
 
 		:global(.employee-stack-cards) {
@@ -476,11 +691,20 @@
 		}
 
 		.employee-content {
-			padding: 1.1rem 1.2rem;
+			padding: 0;
+		}
+
+		.employee-content-frame {
+			padding: 1.2rem;
 		}
 
 		:global(.employee-card) {
-			padding: 1rem;
+			padding: 1.05rem;
+		}
+
+		:global(.employee-page-title) {
+			font-size: 1.45rem;
 		}
 	}
 </style>
+

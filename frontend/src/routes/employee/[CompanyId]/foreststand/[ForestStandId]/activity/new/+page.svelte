@@ -97,15 +97,20 @@
 	onMount(loadForestStandSummary);
 </script>
 
-<h1>Logi tegevus eraldise jaoks</h1>
+<h1 class="employee-page-title">Logi tegevus eraldise jaoks</h1>
 
-<p class="breadcrumb">
+
+<p class="employee-back-link">
 	<a
+		class="employee-back-link-button"
 		href={resolve('/employee/[CompanyId]/foreststand/[ForestStandId]', {
 			CompanyId: companyId,
 			ForestStandId: forestStandId
-		})}>← Tagasi eraldise detailidesse</a
+		})}
 	>
+		<span aria-hidden="true">←</span>
+		<span>Tagasi eraldise detailidesse</span>
+	</a>
 </p>
 
 {#if isLoading}
@@ -158,28 +163,10 @@
 {/if}
 
 <style>
-	.breadcrumb {
-		margin-top: -0.25rem;
-		margin-bottom: 0.9rem;
-	}
-
-	.breadcrumb a {
-		font-size: 0.9rem;
-		font-weight: 700;
-		text-decoration: none;
-		color: #1f5a42;
-	}
-
-	h1 {
-		margin: 0 0 0.7rem;
-		font-size: 1.2rem;
-		color: #17251e;
-	}
-
 	h2 {
 		margin: 0 0 0.6rem;
 		font-size: 1.05rem;
-		color: #1a3228;
+		color: #1f2937;
 	}
 
 	.summary {
@@ -188,7 +175,7 @@
 
 	.summary p {
 		margin: 0.3rem 0;
-		color: #3f564a;
+		color: #334155;
 	}
 
 	.summary a {

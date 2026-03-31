@@ -162,11 +162,15 @@
 {:else if forestStand}
 	<p class="back-link">
 		<a
+			class="back-link-button"
 			href={resolve('/employee/[CompanyId]/cadaster/[CadasterId]', {
 				CompanyId: companyId,
 				CadasterId: forestStand.cadasterId
-			})}>← Tagasi katastri juurde</a
+			})}
 		>
+			<span aria-hidden="true">←</span>
+			<span>Tagasi katastri juurde</span>
+		</a>
 	</p>
 
 	<section class="employee-card summary">
@@ -221,7 +225,18 @@
 	</section>
 
 	<section class="employee-card">
-		<h2>Sinu tegevused selles eraldises</h2>
+		<div class="section-head">
+			<h2>Sinu tegevused selles eraldises</h2>
+			<a
+				class="log-activity-link is-secondary"
+				href={resolve('/employee/[CompanyId]/foreststand/[ForestStandId]/activity/new', {
+					CompanyId: companyId,
+					ForestStandId: forestStand.id
+				})}
+			>
+				Logi uus tegevus
+			</a>
+		</div>
 		{#if activities.length === 0}
 			<div class="employee-state-block is-empty">Selles eraldises ei leitud sinu konto tegevusi.</div>
 		{:else}
@@ -289,18 +304,40 @@
 
 <style>
 	.back-link {
-		margin: 0 0 0.75rem;
+		margin: 0 0 0.9rem;
 	}
 
-	.back-link a {
-		font-size: 0.9rem;
+	.back-link-button {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45rem;
+		min-height: 3rem;
+		padding: 0.65rem 0.95rem;
+		border-radius: 0.85rem;
+		border: 1px solid #c4d4cd;
+		background: #ffffff;
+		font-size: 0.97rem;
 		font-weight: 700;
 		text-decoration: none;
-		color: #1f5a42;
+		color: #1f3f33;
+		box-shadow: 0 2px 8px rgba(15, 37, 28, 0.06);
+	}
+
+	.back-link-button:hover {
+		background: #f5f9f7;
+		border-color: #afc6bb;
 	}
 
 	.summary {
 		margin-bottom: 0.75rem;
+	}
+
+	.section-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.7rem;
+		margin-bottom: 0.65rem;
 	}
 
 	.summary-head {
@@ -329,9 +366,9 @@
 	}
 
 	h2 {
-		margin: 0 0 0.65rem;
+		margin: 0;
 		font-size: 1.05rem;
-		color: #1a3228;
+		color: #1f2937;
 	}
 
 	.inline-note {
@@ -344,21 +381,27 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		min-height: 2.4rem;
-		padding: 0.5rem 0.8rem;
+		min-height: 3rem;
+		padding: 0.6rem 1rem;
 		border: 1px solid #1f5a42;
-		border-radius: 0.7rem;
+		border-radius: 0.85rem;
 		background: #1f5a42;
 		color: #f6fbf8;
-		font-size: 0.88rem;
+		font-size: 0.96rem;
 		font-weight: 700;
 		text-decoration: none;
+	}
+
+	.log-activity-link.is-secondary {
+		border-color: #b7cbc1;
+		background: #f7fbf9;
+		color: #184434;
 	}
 
 	.context-grid,
 	.meta-grid {
 		display: grid;
-		gap: 0.45rem;
+		gap: 0.5rem;
 	}
 
 	.context-grid {
@@ -368,7 +411,7 @@
 	.context-grid p,
 	.meta-grid p {
 		margin: 0;
-		color: #3f564a;
+		color: #334155;
 	}
 
 	.context-grid a {
@@ -382,23 +425,33 @@
 	}
 
 	.activity-card {
-		border: 1px solid #d9e4de;
+		border: 1px solid #d8e0dc;
 		border-radius: 0.8rem;
-		padding: 0.8rem;
+		padding: 0.9rem;
 		background: #ffffff;
 		display: grid;
-		gap: 0.35rem;
+		gap: 0.42rem;
 	}
 
 	.activity-card p {
 		margin: 0;
-		color: #3f564a;
+		color: #334155;
 	}
 
 	.activity-card a {
-		font-size: 0.9rem;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		align-self: start;
+		min-height: 2.75rem;
+		margin-top: 0.2rem;
+		padding: 0.45rem 0.8rem;
+		border: 1px solid #bfd0c8;
+		border-radius: 0.75rem;
+		background: #f8fbf9;
+		font-size: 0.95rem;
 		font-weight: 700;
-		color: #1f5a42;
+		color: #184334;
 		text-decoration: none;
 	}
 
@@ -406,6 +459,17 @@
 		display: flex;
 		justify-content: space-between;
 		gap: 0.6rem;
+	}
+
+	@media (max-width: 420px) {
+		.section-head {
+			flex-direction: column;
+			align-items: stretch;
+		}
+
+		.log-activity-link.is-secondary {
+			width: 100%;
+		}
 	}
 
 	@media (min-width: 768px) {

@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
+	import { toastStore } from '$lib/stores/toast.store';
 	import { onMount } from 'svelte';
 
 	type ActivityTypeListDto = {
@@ -55,17 +56,6 @@
 	let activityTypeId = $state('');
 	let selectedCadasterId = $state('');
 
-	$effect(() => {
-		if (lockCadaster && cadasterId) {
-			selectedCadasterId = cadasterId;
-			return;
-		}
-
-		if (!lockCadaster && cadasterId && !selectedCadasterId) {
-			selectedCadasterId = cadasterId;
-		}
-	});
-
 	async function loadActivityTypes() {
 		try {
 			errorMessage = '';
@@ -100,16 +90,19 @@
 
 		if (!description.trim()) {
 			errorMessage = 'Kirjeldus on kohustuslik.';
+			toastStore.showToast(errorMessage, 'error');
 			return;
 		}
 
 		if (!activityTypeId) {
 			errorMessage = 'Tegevuse tüüp on kohustuslik.';
+			toastStore.showToast(errorMessage, 'error');
 			return;
 		}
 
 		if (!selectedCadasterId) {
 			errorMessage = 'Kataster on kohustuslik.';
+			toastStore.showToast(errorMessage, 'error');
 			return;
 		}
 
@@ -117,6 +110,7 @@
 		const quantityNumber = quantityRaw === '' ? 0 : Number(quantityRaw);
 		if (!Number.isFinite(quantityNumber)) {
 			errorMessage = 'Kogus peab olema korrektne number.';
+			toastStore.showToast(errorMessage, 'error');
 			return;
 		}
 
@@ -151,20 +145,30 @@
 						: response.status === 401
 							? 'Ligipääs puudub. Logige uuesti sisse.'
 							: 'Tegevuse loomine ebaõnnestus.';
+				toastStore.showToast(errorMessage, 'error');
 				return;
 			}
+
+			toastStore.showToast('Tegevus logiti edukalt.', 'success');
 
 			if (redirectHref) {
 				await goto(resolve(redirectHref as unknown as '/'));
 			}
 		} catch {
 			errorMessage = 'Tegevuse loomine ebaõnnestus.';
+			toastStore.showToast(errorMessage, 'error');
 		} finally {
 			isSubmitting = false;
 		}
 	}
 
-	onMount(loadActivityTypes);
+	onMount(() => {
+		if (cadasterId) {
+			selectedCadasterId = cadasterId;
+		}
+
+		loadActivityTypes();
+	});
 </script>
 
 <section class="employee-card activity-form-card">

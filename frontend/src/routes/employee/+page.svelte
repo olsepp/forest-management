@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
+	import { user } from '$lib/stores/auth.store';
 	import type { CompanyListDto } from '$lib/types/company';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
@@ -11,6 +12,7 @@
 	let companies = $state<CompanyListDto[]>([]);
 	let isLoading = $state(true);
 	let errorMessage = $state('');
+	let currentUserId = $derived($user?.userId?.trim() ?? '');
 
 	onMount(async () => {
 		try {
@@ -46,9 +48,14 @@
 </script>
 
 <section class="employee-card hero">
+	{#if currentUserId}
+		<a class="profile-shortcut" href={resolve('/employee/user/[userId]', { userId: currentUserId })}>
+			Minu profiil
+		</a>
+	{/if}
 	<p class="kicker">Ettevõtte valik</p>
-	<h1>Valige oma ettevõte</h1>
-	<p>Valige ettevõte, et avada oma töötajate tööruum.</p>
+	<h1 class="employee-page-title">Vali ettevõte</h1>
+	<!-- <p>Valige ettevõte, et avada oma töötajate tööruum.</p> -->
 </section>
 
 {#if isLoading}
@@ -63,7 +70,6 @@
 			<button class="company-card" type="button" onclick={() => openCompany(company.id)}>
 				<span class="company-name">{company.name}</span>
 				<span class="company-meta">Reg. nr: {company.registrationNumber}</span>
-				<span class="company-action">Avage ettevõte</span>
 			</button>
 		{/each}
 	</div>
@@ -73,8 +79,8 @@
 	.hero {
 		margin-bottom: 0.9rem;
 		padding: 1rem;
-		background: linear-gradient(180deg, #ffffff 0%, #f3f8f5 100%);
-		border-color: #d2e1d8;
+		background: linear-gradient(180deg, #ffffff 0%, #f5f8fc 100%);
+		border-color: #d3dde8;
 	}
 
 	.kicker {
@@ -86,16 +92,41 @@
 		color: #3f5a4b;
 	}
 
-	h1 {
-		margin: 0.3rem 0 0.4rem;
-		font-size: 1.15rem;
-		line-height: 1.2;
-		color: #17251e;
+	.profile-shortcut {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		align-self: flex-start;
+		min-height: 3rem;
+		padding: 0.65rem 0.95rem;
+		margin-bottom: 0.7rem;
+		border-radius: 0.85rem;
+		border: 1px solid #97b6a6;
+		background: #eaf5ef;
+		color: #123d2e;
+		font-size: 0.95rem;
+		font-weight: 700;
+		text-decoration: none;
+		box-shadow: 0 2px 8px rgba(15, 37, 28, 0.08);
+	}
+
+	.profile-shortcut:hover {
+		background: #ddede4;
+		border-color: #7ca48f;
+	}
+
+	.profile-shortcut:active {
+		transform: translateY(1px);
+	}
+
+	.profile-shortcut:focus-visible {
+		outline: none;
+		box-shadow: 0 0 0 3px rgba(31, 90, 66, 0.25);
 	}
 
 	p {
 		margin: 0;
-		color: #40574a;
+		color: #334155;
 	}
 
 	.company-grid {
@@ -112,7 +143,7 @@
 		width: 100%;
 		min-height: 2.75rem;
 		padding: 0.92rem;
-		border: 1px solid #d2e0d8;
+		border: 1px solid #cfd8e3;
 		border-radius: 1rem;
 		background: #fff;
 		text-align: left;
@@ -124,8 +155,8 @@
 	}
 
 	.company-card:hover {
-		border-color: #99b8a9;
-		box-shadow: 0 6px 16px rgba(25, 53, 40, 0.12);
+		border-color: #aebed0;
+		box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
 		transform: translateY(-1px);
 	}
 
@@ -141,19 +172,12 @@
 	.company-name {
 		font-size: 1rem;
 		font-weight: 700;
-		color: #173b2d;
+		color: #0f172a;
 	}
 
 	.company-meta {
 		font-size: 0.88rem;
-		color: #4a6356;
-	}
-
-	.company-action {
-		margin-top: 0.28rem;
-		font-size: 0.84rem;
-		font-weight: 700;
-		color: #1f5a42;
+		color: #475569;
 	}
 
 	@media (min-width: 640px) {

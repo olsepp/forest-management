@@ -3,7 +3,6 @@
 	import { resolve } from '$app/paths';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
-	import { user } from '$lib/stores/auth.store';
 	import type { CompanyDto } from '$lib/types/company';
 	import { onMount } from 'svelte';
 
@@ -12,7 +11,7 @@
 	type QuickAction = {
 		label: string;
 		description: string;
-		kind: 'properties' | 'activities' | 'profile';
+		kind: 'properties' | 'activities';
 	};
 
 	let company = $state<CompanyDto | null>(null);
@@ -21,7 +20,6 @@
 	let isUnauthorized = $state(false);
 
 	let companyId = $derived($page.params.CompanyId ?? '');
-	let currentUserId = $derived($user?.userId ?? '');
 
 	let quickActions = $derived.by(() => {
 		if (!companyId) return [] as QuickAction[];
@@ -29,18 +27,13 @@
 		return [
 			{
 				label: 'Kinnistud',
-				description: 'Sirvi aktiivseid kinnistuid ja ava katasteri detailid.',
+				description: 'Otsi aktiivseid kinnistuid.',
 				kind: 'properties'
 			},
 			{
 				label: 'Tegevuste ajalugu',
-				description: 'Vaata selle ettevõtte viimaseid töölogisid.',
+				description: 'Vaata enda tehtud tegevuste ajalugu.',
 				kind: 'activities'
-			},
-			{
-				label: 'Profiil',
-				description: 'Vaata oma konto ja kontaktandmeid.',
-				kind: 'profile'
 			}
 		];
 	});
@@ -86,14 +79,8 @@
 
 <section class="intro employee-card">
 	<p class="kicker">Ettevõtte tööruum</p>
-	<h1>{company?.name ?? 'Töötaja töölaud'}</h1>
-	<p>
-		{#if company}
-			Valige valdkond, kus jätkata igapäevast tööd ettevõttes <strong>{company.name}</strong>.
-		{:else}
-			Valige valdkond, kus jätkata igapäevast tööd.
-		{/if}
-	</p>
+	<h1 class="employee-page-title">{company?.name ?? 'Töötaja töölaud'}</h1>
+
 </section>
 
 {#if isLoading}
@@ -116,20 +103,8 @@
 					<p>{action.description}</p>
 					<span class="action-link">Ava</span>
 				</a>
-			{:else if action.kind === 'activities'}
-				<a class="action-card" href={resolve('/employee/[CompanyId]/activity', { CompanyId: companyId })}>
-					<h2>{action.label}</h2>
-					<p>{action.description}</p>
-					<span class="action-link">Ava</span>
-				</a>
-			{:else if currentUserId}
-				<a class="action-card" href={resolve('/employee/user/[userId]', { userId: currentUserId })}>
-					<h2>{action.label}</h2>
-					<p>{action.description}</p>
-					<span class="action-link">Ava</span>
-				</a>
 			{:else}
-				<a class="action-card" href={resolve('/employee')}>
+				<a class="action-card" href={resolve('/employee/[CompanyId]/activity', { CompanyId: companyId })}>
 					<h2>{action.label}</h2>
 					<p>{action.description}</p>
 					<span class="action-link">Ava</span>
@@ -143,8 +118,8 @@
 	.intro {
 		margin-bottom: 0.85rem;
 		padding: 1rem;
-		background: linear-gradient(180deg, #ffffff 0%, #f3f8f5 100%);
-		border-color: #d2e1d8;
+		background: linear-gradient(180deg, #ffffff 0%, #f5f8fc 100%);
+		border-color: #d3dde8;
 	}
 
 	.kicker {
@@ -156,16 +131,9 @@
 		color: #3f5a4b;
 	}
 
-	h1 {
-		margin: 0.32rem 0 0.4rem;
-		font-size: 1.16rem;
-		line-height: 1.2;
-		color: #17251e;
-	}
-
 	p {
 		margin: 0;
-		color: #40574a;
+		color: #334155;
 	}
 
 	.inline-note {
@@ -179,7 +147,7 @@
 		flex-direction: column;
 		gap: 0.45rem;
 		min-height: 2.75rem;
-		border: 1px solid #d2e0d8;
+		border: 1px solid #cfd8e3;
 		border-radius: 1rem;
 		padding: 0.92rem;
 		background: #fff;
@@ -191,8 +159,8 @@
 	}
 
 	.action-card:hover {
-		border-color: #99b8a9;
-		box-shadow: 0 6px 16px rgba(25, 53, 40, 0.12);
+		border-color: #aebed0;
+		box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
 		transform: translateY(-1px);
 	}
 
@@ -208,14 +176,22 @@
 	h2 {
 		margin: 0;
 		font-size: 1.02rem;
-		color: #173f2f;
+		color: #0f172a;
 	}
 
 	.action-link {
-		margin-top: 0.22rem;
-		font-size: 0.84rem;
+		margin-top: 0.28rem;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 2.6rem;
+		padding: 0.45rem 0.85rem;
+		font-size: 0.9rem;
 		font-weight: 700;
-		color: #1f5a42;
+		color: #184334;
+		background: #f6fbf9;
+		border: 1px solid #bfd0c8;
+		border-radius: 0.72rem;
 	}
 
 	@media (min-width: 640px) {

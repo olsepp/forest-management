@@ -269,15 +269,18 @@
 		{/if}
 	</div>
 {:else if activity}
-	<p class="back-link">
-		<a href={resolve('/employee/[CompanyId]/activity', { CompanyId: companyId })}>← Tagasi tegevuste ajalukku</a>
+	<p class="employee-back-link">
+		<a class="employee-back-link-button" href={resolve('/employee/[CompanyId]/activity', { CompanyId: companyId })}>
+			<span aria-hidden="true">←</span>
+			<span>Tagasi tegevuste ajalukku</span>
+		</a>
 	</p>
 
 	<section class="employee-card summary">
 		<div class="summary-head">
 			<div>
 				<p class="kicker">Tegevuse kirje</p>
-				<h1>{activity.activityTypeName || 'Tegevus'}</h1>
+				<h1 class="employee-page-title">{activity.activityTypeName || 'Tegevus'}</h1>
 				<p class="subtitle">Vaata ja uuenda oma sisestatud tegevuse detaile.</p>
 			</div>
 			<button type="button" class="mode-btn" onclick={() => (isEditMode = !isEditMode)} disabled={isSaving}>
@@ -330,51 +333,53 @@
 		</div>
 	</section>
 
-	<form onsubmit={saveActivity} class="employee-card detail-form">
-		<h2>Muuda tegevust</h2>
+	{#if isEditMode}
+		<form onsubmit={saveActivity} class="employee-card detail-form">
+			<h2>Muuda tegevust</h2>
 
-		<div class="form-grid">
-			<label>
-				<span>Tegevuse tüüp</span>
-				<select bind:value={form.activityTypeId} disabled={!isEditMode}>
-					{#each activityTypes as type (type.id)}
-						<option value={type.id}>{type.activityTypeName}</option>
-					{/each}
-				</select>
-			</label>
+			<div class="form-grid">
+				<label>
+					<span>Tegevuse tüüp</span>
+					<select bind:value={form.activityTypeId} disabled={!isEditMode}>
+						{#each activityTypes as type (type.id)}
+							<option value={type.id}>{type.activityTypeName}</option>
+						{/each}
+					</select>
+				</label>
 
-			<label>
-				<span>Kuupäev</span>
-				<input type="datetime-local" bind:value={form.date} readonly={!isEditMode} />
-			</label>
+				<label>
+					<span>Kuupäev</span>
+					<input type="datetime-local" bind:value={form.date} readonly={!isEditMode} />
+				</label>
 
-			<label>
-				<span>Kogus</span>
-				<input type="number" step="any" bind:value={form.quantity} readonly={!isEditMode} />
-			</label>
+				<label>
+					<span>Kogus</span>
+					<input type="number" step="any" bind:value={form.quantity} readonly={!isEditMode} />
+				</label>
 
-			<label>
-				<span>Ühik</span>
-				<input type="text" bind:value={form.unit} readonly={!isEditMode} />
-			</label>
+				<label>
+					<span>Ühik</span>
+					<input type="text" bind:value={form.unit} readonly={!isEditMode} />
+				</label>
 
-			<label class="full-width">
-				<span>Kirjeldus</span>
-				<textarea bind:value={form.description} rows="4" readonly={!isEditMode}></textarea>
-			</label>
+				<label class="full-width">
+					<span>Kirjeldus</span>
+					<textarea bind:value={form.description} rows="4" readonly={!isEditMode}></textarea>
+				</label>
 
-			<label class="full-width">
-				<span>Märkused</span>
-				<textarea bind:value={form.notes} rows="4" readonly={!isEditMode}></textarea>
-			</label>
-		</div>
+				<label class="full-width">
+					<span>Märkused</span>
+					<textarea bind:value={form.notes} rows="4" readonly={!isEditMode}></textarea>
+				</label>
+			</div>
 
-		<div class="form-actions">
-			<button class="btn-save" type="submit" disabled={isSaving || !isEditMode}>
-				{isSaving ? 'Salvestamine...' : 'Salvesta muudatused'}
-			</button>
-		</div>
-	</form>
+			<div class="form-actions">
+				<button class="btn-save" type="submit" disabled={isSaving || !isEditMode}>
+					{isSaving ? 'Salvestamine...' : 'Salvesta muudatused'}
+				</button>
+			</div>
+		</form>
+	{/if}
 
 	{#if errorMessage}
 		<div class="employee-state-block is-error">{errorMessage}</div>
@@ -386,17 +391,6 @@
 {/if}
 
 <style>
-	.back-link {
-		margin: 0 0 0.75rem;
-	}
-
-	.back-link a {
-		font-size: 0.9rem;
-		font-weight: 700;
-		text-decoration: none;
-		color: #1f5a42;
-	}
-
 	.summary {
 		margin-bottom: 0.75rem;
 	}
@@ -420,21 +414,21 @@
 	}
 
 	h1 {
-		margin: 0.3rem 0 0.2rem;
-		font-size: 1.2rem;
+		margin: 0;
+		font-size: 1.28rem;
 		line-height: 1.2;
-		color: #17251e;
+		color: #0f172a;
 	}
 
 	h2 {
 		margin: 0 0 0.75rem;
 		font-size: 1.05rem;
-		color: #1a3228;
+		color: #1f2937;
 	}
 
 	.subtitle {
 		margin: 0;
-		color: #415a4d;
+		color: #334155;
 	}
 
 	.inline-note {
@@ -444,13 +438,13 @@
 	}
 
 	.mode-btn {
-		min-height: 2.45rem;
-		padding: 0.5rem 0.9rem;
+		min-height: 2.8rem;
+		padding: 0.55rem 0.95rem;
 		background: #1f5a42;
 		color: #f6fbf8;
 		border: 1px solid #184835;
-		border-radius: 0.65rem;
-		font-size: 0.9rem;
+		border-radius: 0.75rem;
+		font-size: 0.95rem;
 		font-weight: 700;
 	}
 
@@ -465,7 +459,7 @@
 
 	.meta-grid p {
 		margin: 0;
-		color: #3f564a;
+		color: #334155;
 	}
 
 	.meta-grid a {

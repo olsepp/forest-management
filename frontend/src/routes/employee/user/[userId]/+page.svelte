@@ -126,13 +126,16 @@
 	onMount(loadProfile);
 </script>
 
-<p class="back-link">
-	<a href={resolve('/employee')}>← Tagasi töötaja avalehele</a>
+<p class="employee-back-link">
+	<a class="employee-back-link-button" href={resolve('/employee')}>
+		<span aria-hidden="true">←</span>
+		<span>Tagasi töötaja avalehele</span>
+	</a>
 </p>
 
 <section class="employee-card summary">
 	<p class="kicker">Kasutajaprofiil</p>
-	<h1>Sinu konto</h1>
+	<h1 class="employee-page-title">Sinu konto</h1>
 	<p>Profiiliandmed sinu töötaja kontole.</p>
 </section>
 
@@ -158,44 +161,11 @@
 {/if}
 
 <style>
-	.back-link {
-		margin: 0 0 0.75rem;
-	}
-
-	.back-link a {
-		display: inline-flex;
-		align-items: center;
-		min-height: 2.75rem;
-		padding: 0.25rem 0.5rem;
-		border-radius: 0.75rem;
-		font-size: 0.86rem;
-		font-weight: 700;
-		text-decoration: none;
-		color: #1f5a42;
-		transition:
-			background-color 0.18s ease,
-			color 0.18s ease,
-			transform 0.12s ease;
-	}
-
-	.back-link a:hover {
-		background: #eef6f2;
-	}
-
-	.back-link a:active {
-		transform: translateY(1px);
-	}
-
-	.back-link a:focus-visible {
-		outline: none;
-		box-shadow: 0 0 0 3px rgba(31, 90, 66, 0.22);
-	}
-
 	.summary {
 		margin-bottom: 0.75rem;
 		padding: 1rem;
-		background: linear-gradient(180deg, #ffffff 0%, #f3f8f5 100%);
-		border-color: #d2e1d8;
+		background: linear-gradient(180deg, #ffffff 0%, #f5f8fc 100%);
+		border-color: #d3dde8;
 	}
 
 	.kicker {
@@ -208,15 +178,15 @@
 	}
 
 	h1 {
-		margin: 0.3rem 0 0.4rem;
-		font-size: 1.14rem;
+		margin: 0 0 0.4rem;
+		font-size: 1.2rem;
 		line-height: 1.2;
-		color: #17251e;
+		color: #0f172a;
 	}
 
 	p {
 		margin: 0;
-		color: #40574a;
+		color: #334155;
 	}
 
 	.profile-grid {
@@ -226,11 +196,11 @@
 
 	.profile-grid p {
 		margin: 0;
-		color: #3f564a;
+		color: #334155;
 		padding: 0.58rem 0.64rem;
-		border: 1px solid #d9e5df;
+		border: 1px solid #d7e0ea;
 		border-radius: 0.8rem;
-		background: #f8fbf9;
+		background: #f8fbff;
 	}
 
 	@media (min-width: 640px) {

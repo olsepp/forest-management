@@ -99,7 +99,7 @@
 
 <section class="employee-card summary">
 	<p class="kicker">Tegevuste ajalugu</p>
-	<h1>Sinu ettevõtte tegevuste ajalugu</h1>
+	<h1 class="employee-page-title">Sinu ettevõtte tegevuste ajalugu</h1>
 	<p>Vaata kõiki tegevusi, mille oled selles ettevõttes sisestanud.</p>
 </section>
 
@@ -128,6 +128,7 @@
 					<p><strong>Eraldis:</strong> {forestStandLabel(activity)}</p>
 					<p><strong>Kogus:</strong> {formatQuantity(activity)}</p>
 					<a
+						class="activity-link"
 						href={resolve('/employee/[CompanyId]/activity/[ActivityId]', {
 							CompanyId: companyId,
 							ActivityId: activity.id
@@ -193,16 +194,9 @@
 		color: #3f5a4b;
 	}
 
-	h1 {
-		margin: 0.3rem 0 0.4rem;
-		font-size: 1.2rem;
-		line-height: 1.2;
-		color: #17251e;
-	}
-
 	p {
 		margin: 0;
-		color: #40574a;
+		color: #334155;
 	}
 
 	.inline-note {
@@ -216,23 +210,33 @@
 	}
 
 	.activity-card {
-		border: 1px solid #d9e4de;
+		border: 1px solid #d8e0dc;
 		border-radius: 0.8rem;
-		padding: 0.8rem;
+		padding: 0.9rem;
 		background: #ffffff;
 		display: grid;
-		gap: 0.35rem;
+		gap: 0.42rem;
 	}
 
 	.activity-card p {
 		margin: 0;
-		color: #3f564a;
+		color: #334155;
 	}
 
-	.activity-card a {
-		font-size: 0.9rem;
+	.activity-link {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		align-self: start;
+		min-height: 2.75rem;
+		margin-top: 0.2rem;
+		padding: 0.45rem 0.8rem;
+		border: 1px solid #bfd0c8;
+		border-radius: 0.75rem;
+		background: #f8fbf9;
+		font-size: 0.95rem;
 		font-weight: 700;
-		color: #1f5a42;
+		color: #184334;
 		text-decoration: none;
 	}
 

@@ -148,10 +148,16 @@
 	</div>
 {:else if cadaster}
 	<p class="back-link">
-		<a href={resolve('/employee/[CompanyId]/landproperty/[LandPropertyId]', {
-			CompanyId: companyId,
-			LandPropertyId: cadaster.landPropertyId
-		})}>← Tagasi kinnistu juurde</a>
+		<a
+			class="back-link-button"
+			href={resolve('/employee/[CompanyId]/landproperty/[LandPropertyId]', {
+				CompanyId: companyId,
+				LandPropertyId: cadaster.landPropertyId
+			})}
+		>
+			<span aria-hidden="true">←</span>
+			<span>Tagasi kinnistu juurde</span>
+		</a>
 	</p>
 
 	<section class="employee-card summary">
@@ -187,67 +193,42 @@
 	</section>
 
 	<section class="employee-card">
-		<h2>Eraldised selles katastris</h2>
+		<h2>Eraldised</h2>
 		{#if forestStands.length === 0}
 			<div class="employee-state-block is-empty">Eraldisi ei leitud.</div>
 		{:else}
-			<div class="employee-stack-cards stands-mobile">
+			<div class="stand-button-grid stands-mobile" aria-label="Eraldised">
 				{#each forestStands as stand (stand.id)}
-					<article class="stand-card">
-						<p><strong>Eraldis:</strong> #{stand.number}</p>
-						<p><strong>Pindala:</strong> {formatNumber(stand.area)}</p>
-						<p><strong>Tagavara kokku:</strong> {formatNumber(stand.totalVolume)}</p>
-						<p><strong>Olek:</strong> {stand.isActive ? 'Aktiivne' : 'Mitteaktiivne'}</p>
-						<a
-							href={resolve('/employee/[CompanyId]/foreststand/[ForestStandId]', {
-								CompanyId: companyId,
-								ForestStandId: stand.id
-							})}
-						>
-							Ava eraldis
-						</a>
-					</article>
+					<a
+						class="stand-button"
+						href={resolve('/employee/[CompanyId]/foreststand/[ForestStandId]', {
+							CompanyId: companyId,
+							ForestStandId: stand.id
+						})}
+						aria-label={`Ava eraldis ${stand.number}`}
+					>
+						#{stand.number}
+					</a>
 				{/each}
 			</div>
 
-			<div class="employee-table-wrap stands-table">
-				<table>
-					<thead>
-						<tr>
-							<th>Eraldis</th>
-							<th>Pindala</th>
-							<th>Tagavara kokku</th>
-							<th>Olek</th>
-							<th>Ava</th>
-						</tr>
-					</thead>
-					<tbody>
-						{#each forestStands as stand (stand.id)}
-							<tr>
-								<td>#{stand.number}</td>
-								<td>{formatNumber(stand.area)}</td>
-								<td>{formatNumber(stand.totalVolume)}</td>
-								<td>{stand.isActive ? 'Aktiivne' : 'Mitteaktiivne'}</td>
-								<td>
-									<a
-										href={resolve('/employee/[CompanyId]/foreststand/[ForestStandId]', {
-											CompanyId: companyId,
-											ForestStandId: stand.id
-										})}
-									>
-										Ava
-									</a>
-								</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
-			</div>
+			
 		{/if}
 	</section>
 
 	<section class="employee-card">
-		<h2>Sinu tegevused selles katastris</h2>
+		<div class="section-head">
+			<h2>Sinu tegevused selles katastris</h2>
+			<a
+				class="log-activity-link is-secondary"
+				href={resolve('/employee/[CompanyId]/cadaster/[CadasterId]/activity/new', {
+					CompanyId: companyId,
+					CadasterId: cadaster.id
+				})}
+			>
+				Logi uus tegevus
+			</a>
+		</div>
 		{#if activities.length === 0}
 			<div class="employee-state-block is-empty">Selles katastris ei leitud sinu konto tegevusi.</div>
 		{:else}
@@ -261,6 +242,15 @@
 						<p>{activity.description || '—'}</p>
 						<p><strong>Kogus:</strong> {formatActivityQuantity(activity)}</p>
 						<p><strong>Eraldis:</strong> {activity.forestStandNumber || '—'}</p>
+						<a
+							class="activity-link"
+							href={resolve('/employee/[CompanyId]/activity/[ActivityId]', {
+								CompanyId: companyId,
+								ActivityId: activity.id
+							})}
+						>
+							Ava tegevus
+						</a>
 					</article>
 				{/each}
 			</div>
@@ -279,18 +269,40 @@
 
 <style>
 	.back-link {
-		margin: 0 0 0.75rem;
+		margin: 0 0 0.9rem;
 	}
 
-	.back-link a {
-		font-size: 0.9rem;
+	.back-link-button {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45rem;
+		min-height: 3rem;
+		padding: 0.65rem 0.95rem;
+		border-radius: 0.85rem;
+		border: 1px solid #c4d4cd;
+		background: #ffffff;
+		font-size: 0.97rem;
 		font-weight: 700;
 		text-decoration: none;
-		color: #1f5a42;
+		color: #1f3f33;
+		box-shadow: 0 2px 8px rgba(15, 37, 28, 0.06);
+	}
+
+	.back-link-button:hover {
+		background: #f5f9f7;
+		border-color: #afc6bb;
 	}
 
 	.summary {
 		margin-bottom: 0.75rem;
+	}
+
+	.section-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.7rem;
+		margin-bottom: 0.65rem;
 	}
 
 	.summary-head {
@@ -319,9 +331,9 @@
 	}
 
 	h2 {
-		margin: 0 0 0.65rem;
+		margin: 0;
 		font-size: 1.05rem;
-		color: #1a3228;
+		color: #1f2937;
 	}
 
 	.inline-note {
@@ -334,46 +346,92 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		min-height: 2.4rem;
-		padding: 0.5rem 0.8rem;
+		min-height: 3rem;
+		padding: 0.6rem 1rem;
 		border: 1px solid #1f5a42;
-		border-radius: 0.7rem;
+		border-radius: 0.85rem;
 		background: #1f5a42;
 		color: #f6fbf8;
-		font-size: 0.88rem;
+		font-size: 0.96rem;
 		font-weight: 700;
 		text-decoration: none;
 	}
 
+	.log-activity-link.is-secondary {
+		border-color: #b7cbc1;
+		background: #f7fbf9;
+		color: #184434;
+	}
+
 	.meta-grid {
 		display: grid;
-		gap: 0.45rem;
+		gap: 0.5rem;
 	}
 
-	.stands-table {
-		display: none;
+	.meta-grid p {
+		margin: 0;
+		color: #334155;
 	}
 
-	.stand-card,
 	.activity-card {
-		border: 1px solid #d9e4de;
+		border: 1px solid #d8e0dc;
 		border-radius: 0.8rem;
-		padding: 0.8rem;
+		padding: 0.9rem;
 		background: #ffffff;
 		display: grid;
-		gap: 0.35rem;
+		gap: 0.42rem;
 	}
 
-	.stand-card p,
+	.stand-button-grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.55rem;
+	}
+
+	.stand-button {
+		text-decoration: none;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 3rem;
+		border: 1px solid #1f5a42;
+		background: linear-gradient(180deg, #2a6b4f 0%, #1f5a42 100%);
+		box-shadow: 0 6px 16px rgba(15, 42, 31, 0.22);
+		color: #f3fbf7;
+		border-radius: 0.82rem;
+		font-size: 1rem;
+		font-weight: 700;
+	}
+
+	.stand-button:hover {
+		background: linear-gradient(180deg, #2f7657 0%, #245f46 100%);
+		border-color: #184736;
+	}
+
+	.stand-button:active {
+		transform: translateY(1px);
+		box-shadow: 0 3px 10px rgba(15, 42, 31, 0.2);
+	}
+
 	.activity-card p {
 		margin: 0;
-		color: #3f564a;
+		color: #334155;
 	}
 
-	.stand-card a {
-		font-size: 0.9rem;
+	.activity-link {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		align-self: start;
+		min-height: 2.75rem;
+		margin-top: 0.2rem;
+		padding: 0.45rem 0.8rem;
+		border: 1px solid #bfd0c8;
+		border-radius: 0.75rem;
+		background: #f8fbf9;
+		font-size: 0.95rem;
 		font-weight: 700;
-		color: #1f5a42;
+		color: #184334;
 		text-decoration: none;
 	}
 
@@ -383,13 +441,20 @@
 		gap: 0.6rem;
 	}
 
+	@media (max-width: 420px) {
+		.section-head {
+			flex-direction: column;
+			align-items: stretch;
+		}
+
+		.log-activity-link.is-secondary {
+			width: 100%;
+		}
+	}
+
 	@media (min-width: 768px) {
 		.stands-mobile {
 			display: none;
-		}
-
-		.stands-table {
-			display: block;
 		}
 	}
 </style>
