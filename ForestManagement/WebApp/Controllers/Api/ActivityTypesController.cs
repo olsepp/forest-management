@@ -29,7 +29,7 @@ public class ActivityTypesController : ApiControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ActivityTypeDto>> Create([FromBody] ActivityTypeCreateDto dto)
     {
         var created = await _service.CreateAsync(dto);
@@ -37,7 +37,7 @@ public class ActivityTypesController : ApiControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ActivityTypeDto>> Update(Guid id, [FromBody] ActivityTypeUpdateDto dto)
     {
         if (id != dto.Id) return BadRequest(new { message = "Route id does not match body id." });
@@ -48,7 +48,7 @@ public class ActivityTypesController : ApiControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var deleted = await _service.DeleteAsync(id);
