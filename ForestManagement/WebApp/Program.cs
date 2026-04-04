@@ -24,12 +24,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// -----------------------------------------------------------------------
-// Identity
-// -----------------------------------------------------------------------
+// ---------------------------------------------------------------------
+// Identity (used for JWT auth only - no UI needed)
+// ---------------------------------------------------------------------
 builder.Services
     .AddIdentity<AppUser, AppRole>(options => options.SignIn.RequireConfirmedAccount = false)
-    .AddDefaultUI()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
@@ -107,10 +106,9 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 // -----------------------------------------------------------------------
-// MVC + Razor Pages
+// API Controllers Only
 // -----------------------------------------------------------------------
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllers();
 
 // -----------------------------------------------------------------------
 // Swagger / OpenAPI
@@ -188,7 +186,7 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseExceptionHandler("/Home/Error");
+    app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
 
@@ -203,17 +201,6 @@ app.UseAuthorization();
 
 app.MapStaticAssets();
 
-app.MapControllerRoute(
-        name: "area",
-        pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
-
-app.MapControllerRoute(
-        name: "default",
-        pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
-
-app.MapRazorPages()
-    .WithStaticAssets();
+app.MapControllers();
 
 app.Run();

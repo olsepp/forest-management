@@ -31,10 +31,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Data\" />
-    </ItemGroup>
-
-    <ItemGroup>
       <_ContentIncludedByDefault Remove="Views\ActivityTypes\Create.cshtml" />
       <_ContentIncludedByDefault Remove="Views\ActivityTypes\Delete.cshtml" />
       <_ContentIncludedByDefault Remove="Views\ActivityTypes\Details.cshtml" />
