@@ -1,4 +1,5 @@
 using App.BLL.Services.Interfaces;
+using App.Contracts.Enums;
 using App.DAL.UnitOfWork;
 using App.Domain;
 using App.DTO.LandProperty;
@@ -31,6 +32,17 @@ public class LandPropertyService : ILandPropertyService
 
     public async Task<LandPropertyDto> CreateAsync(LandPropertyCreateDto dto)
     {
+        // Validate status enum value
+        if (!Enum.TryParse<EPropertyStatus>(dto.Status.ToString(), out var status))
+        {
+            throw new ArgumentException($"Invalid status '{dto.Status}'. Valid values: {string.Join(", ", Enum.GetNames<EPropertyStatus>())}");
+        }
+
+        if (!Enum.IsDefined(typeof(EPropertyStatus), status))
+        {
+            throw new ArgumentException($"Invalid status '{dto.Status}'. Valid values: {string.Join(", ", Enum.GetNames<EPropertyStatus>())}");
+        }
+
         var entity = new LandProperty
         {
             Name = dto.Name,
@@ -40,7 +52,7 @@ public class LandPropertyService : ILandPropertyService
             Village = dto.Village,
             BoughtDate = dto.BoughtDate,
             SoldDate = dto.SoldDate,
-            Status = dto.Status,
+            Status = status,
             CompanyId = dto.CompanyId
         };
         await _uow.LandProperties.AddAsync(entity);
@@ -55,6 +67,17 @@ public class LandPropertyService : ILandPropertyService
         var entity = await _uow.LandProperties.GetByIdAsync(id);
         if (entity == null) return null;
 
+        // Validate status enum value
+        if (!Enum.TryParse<EPropertyStatus>(dto.Status.ToString(), out var status))
+        {
+            throw new ArgumentException($"Invalid status '{dto.Status}'. Valid values: {string.Join(", ", Enum.GetNames<EPropertyStatus>())}");
+        }
+
+        if (!Enum.IsDefined(typeof(EPropertyStatus), status))
+        {
+            throw new ArgumentException($"Invalid status '{dto.Status}'. Valid values: {string.Join(", ", Enum.GetNames<EPropertyStatus>())}");
+        }
+
         entity.Name = dto.Name;
         entity.RegistrationNumber = dto.RegistrationNumber;
         entity.County = dto.County;
@@ -62,7 +85,7 @@ public class LandPropertyService : ILandPropertyService
         entity.Village = dto.Village;
         entity.BoughtDate = dto.BoughtDate;
         entity.SoldDate = dto.SoldDate;
-        entity.Status = dto.Status;
+        entity.Status = status;
         entity.CompanyId = dto.CompanyId;
 
         await _uow.LandProperties.UpdateAsync(entity);

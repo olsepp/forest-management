@@ -20,7 +20,7 @@ public class AccountController : ApiControllerBase
     }
 
     // -----------------------------------------------------------------------
-    // Anonymous endpointss
+    // Anonymous endpoints
     // -----------------------------------------------------------------------
 
     /// <summary>

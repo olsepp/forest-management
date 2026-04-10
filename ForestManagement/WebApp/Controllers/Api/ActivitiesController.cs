@@ -50,7 +50,6 @@ public class ActivitiesController : ApiControllerBase
     }
 
     [HttpGet("by-company/{companyId:guid}/my")]
-    [Authorize(Roles = "Admin,Employee")]
     public async Task<ActionResult<IEnumerable<ActivityDto>>> GetByCompanyMy(Guid companyId)
     {
         if (!TryGetCurrentUserId(out var userId))
@@ -61,7 +60,6 @@ public class ActivitiesController : ApiControllerBase
     }
 
     [HttpGet("by-property/{landPropertyId:guid}")]
-    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<IEnumerable<ActivityDto>>> GetByProperty(Guid landPropertyId)
     {
         var items = await _service.GetByLandPropertyIdAsync(landPropertyId);
@@ -69,7 +67,6 @@ public class ActivitiesController : ApiControllerBase
     }
 
     [HttpGet("by-property/{landPropertyId:guid}/my")]
-    [Authorize(Roles = "Admin,Employee")]
     public async Task<ActionResult<IEnumerable<ActivityDto>>> GetByPropertyMy(Guid landPropertyId)
     {
         if (!TryGetCurrentUserId(out var userId))
@@ -87,18 +84,23 @@ public class ActivitiesController : ApiControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,Employee")]
     public async Task<ActionResult<ActivityDto>> Create([FromBody] ActivityCreateDto dto)
     {
         if (!TryGetCurrentUserId(out var userId))
             return Unauthorized();
 
-        var created = await _service.CreateAsync(dto, userId);
-        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        try
+        {
+            var created = await _service.CreateAsync(dto, userId);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "Admin,Employee")]
     public async Task<ActionResult<ActivityDto>> Update(Guid id, [FromBody] ActivityUpdateDto dto)
     {
         if (id != dto.Id) return BadRequest(new { message = "Route id does not match body id." });
@@ -106,13 +108,19 @@ public class ActivitiesController : ApiControllerBase
         if (!TryGetCurrentUserId(out var currentUserId))
             return Unauthorized();
 
-        var updated = await _service.UpdateAsync(id, dto, currentUserId, User.IsInRole("Admin"));
-        if (updated == null) return NotFound();
-        return Ok(updated);
+        try
+        {
+            var updated = await _service.UpdateAsync(id, dto, currentUserId, User.IsInRole("Admin"));
+            if (updated == null) return NotFound();
+            return Ok(updated);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin,Employee")]
     public async Task<IActionResult> Delete(Guid id)
     {
         if (!TryGetCurrentUserId(out var currentUserId))

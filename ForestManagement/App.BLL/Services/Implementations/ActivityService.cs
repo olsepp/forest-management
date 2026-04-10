@@ -1,4 +1,5 @@
 using App.BLL.Services.Interfaces;
+using App.Contracts.Enums;
 using App.DAL.UnitOfWork;
 using App.Domain;
 using App.DTO.Activity;
@@ -67,6 +68,20 @@ public class ActivityService : IActivityService
 
     public async Task<ActivityDto> CreateAsync(ActivityCreateDto dto, Guid userId)
     {
+        // Validate ApplicationStatus if provided
+        if (dto.ApplicationStatus.HasValue)
+        {
+            if (!Enum.TryParse<EApplicationStatus>(dto.ApplicationStatus.Value.ToString(), out var status))
+            {
+                throw new ArgumentException($"Invalid application status '{dto.ApplicationStatus}'. Valid values: {string.Join(", ", Enum.GetNames<EApplicationStatus>())}");
+            }
+
+            if (!Enum.IsDefined(typeof(EApplicationStatus), status))
+            {
+                throw new ArgumentException($"Invalid application status '{dto.ApplicationStatus}'. Valid values: {string.Join(", ", Enum.GetNames<EApplicationStatus>())}");
+            }
+        }
+
         var entity = new Activity
         {
             Description = dto.Description,
@@ -94,6 +109,20 @@ public class ActivityService : IActivityService
 
         if (!isAdmin && entity.UserId != currentUserId)
             return null;
+
+        // Validate ApplicationStatus if provided
+        if (dto.ApplicationStatus.HasValue)
+        {
+            if (!Enum.TryParse<EApplicationStatus>(dto.ApplicationStatus.Value.ToString(), out var status))
+            {
+                throw new ArgumentException($"Invalid application status '{dto.ApplicationStatus}'. Valid values: {string.Join(", ", Enum.GetNames<EApplicationStatus>())}");
+            }
+
+            if (!Enum.IsDefined(typeof(EApplicationStatus), status))
+            {
+                throw new ArgumentException($"Invalid application status '{dto.ApplicationStatus}'. Valid values: {string.Join(", ", Enum.GetNames<EApplicationStatus>())}");
+            }
+        }
 
         entity.Description = dto.Description;
         entity.Quantity = dto.Quantity;
