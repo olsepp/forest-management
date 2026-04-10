@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
-	import type { CompanyListDto } from '$lib/types/company';
+	import type { CompanyListDto } from '$lib/dtos/company/company.dto';
 	import { onMount } from 'svelte';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
@@ -77,7 +77,7 @@
 
 <aside class="admin-sidebar sticky top-4 h-[calc(100vh-2rem)] w-64 shrink-0 p-4">
 	<div class="mb-6">
-		<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Adminpaneel</p>
+		<p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">Adminpaneel</p>
 		<p class="mt-1 text-sm text-slate-700">
 			{#if companyId}
 				Ettevõtte vaade: {companyName}

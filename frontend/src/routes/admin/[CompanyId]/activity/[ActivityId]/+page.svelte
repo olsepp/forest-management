@@ -4,46 +4,12 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
 	import { onMount } from 'svelte';
-
-	type ActivityStatus = 'Pending' | 'Approved' | 'Rejected';
-
-	type ActivityDto = {
-		id: string;
-		description: string;
-		quantity: number;
-		unit: string | null;
-		notes: string | null;
-		date: string;
-		userId: string;
-		userName: string;
-		activityTypeId: string;
-		activityTypeName: string;
-		cadasterId: string | null;
-		cadasterCadastralNumber: string | null;
-		forestStandId: string | null;
-		forestStandNumber: number;
-		landPropertyId: string | null;
-		landPropertyName: string | null;
-		applicationStatus: ActivityStatus | null;
-	};
-
-	type ActivityTypeListDto = {
-		id: string;
-		activityTypeName: string;
-	};
-
-	type ActivityUpdateDto = {
-		id: string;
-		description: string;
-		quantity: number;
-		unit: string | null;
-		notes: string | null;
-		date: string;
-		activityTypeId: string;
-		forestStandId: string | null;
-		cadasterId: string | null;
-		applicationStatus: ActivityStatus | null;
-	};
+	import type {
+		ActivityStatus,
+		ActivityDto,
+		ActivityTypeListDto,
+		ActivityUpdateDto
+	} from '$lib/dtos/activity/activity.dto';
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
@@ -236,9 +202,16 @@
 			<div>
 				<p class="eyebrow">Tegevuse kirje</p>
 				<h1>{activity.activityTypeName}</h1>
-				<p class="subtitle">Vaata ja uuenda tegevuse metaandmeid, väärtusi ja staatust ühes töölauas.</p>
+				<p class="subtitle">
+					Vaata ja uuenda tegevuse metaandmeid, väärtusi ja staatust ühes töölauas.
+				</p>
 			</div>
-			<button type="button" class="mode-btn" onclick={() => (isEditMode = !isEditMode)} disabled={isSaving}>
+			<button
+				type="button"
+				class="mode-btn"
+				onclick={() => (isEditMode = !isEditMode)}
+				disabled={isSaving}
+			>
 				{isEditMode ? 'Tühista muutmine' : 'Luba muutmine'}
 			</button>
 		</header>
@@ -371,11 +344,29 @@
 		border-radius: 1rem;
 		background: #eef5f1;
 	}
-	.breadcrumb { margin: 0; }
-	.page-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
-	.eyebrow { margin: 0; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; }
-	h1 { margin: 0.2rem 0 0.35rem; font-size: 1.6rem; }
-	.subtitle { margin: 0; }
+	.breadcrumb {
+		margin: 0;
+	}
+	.page-head {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		gap: 1rem;
+	}
+	.eyebrow {
+		margin: 0;
+		font-size: 0.78rem;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		font-weight: 700;
+	}
+	h1 {
+		margin: 0.2rem 0 0.35rem;
+		font-size: 1.6rem;
+	}
+	.subtitle {
+		margin: 0;
+	}
 	.mode-btn {
 		white-space: nowrap;
 		padding: 0.58rem 1rem;
@@ -389,17 +380,37 @@
 	.mode-btn:hover {
 		background: #274f3d;
 	}
-	.meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.8rem; }
+	.meta-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+		gap: 0.8rem;
+	}
 	.meta-card {
 		padding: 0.9rem;
 		border: 1px solid #c9dace;
 		border-radius: 0.75rem;
 		background: #f4faf6;
 	}
-	.meta-label { margin: 0; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; }
-	.meta-value { margin: 0.35rem 0 0; font-size: 1rem; font-weight: 600; }
-	.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace; font-size: 0.88rem; }
-	.detail-form { display: grid; gap: 1rem; }
+	.meta-label {
+		margin: 0;
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+	}
+	.meta-value {
+		margin: 0.35rem 0 0;
+		font-size: 1rem;
+		font-weight: 600;
+	}
+	.mono {
+		font-family:
+			ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+		font-size: 0.88rem;
+	}
+	.detail-form {
+		display: grid;
+		gap: 1rem;
+	}
 	.form-section {
 		padding: 1rem;
 		border: 1px solid #cadbcf;
@@ -407,11 +418,27 @@
 		background: #f9fcfa;
 		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
 	}
-	h2 { margin: 0 0 0.8rem; font-size: 1.03rem; }
-	.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem 1rem; }
-	label { display: flex; flex-direction: column; gap: 0.35rem; }
-	.full-width { grid-column: 1 / -1; }
-	.form-actions { display: flex; justify-content: flex-end; }
+	h2 {
+		margin: 0 0 0.8rem;
+		font-size: 1.03rem;
+	}
+	.form-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+		gap: 0.75rem 1rem;
+	}
+	label {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+	}
+	.full-width {
+		grid-column: 1 / -1;
+	}
+	.form-actions {
+		display: flex;
+		justify-content: flex-end;
+	}
 
 	.btn-save {
 		padding: 0.62rem 1.1rem;
@@ -426,7 +453,15 @@
 	.btn-save:hover {
 		background: #174a35;
 	}
-	.message { margin: 0; padding: 0.7rem 0.9rem; border-radius: 0.65rem; }
-	.error { background: #fdebec; }
-	.success { background: #e6f7ea; }
+	.message {
+		margin: 0;
+		padding: 0.7rem 0.9rem;
+		border-radius: 0.65rem;
+	}
+	.error {
+		background: #fdebec;
+	}
+	.success {
+		background: #e6f7ea;
+	}
 </style>

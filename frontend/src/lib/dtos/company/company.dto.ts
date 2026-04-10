@@ -10,4 +10,3 @@ export type CompanyDto = {
 	registrationNumber: number;
 	propertyCount: number;
 };
-

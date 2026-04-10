@@ -4,26 +4,12 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
 	import { onMount } from 'svelte';
+	import type {
+		ActivityStatus,
+		ActivityDto as ActivityDtoType
+	} from '$lib/dtos/activity/activity.dto';
 
-	type ActivityDto = {
-		id: string;
-		description: string;
-		quantity: number;
-		unit: string | null;
-		notes: string | null;
-		date: string;
-		userId: string;
-		activityTypeName: string;
-		activityTypeId: string;
-		userName: string;
-		cadasterId: string | null;
-		cadasterCadastralNumber: string | null;
-		forestStandId: string | null;
-		forestStandNumber: number | null;
-		landPropertyId: string | null;
-		landPropertyName: string | null;
-		applicationStatus: number | null;
-	};
+	type ActivityDto = ActivityDtoType;
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
@@ -41,7 +27,8 @@
 	}
 
 	function formatQuantity(item: ActivityDto): string {
-		const quantity = typeof item.quantity === 'number' && Number.isFinite(item.quantity) ? item.quantity : 0;
+		const quantity =
+			typeof item.quantity === 'number' && Number.isFinite(item.quantity) ? item.quantity : 0;
 		return item.unit ? `${quantity} ${item.unit}` : String(quantity);
 	}
 
@@ -51,7 +38,8 @@
 
 	function forestStandLabel(item: ActivityDto): string {
 		const standNumber = item.forestStandNumber;
-		if (typeof standNumber === 'number' && Number.isFinite(standNumber) && standNumber > 0) return String(standNumber);
+		if (typeof standNumber === 'number' && Number.isFinite(standNumber) && standNumber > 0)
+			return String(standNumber);
 		return '—';
 	}
 
@@ -69,9 +57,12 @@
 
 			const token = await authService.ensureValidToken();
 
-			const activitiesResponse = await fetch(`${apiBaseUrl}/api/activities/by-company/${companyId}/my`, {
-				headers: { Authorization: `Bearer ${token}` }
-			});
+			const activitiesResponse = await fetch(
+				`${apiBaseUrl}/api/activities/by-company/${companyId}/my`,
+				{
+					headers: { Authorization: `Bearer ${token}` }
+				}
+			);
 
 			if (!activitiesResponse.ok) {
 				if (activitiesResponse.status === 401 || activitiesResponse.status === 403) {
@@ -142,17 +133,17 @@
 
 		<div class="employee-table-wrap activities-table">
 			<table>
-			<thead>
-				<tr>
-					<th>Kuupäev</th>
-					<th>Tüüp</th>
-					<th>Kirjeldus</th>
-					<th>Kataster</th>
-					<th>Eraldis</th>
-					<th>Kogus</th>
-					<th>Ava</th>
-				</tr>
-			</thead>
+				<thead>
+					<tr>
+						<th>Kuupäev</th>
+						<th>Tüüp</th>
+						<th>Kirjeldus</th>
+						<th>Kataster</th>
+						<th>Eraldis</th>
+						<th>Kogus</th>
+						<th>Ava</th>
+					</tr>
+				</thead>
 				<tbody>
 					{#each activities as activity (activity.id)}
 						<tr>
@@ -163,16 +154,16 @@
 							<td>{forestStandLabel(activity)}</td>
 							<td>{formatQuantity(activity)}</td>
 							<td>
-							<a
-								href={resolve('/employee/[CompanyId]/activity/[ActivityId]', {
-									CompanyId: companyId,
-									ActivityId: activity.id
-								})}
-							>
-								Ava
-							</a>
-						</td>
-					</tr>
+								<a
+									href={resolve('/employee/[CompanyId]/activity/[ActivityId]', {
+										CompanyId: companyId,
+										ActivityId: activity.id
+									})}
+								>
+									Ava
+								</a>
+							</td>
+						</tr>
 					{/each}
 				</tbody>
 			</table>

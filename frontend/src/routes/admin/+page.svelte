@@ -3,7 +3,7 @@
 	import { authService } from '$lib/services/auth';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import type { CompanyListDto } from '$lib/types/company';
+	import type { CompanyListDto } from '$lib/dtos/company/company.dto';
 	import { onMount } from 'svelte';
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
@@ -25,7 +25,10 @@
 			});
 
 			if (!response.ok) {
-				errorMessage = response.status === 401 ? 'Ligipääs puudub. Logige uuesti sisse.' : 'Ettevõtteid ei õnnestunud laadida.';
+				errorMessage =
+					response.status === 401
+						? 'Ligipääs puudub. Logige uuesti sisse.'
+						: 'Ettevõtteid ei õnnestunud laadida.';
 				return;
 			}
 

@@ -5,48 +5,11 @@
 	import { authService } from '$lib/services/auth';
 	import CadastralMap from '$lib/components/shared/CadastralMap.svelte';
 	import { onMount } from 'svelte';
-
-	type ForestStandListDto = {
-		id: string;
-		number: number;
-		area: number;
-		totalVolume: number;
-		isActive: boolean;
-	};
-
-	type CadasterDto = {
-		id: string;
-		cadastralNumber: string;
-		forestArea: number;
-		arableArea: number;
-		grasslandArea: number;
-		yardArea: number;
-		buildingFootprintArea: number;
-		underwaterArea: number;
-		otherArea: number;
-		soilQualityIndex: number;
-		calculatedVolume: number;
-		volumeGrowth: number;
-		landPropertyId: string;
-		landPropertyName: string;
-		forestStands: ForestStandListDto[];
-	};
-
-	type CadasterUpdateDto = {
-		id: string;
-		cadastralNumber: string;
-		forestArea: number;
-		arableArea: number;
-		grasslandArea: number;
-		yardArea: number;
-		buildingFootprintArea: number;
-		underwaterArea: number;
-		otherArea: number;
-		soilQualityIndex: number;
-		calculatedVolume: number;
-		volumeGrowth: number;
-		landPropertyId: string;
-	};
+	import type {
+		ForestStandListDto,
+		CadasterDto,
+		CadasterUpdateDto
+	} from '$lib/dtos/cadaster/cadaster.dto';
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
@@ -234,7 +197,12 @@
 						CadasterId: cadaster.id
 					})}>Logi tegevus</a
 				>
-				<button type="button" class="mode-btn" onclick={() => (isEditMode = !isEditMode)} disabled={isSaving}>
+				<button
+					type="button"
+					class="mode-btn"
+					onclick={() => (isEditMode = !isEditMode)}
+					disabled={isSaving}
+				>
 					{isEditMode ? 'Tühista muutmine' : 'Luba muutmine'}
 				</button>
 			</div>
@@ -262,33 +230,111 @@
 			</article>
 		</section>
 
-		
 		<form id="cadaster-form" onsubmit={saveCadaster} class="detail-form">
 			<section class="form-section">
 				<h2>Üldised väärtused</h2>
 				<div class="form-grid">
-					<label><span>Katastrinumber</span><input type="text" bind:value={form.cadastralNumber} required readonly={!isEditMode} /></label>
-					<label><span>Mullaviljakuse indeks</span><input type="number" min="0" max="4" bind:value={form.soilQualityIndex} readonly={!isEditMode} /></label>
-					<label><span>Arvutatud maht</span><input type="number" bind:value={form.calculatedVolume} readonly={!isEditMode} /></label>
-					<label><span>Mahukasv</span><input type="number" step="any" bind:value={form.volumeGrowth} readonly={!isEditMode} /></label>
+					<label
+						><span>Katastrinumber</span><input
+							type="text"
+							bind:value={form.cadastralNumber}
+							required
+							readonly={!isEditMode}
+						/></label
+					>
+					<label
+						><span>Boniteet</span><input
+							type="number"
+							min="0"
+							max="4"
+							bind:value={form.soilQualityIndex}
+							readonly={!isEditMode}
+						/></label
+					>
+					<label
+						><span>Arvutatud maht</span><input
+							type="number"
+							bind:value={form.calculatedVolume}
+							readonly={!isEditMode}
+						/></label
+					>
+					<label
+						><span>Mahukasv</span><input
+							type="number"
+							step="any"
+							bind:value={form.volumeGrowth}
+							readonly={!isEditMode}
+						/></label
+					>
 				</div>
 			</section>
 
 			<section class="form-section">
 				<h2>Pindalade jaotus</h2>
 				<div class="form-grid">
-					<label><span>Metsamaa pindala</span><input type="number" step="any" bind:value={form.forestArea} readonly={!isEditMode} /></label>
-					<label><span>Haritava maa pindala</span><input type="number" step="any" bind:value={form.arableArea} readonly={!isEditMode} /></label>
-					<label><span>Rohumaa pindala</span><input type="number" step="any" bind:value={form.grasslandArea} readonly={!isEditMode} /></label>
-					<label><span>Õueala pindala</span><input type="number" step="any" bind:value={form.yardArea} readonly={!isEditMode} /></label>
-					<label><span>Hoonete alune pindala</span><input type="number" step="any" bind:value={form.buildingFootprintArea} readonly={!isEditMode} /></label>
-					<label><span>Veealune pindala</span><input type="number" step="any" bind:value={form.underwaterArea} readonly={!isEditMode} /></label>
-					<label><span>Muu pindala</span><input type="number" step="any" bind:value={form.otherArea} readonly={!isEditMode} /></label>
+					<label
+						><span>Metsamaa pindala</span><input
+							type="number"
+							step="any"
+							bind:value={form.forestArea}
+							readonly={!isEditMode}
+						/></label
+					>
+					<label
+						><span>Haritava maa pindala</span><input
+							type="number"
+							step="any"
+							bind:value={form.arableArea}
+							readonly={!isEditMode}
+						/></label
+					>
+					<label
+						><span>Rohumaa pindala</span><input
+							type="number"
+							step="any"
+							bind:value={form.grasslandArea}
+							readonly={!isEditMode}
+						/></label
+					>
+					<label
+						><span>Õueala pindala</span><input
+							type="number"
+							step="any"
+							bind:value={form.yardArea}
+							readonly={!isEditMode}
+						/></label
+					>
+					<label
+						><span>Hoonete alune pindala</span><input
+							type="number"
+							step="any"
+							bind:value={form.buildingFootprintArea}
+							readonly={!isEditMode}
+						/></label
+					>
+					<label
+						><span>Veealune pindala</span><input
+							type="number"
+							step="any"
+							bind:value={form.underwaterArea}
+							readonly={!isEditMode}
+						/></label
+					>
+					<label
+						><span>Muu pindala</span><input
+							type="number"
+							step="any"
+							bind:value={form.otherArea}
+							readonly={!isEditMode}
+						/></label
+					>
 				</div>
 			</section>
 
 			<div class="form-actions">
-				<button class="btn-save" type="submit" disabled={isSaving || !isEditMode}>{isSaving ? 'Salvestamine...' : 'Salvesta muudatused'}</button>
+				<button class="btn-save" type="submit" disabled={isSaving || !isEditMode}
+					>{isSaving ? 'Salvestamine...' : 'Salvesta muudatused'}</button
+				>
 			</div>
 		</form>
 
@@ -342,7 +388,6 @@
 			<h2>Katastriüksus kaardil</h2>
 			<CadastralMap tunnus={cadaster.cadastralNumber} />
 		</section>
-
 	</div>
 {/if}
 
@@ -355,12 +400,34 @@
 		border-radius: 1rem;
 		background: #eef5f1;
 	}
-	.breadcrumb { margin: 0; }
-	.page-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
-	.eyebrow { margin: 0; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; }
-	h1 { margin: 0.2rem 0 0.35rem; font-size: 1.6rem; }
-	.subtitle { margin: 0; }
-	.head-actions { display: flex; gap: 0.6rem; align-items: center; }
+	.breadcrumb {
+		margin: 0;
+	}
+	.page-head {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		gap: 1rem;
+	}
+	.eyebrow {
+		margin: 0;
+		font-size: 0.78rem;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		font-weight: 700;
+	}
+	h1 {
+		margin: 0.2rem 0 0.35rem;
+		font-size: 1.6rem;
+	}
+	.subtitle {
+		margin: 0;
+	}
+	.head-actions {
+		display: flex;
+		gap: 0.6rem;
+		align-items: center;
+	}
 	.btn-log-activity {
 		white-space: nowrap;
 		padding: 0.58rem 1rem;
@@ -372,7 +439,11 @@
 		box-shadow: 0 8px 16px rgba(31, 90, 66, 0.24);
 		text-decoration: none;
 	}
-	.btn-log-activity:hover { background: #174a35; color: #ffffff; text-decoration: none; }
+	.btn-log-activity:hover {
+		background: #174a35;
+		color: #ffffff;
+		text-decoration: none;
+	}
 	.mode-btn {
 		padding: 0.58rem 1rem;
 		background: #2f5f49;
@@ -381,13 +452,40 @@
 		border-radius: 0.65rem;
 		box-shadow: 0 6px 14px rgba(29, 61, 46, 0.2);
 	}
-	.mode-btn:hover { background: #274f3d; }
-	.meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.8rem; }
-	.meta-card { padding: 0.9rem; border: 1px solid #c9dace; border-radius: 0.75rem; background: #f4faf6; }
-	.meta-label { margin: 0; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; }
-	.meta-value { margin: 0.35rem 0 0; font-size: 1rem; font-weight: 600; }
-	.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace; font-size: 0.88rem; }
-	.detail-form { display: grid; gap: 1rem; }
+	.mode-btn:hover {
+		background: #274f3d;
+	}
+	.meta-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+		gap: 0.8rem;
+	}
+	.meta-card {
+		padding: 0.9rem;
+		border: 1px solid #c9dace;
+		border-radius: 0.75rem;
+		background: #f4faf6;
+	}
+	.meta-label {
+		margin: 0;
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+	}
+	.meta-value {
+		margin: 0.35rem 0 0;
+		font-size: 1rem;
+		font-weight: 600;
+	}
+	.mono {
+		font-family:
+			ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+		font-size: 0.88rem;
+	}
+	.detail-form {
+		display: grid;
+		gap: 1rem;
+	}
 	.form-section {
 		padding: 1rem;
 		border: 1px solid #cadbcf;
@@ -395,10 +493,24 @@
 		background: #f9fcfa;
 		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
 	}
-	h2 { margin: 0 0 0.8rem; font-size: 1.03rem; }
-	.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem 1rem; }
-	label { display: flex; flex-direction: column; gap: 0.35rem; }
-	.form-actions { display: flex; justify-content: flex-end; }
+	h2 {
+		margin: 0 0 0.8rem;
+		font-size: 1.03rem;
+	}
+	.form-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+		gap: 0.75rem 1rem;
+	}
+	label {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+	}
+	.form-actions {
+		display: flex;
+		justify-content: flex-end;
+	}
 	.btn-save {
 		padding: 0.62rem 1.1rem;
 		background: #1f5a42;
@@ -408,12 +520,38 @@
 		border-radius: 0.65rem;
 		box-shadow: 0 8px 16px rgba(31, 90, 66, 0.24);
 	}
-	.btn-save:hover { background: #174a35; }
-	.message { margin: 0; padding: 0.7rem 0.9rem; border-radius: 0.65rem; }
-	.error { background: #fdebec; }
-	.success { background: #e6f7ea; }
-	.table-wrapper { overflow-x: auto; }
-	table { width: 100%; border-collapse: collapse; background: #fff; }
-	th, td { padding: 0.75rem; border-bottom: 1px solid #e5e7eb; text-align: left; vertical-align: top; }
-	th.actions, td.actions { text-align: right; white-space: nowrap; }
+	.btn-save:hover {
+		background: #174a35;
+	}
+	.message {
+		margin: 0;
+		padding: 0.7rem 0.9rem;
+		border-radius: 0.65rem;
+	}
+	.error {
+		background: #fdebec;
+	}
+	.success {
+		background: #e6f7ea;
+	}
+	.table-wrapper {
+		overflow-x: auto;
+	}
+	table {
+		width: 100%;
+		border-collapse: collapse;
+		background: #fff;
+	}
+	th,
+	td {
+		padding: 0.75rem;
+		border-bottom: 1px solid #e5e7eb;
+		text-align: left;
+		vertical-align: top;
+	}
+	th.actions,
+	td.actions {
+		text-align: right;
+		white-space: nowrap;
+	}
 </style>

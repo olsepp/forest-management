@@ -3,7 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
-	import type { CompanyDto } from '$lib/types/company';
+	import type { CompanyDto } from '$lib/dtos/company/company.dto';
 	import { onMount } from 'svelte';
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
@@ -80,7 +80,6 @@
 <section class="intro employee-card">
 	<p class="kicker">Ettevõtte tööruum</p>
 	<h1 class="employee-page-title">{company?.name ?? 'Töötaja töölaud'}</h1>
-
 </section>
 
 {#if isLoading}
@@ -94,17 +93,23 @@
 	</div>
 {:else if quickActions.length === 0}
 	<div class="employee-state-block is-empty">Toimingud puuduvad.</div>
-	{:else}
+{:else}
 	<section class="employee-stack-cards" aria-label="Töötaja kiirtoimingud">
 		{#each quickActions as action (action.kind)}
 			{#if action.kind === 'properties'}
-				<a class="action-card" href={resolve('/employee/[CompanyId]/landproperty', { CompanyId: companyId })}>
+				<a
+					class="action-card"
+					href={resolve('/employee/[CompanyId]/landproperty', { CompanyId: companyId })}
+				>
 					<h2>{action.label}</h2>
 					<p>{action.description}</p>
 					<span class="action-link">Ava</span>
 				</a>
 			{:else}
-				<a class="action-card" href={resolve('/employee/[CompanyId]/activity', { CompanyId: companyId })}>
+				<a
+					class="action-card"
+					href={resolve('/employee/[CompanyId]/activity', { CompanyId: companyId })}
+				>
 					<h2>{action.label}</h2>
 					<p>{action.description}</p>
 					<span class="action-link">Ava</span>

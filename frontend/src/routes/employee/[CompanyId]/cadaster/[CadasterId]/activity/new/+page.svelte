@@ -5,13 +5,7 @@
 	import ActivityForm from '$lib/components/employee/ActivityForm.svelte';
 	import { authService } from '$lib/services/auth';
 	import { onMount } from 'svelte';
-
-	type CadasterSummaryDto = {
-		id: string;
-		cadastralNumber: string;
-		landPropertyId: string;
-		landPropertyName: string;
-	};
+	import type { CadasterSummaryDto } from '$lib/dtos/forest-stand/forest-stand.dto';
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
@@ -46,7 +40,8 @@
 					return;
 				}
 
-				errorMessage = response.status === 404 ? 'Katasterit ei leitud.' : 'Katastri laadimine ebaõnnestus.';
+				errorMessage =
+					response.status === 404 ? 'Katasterit ei leitud.' : 'Katastri laadimine ebaõnnestus.';
 				return;
 			}
 
@@ -68,7 +63,6 @@
 </script>
 
 <h1 class="employee-page-title">Logi tegevus katastri jaoks</h1>
-
 
 <p class="employee-back-link">
 	<a
@@ -102,14 +96,13 @@
 				href={resolve('/employee/[CompanyId]/landproperty/[LandPropertyId]', {
 					CompanyId: companyId,
 					LandPropertyId: cadaster.landPropertyId
-				})}
-				>{cadaster.landPropertyName}</a
+				})}>{cadaster.landPropertyName}</a
 			>
 		</p>
 	</section>
 
 	<ActivityForm
-		companyId={companyId}
+		{companyId}
 		cadasterId={cadaster.id}
 		cadasterLabel={cadaster.cadastralNumber}
 		lockCadaster={true}
@@ -147,4 +140,3 @@
 		font-size: 0.88rem;
 	}
 </style>
-

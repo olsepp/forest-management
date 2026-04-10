@@ -4,18 +4,7 @@
 	import { authService } from '$lib/services/auth';
 	import { user } from '$lib/stores/auth.store';
 	import { onMount } from 'svelte';
-
-	type UserProfileDto = {
-		id?: string;
-		userId?: string;
-		username?: string;
-		email?: string;
-		firstName?: string;
-		lastName?: string;
-		role?: string;
-		phoneNumber?: string;
-		[key: string]: unknown;
-	};
+	import type { UserProfileDto } from '$lib/dtos/user/user.dto';
 
 	type ProfileViewModel = {
 		id: string;
@@ -156,7 +145,10 @@
 		<p><strong>Perekonnanimi:</strong> {profile.lastName}</p>
 		<p><strong>Roll:</strong> {profile.role}</p>
 		<p><strong>Telefon:</strong> {profile.phoneNumber}</p>
-		<p><strong>Andmeallikas:</strong> {profile.source === 'api' ? 'Profiili teenus' : 'Seansi varuandmed'}</p>
+		<p>
+			<strong>Andmeallikas:</strong>
+			{profile.source === 'api' ? 'Profiili teenus' : 'Seansi varuandmed'}
+		</p>
 	</section>
 {/if}
 
@@ -219,4 +211,3 @@
 		}
 	}
 </style>
-

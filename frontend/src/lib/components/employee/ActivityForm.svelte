@@ -5,11 +5,9 @@
 	import { authService } from '$lib/services/auth';
 	import { toastStore } from '$lib/stores/toast.store';
 	import { onMount } from 'svelte';
+	import type { ActivityTypeListDto as ActivityTypeListDtoType } from '$lib/dtos/activity-type/activity-type.dto';
 
-	type ActivityTypeListDto = {
-		id: string;
-		activityTypeName: string;
-	};
+	type ActivityTypeListDto = ActivityTypeListDtoType;
 
 	type CadasterOption = {
 		id: string;
@@ -192,7 +190,9 @@
 		<label>
 			<span>Tegevuse tüüp</span>
 			<select bind:value={activityTypeId} disabled={isLoadingActivityTypes} required>
-				<option value="" disabled>{isLoadingActivityTypes ? 'Laadimine...' : 'Vali tegevuse tüüp'}</option>
+				<option value="" disabled
+					>{isLoadingActivityTypes ? 'Laadimine...' : 'Vali tegevuse tüüp'}</option
+				>
 				{#each activityTypes as type (type.id)}
 					<option value={type.id}>{type.activityTypeName}</option>
 				{/each}

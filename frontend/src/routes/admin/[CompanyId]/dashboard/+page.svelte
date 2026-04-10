@@ -3,37 +3,15 @@
 	import { resolve } from '$app/paths';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
-	import type { CompanyDto } from '$lib/types/company';
+	import type { CompanyDto } from '$lib/dtos/company/company.dto';
+	import type {
+		LandPropertyListDto,
+		PropertyCadasterLinkDto,
+		ForestStandListDto,
+		ActivityListDto,
+		ActivityChartPoint
+	} from '$lib/dtos/dashboard/dashboard.dto';
 	import { onMount } from 'svelte';
-
-	type LandPropertyListDto = {
-		id: string;
-		status: 'Active' | 'Inactive' | 'Sold' | string | number;
-	};
-
-	type PropertyCadasterLinkDto = {
-		id: string;
-		cadastralNumber: string;
-	};
-
-	type ForestStandListDto = {
-		id: string;
-	};
-
-	type ActivityListDto = {
-		id: string;
-		date: string;
-		description?: string;
-		activityTypeName?: string;
-		userName?: string;
-	};
-
-	type ActivityChartPoint = {
-		label: string;
-		count: number;
-		x: number;
-		y: number;
-	};
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
@@ -278,7 +256,9 @@
 			const properties = (await propertiesResponse.json()) as LandPropertyListDto[];
 
 			totalProperties = properties.length;
-			totalActiveProperties = properties.filter((item) => normalizeStatus(item.status) === 'active').length;
+			totalActiveProperties = properties.filter(
+				(item) => normalizeStatus(item.status) === 'active'
+			).length;
 
 			const cadasterResults = await mapWithConcurrency(properties, 6, (property) =>
 				loadCadastersForProperty(property.id, token)
@@ -286,12 +266,14 @@
 
 			totalCadasters = cadasterResults.reduce((sum, cadasters) => sum + cadasters.length, 0);
 
-			const cadasterIds = [...new Set(
-				cadasterResults
-				.flat()
-				.map((cadaster) => cadaster.id)
-				.filter((id) => Boolean(id))
-			)];
+			const cadasterIds = [
+				...new Set(
+					cadasterResults
+						.flat()
+						.map((cadaster) => cadaster.id)
+						.filter((id) => Boolean(id))
+				)
+			];
 
 			const activitiesByCadaster = await mapWithConcurrency(cadasterIds, 8, (cadasterId) =>
 				loadActivitiesForCadaster(cadasterId, token)
@@ -301,12 +283,14 @@
 				loadForestStandsForCadaster(cadasterId, token)
 			);
 
-			const forestStandIds = [...new Set(
-				forestStandsByCadaster
-				.flat()
-				.map((forestStand) => forestStand.id)
-				.filter((id) => Boolean(id))
-			)];
+			const forestStandIds = [
+				...new Set(
+					forestStandsByCadaster
+						.flat()
+						.map((forestStand) => forestStand.id)
+						.filter((id) => Boolean(id))
+				)
+			];
 
 			const activitiesByForestStand = await mapWithConcurrency(forestStandIds, 6, (forestStandId) =>
 				loadActivitiesForForestStand(forestStandId, token)
@@ -353,22 +337,27 @@
 {#if isLoading}
 	<p class="text-slate-600">Laetakse töölauda...</p>
 {:else if errorMessage}
-	<div class="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{errorMessage}</div>
+	<div class="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+		{errorMessage}
+	</div>
 {:else}
-
 	<div class="grid gap-4 md:grid-cols-3">
 		<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-			<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Kinnistuid kokku</p>
+			<p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">Kinnistuid kokku</p>
 			<p class="mt-2 text-3xl font-bold text-slate-900">{totalProperties}</p>
 		</div>
 
 		<div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
-			<p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Aktiivseid kinnistuid</p>
+			<p class="text-xs font-semibold tracking-wide text-emerald-700 uppercase">
+				Aktiivseid kinnistuid
+			</p>
 			<p class="mt-2 text-3xl font-bold text-emerald-800">{totalActiveProperties}</p>
 		</div>
 
 		<div class="rounded-xl border border-blue-200 bg-blue-50 p-4 shadow-sm">
-			<p class="text-xs font-semibold uppercase tracking-wide text-blue-700">Katastrite arv kokku</p>
+			<p class="text-xs font-semibold tracking-wide text-blue-700 uppercase">
+				Katastrite arv kokku
+			</p>
 			<p class="mt-2 text-3xl font-bold text-blue-800">{totalCadasters}</p>
 		</div>
 	</div>
@@ -383,7 +372,12 @@
 			<p class="text-sm text-slate-600">Tegevusandmed puuduvad.</p>
 		{:else}
 			<div class="chart-wrap">
-				<svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} class="activity-chart" role="img" aria-label="Tegevuste trendijoonis">
+				<svg
+					viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+					class="activity-chart"
+					role="img"
+					aria-label="Tegevuste trendijoonis"
+				>
 					<line
 						x1={chartPadding.left}
 						y1={chartHeight - chartPadding.bottom}
@@ -452,13 +446,13 @@
 								<td class="py-2 pr-3">{activity.description ?? '—'}</td>
 								<td class="py-2 pr-3">{activity.userName ?? '—'}</td>
 								<td class="py-2 text-right">
-								<a
-								class="font-medium text-teal-700 hover:text-teal-800"
-								href={resolve('/admin/[CompanyId]/activity/[ActivityId]', {
-									CompanyId: companyId,
-									ActivityId: activity.id
-								})}>Ava</a
-								>
+									<a
+										class="font-medium text-teal-700 hover:text-teal-800"
+										href={resolve('/admin/[CompanyId]/activity/[ActivityId]', {
+											CompanyId: companyId,
+											ActivityId: activity.id
+										})}>Ava</a
+									>
 								</td>
 							</tr>
 						{/each}

@@ -3,20 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
-
-	type UserListDto = {
-		id: string;
-		username?: string;
-		email: string;
-		role?: string;
-		firstName?: string;
-		lastName?: string;
-		[key: string]: unknown;
-	};
-
-	type UserDetailsDto = UserListDto & {
-		[key: string]: unknown;
-	};
+	import type { UserListDto, UserDetailsDto } from '$lib/dtos/user/user.dto';
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
@@ -117,7 +104,9 @@
 {#if isLoading}
 	<p>Laetakse kasutajaid...</p>
 {:else if errorMessage}
-	<p class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{errorMessage}</p>
+	<p class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+		{errorMessage}
+	</p>
 {:else if users.length === 0}
 	<p>Kasutajaid ei leitud.</p>
 {:else}
@@ -134,15 +123,20 @@
 			<tbody class="divide-y divide-slate-100">
 				{#each users as user (user.id)}
 					<tr class="hover:bg-slate-50">
-						<td class="px-4 py-3 text-slate-900">{getFirstName(userDetailsById[user.id] ?? user)}</td>
-						<td class="px-4 py-3 text-slate-900">{getLastName(userDetailsById[user.id] ?? user)}</td>
+						<td class="px-4 py-3 text-slate-900"
+							>{getFirstName(userDetailsById[user.id] ?? user)}</td
+						>
+						<td class="px-4 py-3 text-slate-900">{getLastName(userDetailsById[user.id] ?? user)}</td
+						>
 						<td class="px-4 py-3 text-slate-700">{user.email}</td>
 						<td class="px-4 py-3">
 							<button
 								type="button"
 								onclick={() => toggleExpand(user.id)}
 								class="expand-toggle"
-								aria-label={isExpanded(user.id) ? 'Peida kasutaja detailid' : 'Näita kasutaja detaile'}
+								aria-label={isExpanded(user.id)
+									? 'Peida kasutaja detailid'
+									: 'Näita kasutaja detaile'}
 								aria-expanded={isExpanded(user.id)}
 							>
 								<svg
@@ -164,12 +158,16 @@
 						<tr class="bg-slate-50/60">
 							<td colspan="4" class="px-4 py-3">
 								<div class="rounded-lg border border-slate-200 bg-white p-3">
-									<p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Kõik saadaolevad kasutaja väljad</p>
+									<p class="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+										Kõik saadaolevad kasutaja väljad
+									</p>
 									<dl class="grid grid-cols-1 gap-2 sm:grid-cols-2">
 										{#each detailEntries(userDetailsById[user.id] ?? user) as [key, value] (key)}
 											<div class="rounded border border-slate-200 bg-slate-50 p-2">
 												<dt class="text-xs font-semibold text-slate-600">{key}</dt>
-												<dd class="mt-0.5 break-all font-mono text-xs text-slate-800">{typeof value === 'string' ? value : JSON.stringify(value)}</dd>
+												<dd class="mt-0.5 font-mono text-xs break-all text-slate-800">
+													{typeof value === 'string' ? value : JSON.stringify(value)}
+												</dd>
 											</div>
 										{/each}
 									</dl>

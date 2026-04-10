@@ -5,41 +5,17 @@
 	import { authService } from '$lib/services/auth';
 	import { user } from '$lib/stores/auth.store';
 	import { onMount } from 'svelte';
+	import type {
+		ForestStandDto as ForestStandDtoType,
+		ActivityListDto as ActivityListDtoType
+	} from '$lib/dtos/forest-stand/forest-stand.dto';
+	import type { CadasterSummaryDto as CadasterSummaryDtoType } from '$lib/dtos/forest-stand/forest-stand.dto';
 
-	type ForestStandDto = {
-		id: string;
-		number: number;
-		area: number;
-		totalVolume: number;
-		isActive: boolean;
-		validFrom: string;
-		validTo: string | null;
-		cadasterId: string;
-		cadasterCadastralNumber: string;
-		landPropertyId: string;
-		landPropertyName: string;
-	};
+	type ForestStandDto = ForestStandDtoType;
 
-	type CadasterSummaryDto = {
-		id: string;
-		cadastralNumber: string;
-		landPropertyId?: string;
-		landPropertyName?: string;
-	};
+	type CadasterSummaryDto = CadasterSummaryDtoType;
 
-	type ActivityListDto = {
-		id: string;
-		description: string;
-		quantity: number;
-		unit: string | null;
-		date: string;
-		activityTypeName: string;
-		userName: string;
-		cadasterCadastralNumber: string | null;
-		forestStandNumber: number;
-		locationDescription: string | null;
-		applicationStatus: string | null;
-	};
+	type ActivityListDto = ActivityListDtoType;
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
@@ -116,7 +92,9 @@
 				}
 
 				errorMessage =
-					forestStandResponse.status === 404 ? 'Eraldist ei leitud.' : 'Eraldise laadimine ebaõnnestus.';
+					forestStandResponse.status === 404
+						? 'Eraldist ei leitud.'
+						: 'Eraldise laadimine ebaõnnestus.';
 				return;
 			}
 
@@ -197,8 +175,8 @@
 					href={resolve('/employee/[CompanyId]/cadaster/[CadasterId]', {
 						CompanyId: companyId,
 						CadasterId: forestStand.cadasterId
-					})}
-				>{forestStand.cadasterCadastralNumber || '—'}</a>
+					})}>{forestStand.cadasterCadastralNumber || '—'}</a
+				>
 			</p>
 			<p>
 				<strong>Kinnistu:</strong>
@@ -207,8 +185,8 @@
 						href={resolve('/employee/[CompanyId]/landproperty/[LandPropertyId]', {
 							CompanyId: companyId,
 							LandPropertyId: linkedLandPropertyId
-						})}
-					>{linkedLandPropertyName}</a>
+						})}>{linkedLandPropertyName}</a
+					>
 				{:else}
 					—
 				{/if}
@@ -238,7 +216,9 @@
 			</a>
 		</div>
 		{#if activities.length === 0}
-			<div class="employee-state-block is-empty">Selles eraldises ei leitud sinu konto tegevusi.</div>
+			<div class="employee-state-block is-empty">
+				Selles eraldises ei leitud sinu konto tegevusi.
+			</div>
 		{:else}
 			<div class="employee-stack-cards activities-mobile">
 				{#each activities as activity (activity.id)}
@@ -286,7 +266,7 @@
 											ActivityId: activity.id
 										})}
 									>
-									Ava
+										Ava
 									</a>
 								</td>
 							</tr>

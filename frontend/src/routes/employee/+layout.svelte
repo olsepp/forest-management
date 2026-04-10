@@ -11,6 +11,7 @@
 	import { getDefaultRouteForRole } from '$lib/services/auth';
 	import ToastMessage from '$lib/components/shared/ToastMessage.svelte';
 	import { toastStore } from '$lib/stores/toast.store';
+	import type { UserProfileDto } from '$lib/dtos/user/user.dto';
 
 	type AppRoleRoute = '/' | '/admin' | '/employee' | '/sign-in';
 
@@ -19,10 +20,6 @@
 	let employeeDisplayName = $state('Metsandus');
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
-	type UserProfileDto = {
-		firstName?: string;
-		lastName?: string;
-	};
 
 	let currentCompanyId = $derived.by(() => {
 		const fromParams = $page.params.CompanyId?.trim();
@@ -41,7 +38,11 @@
 	type NavItem = {
 		key: 'overview' | 'landproperty' | 'activity' | 'companies';
 		label: string;
-		route: '/employee/[CompanyId]' | '/employee/[CompanyId]/landproperty' | '/employee/[CompanyId]/activity' | '/employee';
+		route:
+			| '/employee/[CompanyId]'
+			| '/employee/[CompanyId]/landproperty'
+			| '/employee/[CompanyId]/activity'
+			| '/employee';
 		isCompanyRoute: boolean;
 		icon: NavIcon;
 		isActive: boolean;
@@ -133,7 +134,9 @@
 	});
 </script>
 
-<div class="employee-layout mx-auto min-h-screen w-full max-w-6xl px-3 pt-0 sm:px-4 sm:pt-0 md:px-5">
+<div
+	class="employee-layout mx-auto min-h-screen w-full max-w-6xl px-3 pt-0 sm:px-4 sm:pt-0 md:px-5"
+>
 	<header class="employee-appbar">
 		<div>
 			<p class="employee-kicker">Töötaja tööruum</p>
@@ -148,18 +151,28 @@
 			{#each navItems as item (item.key)}
 				{#if item.isCompanyRoute}
 					<a
-						href={resolve(item.route as '/employee/[CompanyId]' | '/employee/[CompanyId]/landproperty' | '/employee/[CompanyId]/activity', { CompanyId: navCompanyId })}
+						href={resolve(
+							item.route as
+								| '/employee/[CompanyId]'
+								| '/employee/[CompanyId]/landproperty'
+								| '/employee/[CompanyId]/activity',
+							{ CompanyId: navCompanyId }
+						)}
 						class="employee-nav-link"
 						class:is-active={item.isActive}
 					>
 						<span class="employee-nav-icon" aria-hidden="true">
 							{#if item.icon === 'overview'}
 								<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-									<path d="M4 11.25 12 5l8 6.25V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1v-8.75Z" />
+									<path
+										d="M4 11.25 12 5l8 6.25V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1v-8.75Z"
+									/>
 								</svg>
 							{:else if item.icon === 'property'}
 								<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-									<path d="M4 7.5h16v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-12Zm2 2v9h12v-9H6Zm2-6h8l2 3H6l2-3Z" />
+									<path
+										d="M4 7.5h16v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-12Zm2 2v9h12v-9H6Zm2-6h8l2 3H6l2-3Z"
+									/>
 								</svg>
 							{:else if item.icon === 'activity'}
 								<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
@@ -168,7 +181,9 @@
 								</svg>
 							{:else}
 								<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-									<path d="M3 7h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7Zm4-3h10v2H7V4Zm2 6h2v2H9v-2Zm0 4h2v2H9v-2Zm4-4h6v2h-6v-2Zm0 4h6v2h-6v-2Z" />
+									<path
+										d="M3 7h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7Zm4-3h10v2H7V4Zm2 6h2v2H9v-2Zm0 4h2v2H9v-2Zm4-4h6v2h-6v-2Zm0 4h6v2h-6v-2Z"
+									/>
 								</svg>
 							{/if}
 						</span>
@@ -178,7 +193,9 @@
 					<a href={resolve('/employee')} class="employee-nav-link" class:is-active={item.isActive}>
 						<span class="employee-nav-icon" aria-hidden="true">
 							<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-								<path d="M3 7h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7Zm4-3h10v2H7V4Zm2 6h2v2H9v-2Zm0 4h2v2H9v-2Zm4-4h6v2h-6v-2Zm0 4h6v2h-6v-2Z" />
+								<path
+									d="M3 7h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7Zm4-3h10v2H7V4Zm2 6h2v2H9v-2Zm0 4h2v2H9v-2Zm4-4h6v2h-6v-2Zm0 4h6v2h-6v-2Z"
+								/>
 							</svg>
 						</span>
 						<span>{item.label}</span>
@@ -207,18 +224,28 @@
 			{#each navItems as item (item.key)}
 				{#if item.isCompanyRoute}
 					<a
-						href={resolve(item.route as '/employee/[CompanyId]' | '/employee/[CompanyId]/landproperty' | '/employee/[CompanyId]/activity', { CompanyId: navCompanyId })}
+						href={resolve(
+							item.route as
+								| '/employee/[CompanyId]'
+								| '/employee/[CompanyId]/landproperty'
+								| '/employee/[CompanyId]/activity',
+							{ CompanyId: navCompanyId }
+						)}
 						class="employee-tab-link"
 						class:is-active={item.isActive}
 					>
 						<span class="employee-tab-icon" aria-hidden="true">
 							{#if item.icon === 'overview'}
 								<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-									<path d="M4 11.25 12 5l8 6.25V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1v-8.75Z" />
+									<path
+										d="M4 11.25 12 5l8 6.25V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1v-8.75Z"
+									/>
 								</svg>
 							{:else if item.icon === 'property'}
 								<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-									<path d="M4 7.5h16v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-12Zm2 2v9h12v-9H6Zm2-6h8l2 3H6l2-3Z" />
+									<path
+										d="M4 7.5h16v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-12Zm2 2v9h12v-9H6Zm2-6h8l2 3H6l2-3Z"
+									/>
 								</svg>
 							{:else if item.icon === 'activity'}
 								<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
@@ -227,7 +254,9 @@
 								</svg>
 							{:else}
 								<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-									<path d="M3 7h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7Zm4-3h10v2H7V4Zm2 6h2v2H9v-2Zm0 4h2v2H9v-2Zm4-4h6v2h-6v-2Zm0 4h6v2h-6v-2Z" />
+									<path
+										d="M3 7h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7Zm4-3h10v2H7V4Zm2 6h2v2H9v-2Zm0 4h2v2H9v-2Zm4-4h6v2h-6v-2Zm0 4h6v2h-6v-2Z"
+									/>
 								</svg>
 							{/if}
 						</span>
@@ -237,7 +266,9 @@
 					<a href={resolve('/employee')} class="employee-tab-link" class:is-active={item.isActive}>
 						<span class="employee-tab-icon" aria-hidden="true">
 							<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-								<path d="M3 7h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7Zm4-3h10v2H7V4Zm2 6h2v2H9v-2Zm0 4h2v2H9v-2Zm4-4h6v2h-6v-2Zm0 4h6v2h-6v-2Z" />
+								<path
+									d="M3 7h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7Zm4-3h10v2H7V4Zm2 6h2v2H9v-2Zm0 4h2v2H9v-2Zm4-4h6v2h-6v-2Zm0 4h6v2h-6v-2Z"
+								/>
 							</svg>
 						</span>
 						<span>{item.label}</span>
@@ -270,8 +301,7 @@
 
 	.employee-layout {
 		color: var(--employee-ink);
-		background:
-			linear-gradient(180deg, #f4f8f5 0%, #ebf2ee 100%);
+		background: linear-gradient(180deg, #f4f8f5 0%, #ebf2ee 100%);
 		background-color: var(--employee-shell-bg);
 		display: grid;
 		grid-template-rows: auto auto 1fr;
@@ -393,7 +423,11 @@
 	}
 
 	.employee-nav-link.is-active {
-		background: linear-gradient(180deg, var(--employee-accent) 0%, var(--employee-accent-strong) 100%);
+		background: linear-gradient(
+			180deg,
+			var(--employee-accent) 0%,
+			var(--employee-accent-strong) 100%
+		);
 		border-color: var(--employee-accent-strong);
 		color: #f3fbf7;
 	}
@@ -707,4 +741,3 @@
 		}
 	}
 </style>
-

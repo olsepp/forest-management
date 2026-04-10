@@ -4,60 +4,13 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
 	import { onMount } from 'svelte';
-
-	type PropertyStatus = 'Active' | 'Inactive' | 'Sold';
-
-	type LandPropertyDto = {
-		id: string;
-		name: string;
-		registrationNumber: number;
-		county: string;
-		parish: string;
-		village: string;
-		boughtDate: string | null;
-		soldDate: string | null;
-		status: PropertyStatus | number | string;
-		companyId: string;
-		companyName: string;
-	};
-
-	type LandPropertyUpdateDto = {
-		id: string;
-		name: string;
-		registrationNumber: number;
-		county: string;
-		parish: string;
-		village: string;
-		boughtDate: string | null;
-		soldDate: string | null;
-		status: PropertyStatus | number;
-		companyId: string;
-	};
-
-	type CadasterLinkDto = {
-		id: string;
-		cadastralNumber: string;
-	};
-
-	type ActivityDto = {
-		id: string;
-		description: string;
-		quantity: number;
-		unit: string | null;
-		notes: string | null;
-		date: string;
-		userId: string;
-		userName: string;
-		activityTypeId: string;
-		activityTypeName: string;
-		cadasterId: string | null;
-		cadasterCadastralNumber: string | null;
-		forestStandId: string | null;
-		forestStandNumber: number | null;
-		landPropertyId: string | null;
-		landPropertyName: string | null;
-		applicationStatus: number | null;
-	};
+	import type {
+		PropertyStatus,
+		LandPropertyDto,
+		LandPropertyUpdateDto,
+		CadasterLinkDto,
+		ActivityDto
+	} from '$lib/dtos/land-property/land-property.dto';
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
@@ -125,9 +78,7 @@
 		form = {
 			name: detail.name ?? '',
 			registrationNumber:
-				typeof detail.registrationNumber === 'number'
-					? String(detail.registrationNumber)
-					: '',
+				typeof detail.registrationNumber === 'number' ? String(detail.registrationNumber) : '',
 			county: detail.county ?? '',
 			parish: detail.parish ?? '',
 			village: detail.village ?? '',
@@ -144,7 +95,8 @@
 	}
 
 	function formatActivityQuantity(item: ActivityDto): string {
-		const quantity = typeof item.quantity === 'number' && Number.isFinite(item.quantity) ? item.quantity : 0;
+		const quantity =
+			typeof item.quantity === 'number' && Number.isFinite(item.quantity) ? item.quantity : 0;
 		return item.unit ? `${quantity} ${item.unit}` : String(quantity);
 	}
 
@@ -202,15 +154,18 @@
 			property = (await response.json()) as LandPropertyDto;
 			fillForm(property);
 
-			const cadastersResponse = await fetch(`${apiBaseUrl}/api/cadasters/by-land-property/${propertyId}`, {
-				headers: {
-					Authorization: `Bearer ${token}`
+			const cadastersResponse = await fetch(
+				`${apiBaseUrl}/api/cadasters/by-land-property/${propertyId}`,
+				{
+					headers: {
+						Authorization: `Bearer ${token}`
+					}
 				}
-			});
+			);
 
 			if (cadastersResponse.ok) {
-				cadasters = (((await cadastersResponse.json()) as CadasterLinkDto[]) ?? []).filter(
-					(item) => Boolean(item?.id)
+				cadasters = (((await cadastersResponse.json()) as CadasterLinkDto[]) ?? []).filter((item) =>
+					Boolean(item?.id)
 				);
 			} else {
 				cadasters = [];
@@ -220,11 +175,14 @@
 						: 'Katastrite laadimine ebaõnnestus.';
 			}
 
-			const activitiesResponse = await fetch(`${apiBaseUrl}/api/activities/by-property/${propertyId}`, {
-				headers: {
-					Authorization: `Bearer ${token}`
+			const activitiesResponse = await fetch(
+				`${apiBaseUrl}/api/activities/by-property/${propertyId}`,
+				{
+					headers: {
+						Authorization: `Bearer ${token}`
+					}
 				}
-			});
+			);
 
 			if (activitiesResponse.ok) {
 				activities = (((await activitiesResponse.json()) as ActivityDto[]) ?? [])
@@ -325,7 +283,12 @@
 				<h1>{property.name}</h1>
 				<p class="subtitle">Selle kinnistu kirje- ja olekuhaldus.</p>
 			</div>
-			<button type="button" class="mode-btn" onclick={() => (isEditMode = !isEditMode)} disabled={isSaving}>
+			<button
+				type="button"
+				class="mode-btn"
+				onclick={() => (isEditMode = !isEditMode)}
+				disabled={isSaving}
+			>
 				{isEditMode ? 'Tühista muutmine' : 'Luba muutmine'}
 			</button>
 		</header>
@@ -355,7 +318,12 @@
 					</label>
 					<label>
 						<span>Registrinumber</span>
-						<input type="number" bind:value={form.registrationNumber} required readonly={!isEditMode} />
+						<input
+							type="number"
+							bind:value={form.registrationNumber}
+							required
+							readonly={!isEditMode}
+						/>
 					</label>
 					<label>
 						<span>Olek</span>
@@ -550,7 +518,8 @@
 	}
 
 	.mono {
-		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+		font-family:
+			ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
 		font-size: 0.88rem;
 	}
 
@@ -571,32 +540,35 @@
 	}
 
 	.cadaster-links a {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.9rem 2rem;
-    border: 2px solid #1f5a42;
-    border-radius: 0.75rem;
-    background: #1f5a42;
-    text-decoration: none;
-    color: #ffffff;
-    font-size: 1.1rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    box-shadow: 0 4px 12px rgba(31, 90, 66, 0.3);
-    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
-    cursor: pointer;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.9rem 2rem;
+		border: 2px solid #1f5a42;
+		border-radius: 0.75rem;
+		background: #1f5a42;
+		text-decoration: none;
+		color: #ffffff;
+		font-size: 1.1rem;
+		font-weight: 600;
+		letter-spacing: 0.02em;
+		box-shadow: 0 4px 12px rgba(31, 90, 66, 0.3);
+		transition:
+			background 0.2s,
+			box-shadow 0.2s,
+			transform 0.1s;
+		cursor: pointer;
 	}
 
 	.cadaster-links a:hover {
-    background: #174d38;
-    box-shadow: 0 6px 18px rgba(31, 90, 66, 0.4);
-    transform: translateY(-1px);	
+		background: #174d38;
+		box-shadow: 0 6px 18px rgba(31, 90, 66, 0.4);
+		transform: translateY(-1px);
 	}
 
 	.cadaster-links a:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 6px rgba(31, 90, 66, 0.3);
+		transform: translateY(0);
+		box-shadow: 0 2px 6px rgba(31, 90, 66, 0.3);
 	}
 
 	.form-section {

@@ -5,15 +5,7 @@
 	import ActivityForm from '$lib/components/admin/ActivityForm.svelte';
 	import { authService } from '$lib/services/auth';
 	import { onMount } from 'svelte';
-
-	type ForestStandSummaryDto = {
-		id: string;
-		number: number;
-		cadasterId: string;
-		cadasterCadastralNumber: string;
-		landPropertyId?: string;
-		landPropertyName?: string;
-	};
+	import type { ForestStandSummaryDto } from '$lib/dtos/forest-stand/forest-stand.dto';
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
@@ -77,8 +69,7 @@
 		href={resolve('/admin/[CompanyId]/foreststand/[ForestStandId]', {
 			CompanyId: companyId,
 			ForestStandId: forestStandId
-		})}
-		>← Tagasi eraldise detailidesse</a
+		})}>← Tagasi eraldise detailidesse</a
 	>
 </p>
 
@@ -96,8 +87,7 @@
 				href={resolve('/admin/[CompanyId]/cadaster/[CadasterId]', {
 					CompanyId: companyId,
 					CadasterId: forestStand.cadasterId
-				})}
-				>{forestStand.cadasterCadastralNumber}</a
+				})}>{forestStand.cadasterCadastralNumber}</a
 			>
 		</p>
 		{#if forestStand.landPropertyId && forestStand.landPropertyName}
@@ -107,15 +97,14 @@
 					href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
 						CompanyId: companyId,
 						LandPropertyId: forestStand.landPropertyId
-					})}
-					>{forestStand.landPropertyName}</a
+					})}>{forestStand.landPropertyName}</a
 				>
 			</p>
 		{/if}
 	</section>
 
 	<ActivityForm
-		companyId={companyId}
+		{companyId}
 		cadasterId={forestStand.cadasterId}
 		cadasterLabel={forestStand.cadasterCadastralNumber}
 		forestStandId={forestStand.id}

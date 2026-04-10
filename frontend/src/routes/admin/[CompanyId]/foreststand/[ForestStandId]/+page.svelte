@@ -4,50 +4,12 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
 	import { onMount } from 'svelte';
-
-	type RecentActivityDto = {
-		id: string;
-		description: string;
-		quantity: number;
-		unit: string | null;
-		date: string;
-		activityTypeName: string;
-		userName: string;
-		cadasterCadastralNumber: string | null;
-		forestStandNumber: number;
-	};
-
-	type ForestStandDto = {
-		id: string;
-		number: number;
-		area: number;
-		totalVolume: number;
-		isActive: boolean;
-		validFrom: string;
-		validTo: string | null;
-		cadasterId: string;
-		cadasterCadastralNumber: string;
-		landPropertyId: string;
-		landPropertyName: string;
-		recentActivities: RecentActivityDto[];
-	};
-
-	type ForestStandUpdateDto = {
-		id: string;
-		number: number;
-		area: number;
-		totalVolume: number;
-		isActive: boolean;
-		validFrom: string;
-		validTo: string | null;
-		cadasterId: string;
-	};
-
-	type CadasterSummaryDto = {
-		id: string;
-		landPropertyId?: string;
-		landPropertyName?: string;
-	};
+	import type {
+		RecentActivityDto,
+		ForestStandDto,
+		ForestStandUpdateDto,
+		CadasterSummaryDto
+	} from '$lib/dtos/forest-stand/forest-stand.dto';
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
@@ -253,7 +215,12 @@
 				<h1>Eraldis {forestStand.number}</h1>
 				<p class="subtitle">Halda eraldise väärtusi ja vaata hiljutisi tegevusi.</p>
 			</div>
-			<button type="button" class="mode-btn" onclick={() => (isEditMode = !isEditMode)} disabled={isSaving}>
+			<button
+				type="button"
+				class="mode-btn"
+				onclick={() => (isEditMode = !isEditMode)}
+				disabled={isSaving}
+			>
 				{isEditMode ? 'Tühista muutmine' : 'Luba muutmine'}
 			</button>
 		</header>
@@ -270,7 +237,8 @@
 						href={resolve('/admin/[CompanyId]/cadaster/[CadasterId]', {
 							CompanyId: companyId,
 							CadasterId: forestStand.cadasterId
-						})}>
+						})}
+					>
 						{forestStand.cadasterCadastralNumber}
 					</a>
 				</p>
@@ -283,7 +251,8 @@
 							href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
 								CompanyId: companyId,
 								LandPropertyId: linkedLandPropertyId
-							})}>
+							})}
+						>
 							{linkedLandPropertyName}
 						</a>
 					{:else}
@@ -297,20 +266,54 @@
 			<section class="form-section">
 				<h2>Põhiväärtused</h2>
 				<div class="form-grid">
-					<label><span>Eraldise nr</span><input type="number" min="0" bind:value={form.number} readonly={!isEditMode} /></label>
-					<label><span>Pindala</span><input type="number" step="any" bind:value={form.area} readonly={!isEditMode} /></label>
-					<label><span>Kogumaht</span><input type="number" bind:value={form.totalVolume} readonly={!isEditMode} /></label>
+					<label
+						><span>Eraldise nr</span><input
+							type="number"
+							min="0"
+							bind:value={form.number}
+							readonly={!isEditMode}
+						/></label
+					>
+					<label
+						><span>Pindala</span><input
+							type="number"
+							step="any"
+							bind:value={form.area}
+							readonly={!isEditMode}
+						/></label
+					>
+					<label
+						><span>Kogumaht</span><input
+							type="number"
+							bind:value={form.totalVolume}
+							readonly={!isEditMode}
+						/></label
+					>
 					<label class="checkbox-label">
 						<span>Aktiivne</span>
 						<input type="checkbox" bind:checked={form.isActive} disabled={!isEditMode} />
 					</label>
-					<label><span>Kehtib alates</span><input type="date" bind:value={form.validFrom} readonly={!isEditMode} /></label>
-					<label><span>Kehtib kuni</span><input type="date" bind:value={form.validTo} readonly={!isEditMode} /></label>
+					<label
+						><span>Kehtib alates</span><input
+							type="date"
+							bind:value={form.validFrom}
+							readonly={!isEditMode}
+						/></label
+					>
+					<label
+						><span>Kehtib kuni</span><input
+							type="date"
+							bind:value={form.validTo}
+							readonly={!isEditMode}
+						/></label
+					>
 				</div>
 			</section>
 
 			<div class="form-actions">
-				<button class="btn-save" type="submit" disabled={isSaving || !isEditMode}>{isSaving ? 'Salvestamine...' : 'Salvesta muudatused'}</button>
+				<button class="btn-save" type="submit" disabled={isSaving || !isEditMode}
+					>{isSaving ? 'Salvestamine...' : 'Salvesta muudatused'}</button
+				>
 			</div>
 		</form>
 
@@ -367,12 +370,12 @@
 									<td>{activity.quantity}{activity.unit ? ` ${activity.unit}` : ''}</td>
 									<td>{activity.userName}</td>
 									<td class="actions">
-									<a
-										href={resolve('/admin/[CompanyId]/activity/[ActivityId]', {
-											CompanyId: companyId,
-											ActivityId: activity.id
-										})}>Ava</a
-									>
+										<a
+											href={resolve('/admin/[CompanyId]/activity/[ActivityId]', {
+												CompanyId: companyId,
+												ActivityId: activity.id
+											})}>Ava</a
+										>
 									</td>
 								</tr>
 							{/each}
@@ -400,11 +403,29 @@
 		border-radius: 1rem;
 		background: #eef5f1;
 	}
-	.breadcrumb { margin: 0; }
-	.page-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
-	.eyebrow { margin: 0; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; }
-	h1 { margin: 0.2rem 0 0.35rem; font-size: 1.6rem; }
-	.subtitle { margin: 0; }
+	.breadcrumb {
+		margin: 0;
+	}
+	.page-head {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		gap: 1rem;
+	}
+	.eyebrow {
+		margin: 0;
+		font-size: 0.78rem;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		font-weight: 700;
+	}
+	h1 {
+		margin: 0.2rem 0 0.35rem;
+		font-size: 1.6rem;
+	}
+	.subtitle {
+		margin: 0;
+	}
 	.mode-btn {
 		padding: 0.58rem 1rem;
 		background: #2f5f49;
@@ -413,13 +434,40 @@
 		border-radius: 0.65rem;
 		box-shadow: 0 6px 14px rgba(29, 61, 46, 0.2);
 	}
-	.mode-btn:hover { background: #274f3d; }
-	.meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.8rem; }
-	.meta-card { padding: 0.9rem; border: 1px solid #c9dace; border-radius: 0.75rem; background: #f4faf6; }
-	.meta-label { margin: 0; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; }
-	.meta-value { margin: 0.35rem 0 0; font-size: 1rem; font-weight: 600; }
-	.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace; font-size: 0.88rem; }
-	.detail-form { display: grid; gap: 1rem; }
+	.mode-btn:hover {
+		background: #274f3d;
+	}
+	.meta-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+		gap: 0.8rem;
+	}
+	.meta-card {
+		padding: 0.9rem;
+		border: 1px solid #c9dace;
+		border-radius: 0.75rem;
+		background: #f4faf6;
+	}
+	.meta-label {
+		margin: 0;
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+	}
+	.meta-value {
+		margin: 0.35rem 0 0;
+		font-size: 1rem;
+		font-weight: 600;
+	}
+	.mono {
+		font-family:
+			ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+		font-size: 0.88rem;
+	}
+	.detail-form {
+		display: grid;
+		gap: 1rem;
+	}
 	.form-section {
 		padding: 1rem;
 		border: 1px solid #cadbcf;
@@ -434,18 +482,38 @@
 		gap: 0.75rem;
 		margin-bottom: 0.8rem;
 	}
-	h2 { margin: 0 0 0.8rem; font-size: 1.03rem; }
-	.section-head h2 { margin: 0; }
+	h2 {
+		margin: 0 0 0.8rem;
+		font-size: 1.03rem;
+	}
+	.section-head h2 {
+		margin: 0;
+	}
 	.inline-link {
 		text-decoration: none;
 		font-weight: 600;
 		color: #0f766e;
 	}
-	.inline-link:hover { text-decoration: underline; }
-	.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem 1rem; }
-	label { display: flex; flex-direction: column; gap: 0.35rem; }
-	.checkbox-label { justify-content: flex-end; }
-	.form-actions { display: flex; justify-content: flex-end; }
+	.inline-link:hover {
+		text-decoration: underline;
+	}
+	.form-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+		gap: 0.75rem 1rem;
+	}
+	label {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+	}
+	.checkbox-label {
+		justify-content: flex-end;
+	}
+	.form-actions {
+		display: flex;
+		justify-content: flex-end;
+	}
 	.btn-save {
 		padding: 0.62rem 1.1rem;
 		background: #1f5a42;
@@ -455,12 +523,38 @@
 		border-radius: 0.65rem;
 		box-shadow: 0 8px 16px rgba(31, 90, 66, 0.24);
 	}
-	.btn-save:hover { background: #174a35; }
-	.message { margin: 0; padding: 0.7rem 0.9rem; border-radius: 0.65rem; }
-	.error { background: #fdebec; }
-	.success { background: #e6f7ea; }
-	.table-wrapper { overflow-x: auto; }
-	table { width: 100%; border-collapse: collapse; background: #fff; }
-	th, td { padding: 0.75rem; border-bottom: 1px solid #e5e7eb; text-align: left; vertical-align: top; }
-	th.actions, td.actions { text-align: right; white-space: nowrap; }
+	.btn-save:hover {
+		background: #174a35;
+	}
+	.message {
+		margin: 0;
+		padding: 0.7rem 0.9rem;
+		border-radius: 0.65rem;
+	}
+	.error {
+		background: #fdebec;
+	}
+	.success {
+		background: #e6f7ea;
+	}
+	.table-wrapper {
+		overflow-x: auto;
+	}
+	table {
+		width: 100%;
+		border-collapse: collapse;
+		background: #fff;
+	}
+	th,
+	td {
+		padding: 0.75rem;
+		border-bottom: 1px solid #e5e7eb;
+		text-align: left;
+		vertical-align: top;
+	}
+	th.actions,
+	td.actions {
+		text-align: right;
+		white-space: nowrap;
+	}
 </style>

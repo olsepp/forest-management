@@ -4,21 +4,14 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
 	import { onMount } from 'svelte';
+	import type {
+		LandPropertyListDto as LandPropertyListDtoType,
+		PropertyCadasterLinkDto as PropertyCadasterLinkDtoType
+	} from '$lib/dtos/land-property/land-property-list.dto';
 
-	type LandPropertyListDto = {
-		id: string;
-		name: string;
-		registrationNumber: number;
-		county: string;
-		status: 'Active' | 'Inactive' | 'Sold' | number | string;
-		cadastralNumbers?: string[];
-		cadasters?: PropertyCadasterLinkDto[];
-	};
+	type LandPropertyListDto = LandPropertyListDtoType;
 
-	type PropertyCadasterLinkDto = {
-		id: string;
-		cadastralNumber: string;
-	};
+	type PropertyCadasterLinkDto = PropertyCadasterLinkDtoType;
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
@@ -56,7 +49,9 @@
 			return 'Inactive';
 		}
 
-		const value = String(status ?? '').trim().toLowerCase();
+		const value = String(status ?? '')
+			.trim()
+			.toLowerCase();
 		if (value === 'active') return 'Active';
 		if (value === 'sold') return 'Sold';
 		return 'Inactive';
@@ -84,9 +79,7 @@
 		if (fromDto.length > 0) return fromDto;
 
 		const fromNumbers = Array.isArray(property.cadastralNumbers) ? property.cadastralNumbers : [];
-		return fromNumbers
-			.filter(Boolean)
-			.map((cadastralNumber) => ({ id: '', cadastralNumber }));
+		return fromNumbers.filter(Boolean).map((cadastralNumber) => ({ id: '', cadastralNumber }));
 	}
 
 	function propertySearchableCadastralNumbers(property: LandPropertyListDto): string[] {
@@ -131,14 +124,14 @@
 			const data = (await response.json()) as LandPropertyListDto[];
 			const receivedProperties = Array.isArray(data)
 				? data.map((item) => ({
-					...item,
-					cadasters: Array.isArray(item.cadasters)
-						? item.cadasters.filter(
-								(cadaster) => Boolean(cadaster?.id) && Boolean(cadaster?.cadastralNumber)
-							)
-						: [],
-					cadastralNumbers: Array.isArray(item.cadastralNumbers) ? item.cadastralNumbers : []
-				}))
+						...item,
+						cadasters: Array.isArray(item.cadasters)
+							? item.cadasters.filter(
+									(cadaster) => Boolean(cadaster?.id) && Boolean(cadaster?.cadastralNumber)
+								)
+							: [],
+						cadastralNumbers: Array.isArray(item.cadastralNumbers) ? item.cadastralNumbers : []
+					}))
 				: [];
 
 			// Safety filter: some backends may ignore `activeOnly=true`.
@@ -163,12 +156,12 @@
 {#if isLoading}
 	<div class="employee-state-block is-loading">Laetakse kinnistu…</div>
 {:else if errorMessage}
-		<div class="employee-state-block is-error">
-			{errorMessage}
-			{#if isUnauthorized}
-				<span class="inline-note">Sessioon võib olla lõppenud.</span>
-			{/if}
-		</div>
+	<div class="employee-state-block is-error">
+		{errorMessage}
+		{#if isUnauthorized}
+			<span class="inline-note">Sessioon võib olla lõppenud.</span>
+		{/if}
+	</div>
 {:else}
 	<section class="filters employee-card" aria-label="Kinnistute filtrid">
 		<label for="property-search" class="filter-label">Otsi</label>
@@ -198,7 +191,9 @@
 						<h2>
 							{property.name}
 						</h2>
-						<span class={`status ${statusClass(property.status)}`}>{statusText(property.status)}</span>
+						<span class={`status ${statusClass(property.status)}`}
+							>{statusText(property.status)}</span
+						>
 					</div>
 					<div class="property-meta" aria-label="Kinnistu detailid">
 						<p class="meta-item">
@@ -235,11 +230,9 @@
 							</div>
 						{/if}
 					</div>
-
 				</article>
 			{/each}
 		</section>
-
 	{/if}
 {/if}
 

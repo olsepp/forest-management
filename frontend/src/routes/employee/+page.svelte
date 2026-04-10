@@ -2,7 +2,7 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
 	import { user } from '$lib/stores/auth.store';
-	import type { CompanyListDto } from '$lib/types/company';
+	import type { CompanyListDto } from '$lib/dtos/company/company.dto';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
@@ -49,7 +49,10 @@
 
 <section class="employee-card hero">
 	{#if currentUserId}
-		<a class="profile-shortcut" href={resolve('/employee/user/[userId]', { userId: currentUserId })}>
+		<a
+			class="profile-shortcut"
+			href={resolve('/employee/user/[userId]', { userId: currentUserId })}
+		>
 			Minu profiil
 		</a>
 	{/if}

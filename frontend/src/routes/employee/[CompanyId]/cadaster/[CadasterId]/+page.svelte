@@ -6,45 +6,7 @@
 	import CadastralMap from '$lib/components/shared/CadastralMap.svelte';
 	import { user } from '$lib/stores/auth.store';
 	import { onMount } from 'svelte';
-
-	type CadasterDto = {
-		id: string;
-		cadastralNumber: string;
-		forestArea: number;
-		arableArea: number;
-		grasslandArea: number;
-		yardArea: number;
-		buildingFootprintArea: number;
-		underwaterArea: number;
-		otherArea: number;
-		soilQualityIndex: number;
-		calculatedVolume: number;
-		volumeGrowth: number;
-		landPropertyId: string;
-		landPropertyName: string;
-	};
-
-	type ForestStandListDto = {
-		id: string;
-		number: number;
-		area: number;
-		totalVolume: number;
-		isActive: boolean;
-	};
-
-	type ActivityListDto = {
-		id: string;
-		description: string;
-		quantity: number;
-		unit: string | null;
-		date: string;
-		activityTypeName: string;
-		userName: string;
-		cadasterCadastralNumber: string | null;
-		forestStandNumber: number;
-		locationDescription: string | null;
-		applicationStatus: string | null;
-	};
+	import type { CadasterDto, ForestStandListDto, ActivityListDto } from '$lib/dtos/cadaster/cadaster.dto';
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
@@ -110,7 +72,10 @@
 					return;
 				}
 
-				errorMessage = cadasterResponse.status === 404 ? 'Katasterit ei leitud.' : 'Katastri laadimine ebaõnnestus.';
+				errorMessage =
+					cadasterResponse.status === 404
+						? 'Katasterit ei leitud.'
+						: 'Katastri laadimine ebaõnnestus.';
 				return;
 			}
 
@@ -186,9 +151,9 @@
 			<p><strong>Ehitusala:</strong> {formatNumber(cadaster.buildingFootprintArea)}</p>
 			<p><strong>Veealune maa:</strong> {formatNumber(cadaster.underwaterArea)}</p>
 			<p><strong>Muu maa:</strong> {formatNumber(cadaster.otherArea)}</p>
-			<p><strong>Mullaviljakuse indeks:</strong> {formatNumber(cadaster.soilQualityIndex)}</p>
-			<p><strong>Arvutuslik tagavara:</strong> {formatNumber(cadaster.calculatedVolume)}</p>
-			<p><strong>Tagavara juurdekasv:</strong> {formatNumber(cadaster.volumeGrowth)}</p>
+			<p><strong>Boniteet:</strong> {formatNumber(cadaster.soilQualityIndex)}</p>
+			<p><strong>Arvutatud tagavara:</strong> {formatNumber(cadaster.calculatedVolume)}</p>
+			<p><strong>Mahukasv:</strong> {formatNumber(cadaster.volumeGrowth)}</p>
 		</div>
 	</section>
 
@@ -211,8 +176,6 @@
 					</a>
 				{/each}
 			</div>
-
-			
 		{/if}
 	</section>
 
@@ -230,7 +193,9 @@
 			</a>
 		</div>
 		{#if activities.length === 0}
-			<div class="employee-state-block is-empty">Selles katastris ei leitud sinu konto tegevusi.</div>
+			<div class="employee-state-block is-empty">
+				Selles katastris ei leitud sinu konto tegevusi.
+			</div>
 		{:else}
 			<div class="employee-stack-cards">
 				{#each activities as activity (activity.id)}

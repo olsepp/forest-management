@@ -5,46 +5,20 @@
 	import { authService } from '$lib/services/auth';
 	import { user } from '$lib/stores/auth.store';
 	import { onMount } from 'svelte';
+	import type {
+		ActivityStatus,
+		ActivityDto as ActivityDtoType,
+		ActivityTypeListDto as ActivityTypeListDtoType,
+		ActivityUpdateDto as ActivityUpdateDtoType
+	} from '$lib/dtos/activity/activity.dto';
 
 	type ActivityStatus = 'Pending' | 'Approved' | 'Rejected';
 
-	type ActivityDto = {
-		id: string;
-		description: string;
-		quantity: number;
-		unit: string | null;
-		notes: string | null;
-		date: string;
-		userId: string;
-		userName: string;
-		activityTypeId: string;
-		activityTypeName: string;
-		cadasterId: string | null;
-		cadasterCadastralNumber: string | null;
-		forestStandId: string | null;
-		forestStandNumber: number;
-		landPropertyId: string | null;
-		landPropertyName: string | null;
-		applicationStatus: ActivityStatus | null;
-	};
+	type ActivityDto = ActivityDtoType;
 
-	type ActivityTypeListDto = {
-		id: string;
-		activityTypeName: string;
-	};
+	type ActivityTypeListDto = ActivityTypeListDtoType;
 
-	type ActivityUpdateDto = {
-		id: string;
-		description: string;
-		quantity: number;
-		unit: string | null;
-		notes: string | null;
-		date: string;
-		activityTypeId: string;
-		forestStandId: string | null;
-		cadasterId: string | null;
-		applicationStatus: ActivityStatus | null;
-	};
+	type ActivityUpdateDto = ActivityUpdateDtoType;
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
@@ -153,7 +127,8 @@
 					return;
 				}
 
-				errorMessage = response.status === 404 ? 'Tegevust ei leitud.' : 'Tegevuse laadimine ebaõnnestus.';
+				errorMessage =
+					response.status === 404 ? 'Tegevust ei leitud.' : 'Tegevuse laadimine ebaõnnestus.';
 				return;
 			}
 
@@ -270,7 +245,10 @@
 	</div>
 {:else if activity}
 	<p class="employee-back-link">
-		<a class="employee-back-link-button" href={resolve('/employee/[CompanyId]/activity', { CompanyId: companyId })}>
+		<a
+			class="employee-back-link-button"
+			href={resolve('/employee/[CompanyId]/activity', { CompanyId: companyId })}
+		>
 			<span aria-hidden="true">←</span>
 			<span>Tagasi tegevuste ajalukku</span>
 		</a>
@@ -283,7 +261,12 @@
 				<h1 class="employee-page-title">{activity.activityTypeName || 'Tegevus'}</h1>
 				<p class="subtitle">Vaata ja uuenda oma sisestatud tegevuse detaile.</p>
 			</div>
-			<button type="button" class="mode-btn" onclick={() => (isEditMode = !isEditMode)} disabled={isSaving}>
+			<button
+				type="button"
+				class="mode-btn"
+				onclick={() => (isEditMode = !isEditMode)}
+				disabled={isSaving}
+			>
 				{isEditMode ? 'Tühista muutmine' : 'Luba muutmine'}
 			</button>
 		</div>

@@ -18,15 +18,10 @@ export const GET: RequestHandler = async ({ url, fetch }) => {
 
 	try {
 		const response = await fetch(wfsUrl);
-
 		if (!response.ok) {
-			const errorText = await response.text();
-			console.error('[api/cadastral-unit] upstream error', errorText);
-			return json({ error: `WFS request failed with status ${response.status}.` }, { status: response.status });
+  			return json({ error: 'Upstream service error' }, { status: 502 });
 		}
-
 		const data = await response.json();
-		console.info('[api/cadastral-unit] features count', data?.features?.length ?? 0);
 		return json(data);
 	} catch (e) {
 		console.error('[api/cadastral-unit] upstream fetch failed', e);

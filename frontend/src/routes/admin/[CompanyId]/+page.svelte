@@ -1,10 +1,9 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { resolve } from '$app/paths';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
-	import { goto } from '$app/navigation';
-	import { resolve } from '$app/paths';
-	import type { CompanyDto } from '$lib/types/company';
+	import type { CompanyDto } from '$lib/dtos/company/company.dto';
 	import { onMount } from 'svelte';
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
@@ -32,7 +31,9 @@
 
 			if (!response.ok) {
 				errorMessage =
-					response.status === 401 ? 'Ligipääs puudub. Logige uuesti sisse.' : 'Ettevõtte laadimine ebaõnnestus.';
+					response.status === 401
+						? 'Ligipääs puudub. Logige uuesti sisse.'
+						: 'Ettevõtte laadimine ebaõnnestus.';
 				return;
 			}
 

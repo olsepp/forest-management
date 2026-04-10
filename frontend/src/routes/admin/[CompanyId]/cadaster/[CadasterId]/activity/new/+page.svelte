@@ -5,13 +5,7 @@
 	import ActivityForm from '$lib/components/admin/ActivityForm.svelte';
 	import { authService } from '$lib/services/auth';
 	import { onMount } from 'svelte';
-
-	type CadasterSummaryDto = {
-		id: string;
-		cadastralNumber: string;
-		landPropertyId: string;
-		landPropertyName: string;
-	};
+	import type { CadasterSummaryDto } from '$lib/dtos/forest-stand/forest-stand.dto';
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
@@ -73,7 +67,7 @@
 		href={resolve('/admin/[CompanyId]/cadaster/[CadasterId]', {
 			CompanyId: companyId,
 			CadasterId: cadasterId
-		})}>← Tagasi katastri detailidesse</a
+		})}>← Tagasi katastri juurde</a
 	>
 </p>
 
@@ -87,17 +81,17 @@
 		<p><strong>Katastrinumber:</strong> {cadaster.cadastralNumber}</p>
 		<p>
 			<strong>Kinnistu:</strong>
-			<a href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
-				CompanyId: companyId,
-				LandPropertyId: cadaster.landPropertyId
-			})}
-				>{cadaster.landPropertyName}</a
+			<a
+				href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
+					CompanyId: companyId,
+					LandPropertyId: cadaster.landPropertyId
+				})}>{cadaster.landPropertyName}</a
 			>
 		</p>
 	</section>
 
 	<ActivityForm
-		companyId={companyId}
+		{companyId}
 		cadasterId={cadaster.id}
 		cadasterLabel={cadaster.cadastralNumber}
 		lockCadaster={true}

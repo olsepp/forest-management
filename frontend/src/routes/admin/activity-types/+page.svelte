@@ -2,17 +2,10 @@
 	import { onMount } from 'svelte';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
-
-	type ActivityTypeListDto = {
-		id: string;
-		activityTypeName: string;
-	};
-
-	type ActivityTypeDto = {
-		id: string;
-		activityTypeName: string;
-		activityCount: number;
-	};
+	import type {
+		ActivityTypeListDto,
+		ActivityTypeDto
+	} from '$lib/dtos/activity-type/activity-type.dto';
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 	const endpoint = `${apiBaseUrl}/api/activitytypes`;
@@ -220,15 +213,15 @@
 
 <h1 class="mb-4 text-2xl font-semibold text-slate-900">Tegevuse tüübid</h1>
 
-<section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm mb-6">
+<section class="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
 	<h2 class="mb-3 text-lg font-semibold text-slate-800">Loo tegevuse tüüp</h2>
-	<label class="text-sm text-slate-700 create-row">
-		<span class="font-medium create-label">Nimi</span>
+	<label class="create-row text-sm text-slate-700">
+		<span class="create-label font-medium">Nimi</span>
 		<input
 			type="text"
 			bind:value={createName}
 			placeholder="nt Istutamine"
-			class="rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-emerald-500"
+			class="rounded-lg border border-slate-300 px-3 py-2 transition outline-none focus:border-emerald-500"
 			class:create-input={true}
 		/>
 	</label>
@@ -246,11 +239,15 @@
 </section>
 
 {#if errorMessage}
-	<p class="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{errorMessage}</p>
+	<p class="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+		{errorMessage}
+	</p>
 {/if}
 
 {#if successMessage}
-	<p class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+	<p
+		class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700"
+	>
 		{successMessage}
 	</p>
 {/if}
@@ -277,7 +274,7 @@
 								<input
 									type="text"
 									bind:value={editName}
-									class="w-full rounded-lg border border-slate-300 px-2 py-1.5 outline-none transition focus:border-emerald-500"
+									class="w-full rounded-lg border border-slate-300 px-2 py-1.5 transition outline-none focus:border-emerald-500"
 								/>
 							</td>
 							<td class="px-4 py-3">{activityTypeDetailsById[item.id]?.activityCount ?? 0}</td>
@@ -287,41 +284,43 @@
 										type="button"
 										onclick={() => updateActivityType(item.id)}
 										disabled={isSubmitting}
-									class="inline-flex items-center rounded-lg border border-emerald-300 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-60"
-								>
-									Salvesta
-								</button>
-								<button
-									type="button"
-									onclick={cancelEdit}
-									class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
-								>
-									Tühista
-								</button>
-							</div>
-						</td>
+										class="inline-flex items-center rounded-lg border border-emerald-300 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-60"
+									>
+										Salvesta
+									</button>
+									<button
+										type="button"
+										onclick={cancelEdit}
+										class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+									>
+										Tühista
+									</button>
+								</div>
+							</td>
 						{:else}
 							<td class="px-4 py-3 text-slate-900">{item.activityTypeName}</td>
-							<td class="px-4 py-3 text-slate-700">{activityTypeDetailsById[item.id]?.activityCount ?? 0}</td>
+							<td class="px-4 py-3 text-slate-700"
+								>{activityTypeDetailsById[item.id]?.activityCount ?? 0}</td
+							>
 							<td class="px-4 py-3">
 								<div class="flex gap-2">
 									<button
 										type="button"
 										onclick={() => startEdit(item)}
-									class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
-								>
-									Muuda
-								</button>
-								<button
-									type="button"
-									onclick={() => deleteActivityType(item.id)}
-									disabled={isSubmitting}
-									class="inline-flex items-center rounded-lg border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
-								>
-									Kustuta
-								</button>
-							</div>
-						</td>
+										class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+									>
+										Muuda
+									</button>
+									<button
+										type="button"
+										onclick={() => deleteActivityType(item.id)}
+										disabled={isSubmitting}
+										class="inline-flex items-center rounded-lg border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
+									>
+										Kustuta
+									</button>
+								</div>
+							</td>
 						{/if}
 					</tr>
 				{/each}

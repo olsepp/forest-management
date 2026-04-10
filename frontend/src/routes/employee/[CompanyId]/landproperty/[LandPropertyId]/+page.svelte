@@ -4,47 +4,17 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
 	import { onMount } from 'svelte';
+	import type {
+		LandPropertyDto as LandPropertyDtoType,
+		CadasterLinkDto as CadasterLinkDtoType,
+		ActivityDto as ActivityDtoType
+	} from '$lib/dtos/land-property/land-property.dto';
 
-	type LandPropertyDto = {
-		id: string;
-		name: string;
-		registrationNumber: number;
-		county: string;
-		parish: string;
-		village: string;
-		boughtDate: string | null;
-		soldDate: string | null;
-		status: 'Active' | 'Inactive' | 'Sold' | number | string;
-		companyId: string;
-		companyName: string;
-	};
+	type LandPropertyDto = LandPropertyDtoType;
 
-	type CadasterLinkDto = {
-		id: string;
-		cadastralNumber: string;
-		forestArea?: number;
-		forestStandCount?: number;
-	};
+	type CadasterLinkDto = CadasterLinkDtoType;
 
-	type ActivityDto = {
-		id: string;
-		description: string;
-		quantity: number;
-		unit: string | null;
-		notes: string | null;
-		date: string;
-		userId: string;
-		activityTypeName: string;
-		activityTypeId: string;
-		userName: string;
-		cadasterId: string | null;
-		cadasterCadastralNumber: string | null;
-		forestStandId: string | null;
-		forestStandNumber: number | null;
-		landPropertyId: string | null;
-		landPropertyName: string | null;
-		applicationStatus: number | null;
-	};
+	type ActivityDto = ActivityDtoType;
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
@@ -66,7 +36,9 @@
 			return 'Mitteaktiivne';
 		}
 
-		const value = String(status ?? '').trim().toLowerCase();
+		const value = String(status ?? '')
+			.trim()
+			.toLowerCase();
 		if (value === 'active') return 'Aktiivne';
 		if (value === 'sold') return 'Müüdud';
 		return 'Mitteaktiivne';
@@ -109,23 +81,34 @@
 					return;
 				}
 
-				errorMessage = propertyResponse.status === 404 ? 'Kinnistut ei leitud.' : 'Kinnistu laadimine ebaõnnestus.';
+				errorMessage =
+					propertyResponse.status === 404
+						? 'Kinnistut ei leitud.'
+						: 'Kinnistu laadimine ebaõnnestus.';
 				return;
 			}
 
 			property = (await propertyResponse.json()) as LandPropertyDto;
 
-			const cadastersResponse = await fetch(`${apiBaseUrl}/api/cadasters/by-land-property/${propertyId}`, {
-				headers: { Authorization: `Bearer ${token}` }
-			});
+			const cadastersResponse = await fetch(
+				`${apiBaseUrl}/api/cadasters/by-land-property/${propertyId}`,
+				{
+					headers: { Authorization: `Bearer ${token}` }
+				}
+			);
 
 			cadasters = cadastersResponse.ok
-				? (((await cadastersResponse.json()) as CadasterLinkDto[]) ?? []).filter((item) => Boolean(item?.id))
+				? (((await cadastersResponse.json()) as CadasterLinkDto[]) ?? []).filter((item) =>
+						Boolean(item?.id)
+					)
 				: [];
 
-			const activitiesResponse = await fetch(`${apiBaseUrl}/api/activities/by-property/${propertyId}/my`, {
-				headers: { Authorization: `Bearer ${token}` }
-			});
+			const activitiesResponse = await fetch(
+				`${apiBaseUrl}/api/activities/by-property/${propertyId}/my`,
+				{
+					headers: { Authorization: `Bearer ${token}` }
+				}
+			);
 
 			if (!activitiesResponse.ok) {
 				if (activitiesResponse.status === 401 || activitiesResponse.status === 403) {
@@ -162,7 +145,10 @@
 	</div>
 {:else if property}
 	<p class="employee-back-link">
-		<a class="employee-back-link-button" href={resolve('/employee/[CompanyId]/landproperty', { CompanyId: companyId })}>
+		<a
+			class="employee-back-link-button"
+			href={resolve('/employee/[CompanyId]/landproperty', { CompanyId: companyId })}
+		>
 			<span aria-hidden="true">←</span>
 			<span>Tagasi kinnistute juurde</span>
 		</a>

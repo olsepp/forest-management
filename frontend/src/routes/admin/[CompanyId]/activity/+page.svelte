@@ -4,26 +4,7 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
 	import { onMount } from 'svelte';
-
-	type ActivityDto = {
-		id: string;
-		description: string;
-		quantity: number;
-		unit: string | null;
-		notes: string | null;
-		date: string;
-		userId: string;
-		userName: string;
-		activityTypeId: string;
-		activityTypeName: string;
-		cadasterId: string | null;
-		cadasterCadastralNumber: string | null;
-		forestStandId: string | null;
-		forestStandNumber: number | null;
-		landPropertyId: string | null;
-		landPropertyName: string | null;
-		applicationStatus: number | null;
-	};
+	import type { ActivityDto } from '$lib/dtos/land-property/land-property.dto';
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
@@ -53,7 +34,8 @@
 	}
 
 	function formatQuantity(item: ActivityDto): string {
-		const quantity = typeof item.quantity === 'number' && Number.isFinite(item.quantity) ? item.quantity : 0;
+		const quantity =
+			typeof item.quantity === 'number' && Number.isFinite(item.quantity) ? item.quantity : 0;
 		return item.unit ? `${quantity} ${item.unit}` : String(quantity);
 	}
 
@@ -62,7 +44,11 @@
 	}
 
 	function forestStandLabel(item: ActivityDto): string {
-		if (typeof item.forestStandNumber === 'number' && Number.isFinite(item.forestStandNumber) && item.forestStandNumber > 0) {
+		if (
+			typeof item.forestStandNumber === 'number' &&
+			Number.isFinite(item.forestStandNumber) &&
+			item.forestStandNumber > 0
+		) {
 			return String(item.forestStandNumber);
 		}
 
@@ -143,47 +129,48 @@
 						<td>{cadasterLabel(item)}</td>
 						<td>{forestStandLabel(item)}</td>
 						<td>{item.userName}</td>
-					<td class="actions">
-								<button
+						<td class="actions">
+							<button
 								type="button"
 								class="expand-toggle"
 								onclick={() => toggleExpand(item.id)}
-							aria-label={isExpanded(item.id) ? 'Peida tegevuse detailid' : 'Näita tegevuse detaile'}
-							aria-expanded={isExpanded(item.id)}
-						>
-							<svg
-								class={`expand-icon ${isExpanded(item.id) ? 'open' : ''}`}
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2.75"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								aria-hidden="true"
+								aria-label={isExpanded(item.id)
+									? 'Peida tegevuse detailid'
+									: 'Näita tegevuse detaile'}
+								aria-expanded={isExpanded(item.id)}
 							>
-								<path d="M6 9l6 6 6-6" />
-							</svg>
-						</button>
-					</td>
-				</tr>
-				{#if isExpanded(item.id)}
-					<tr class="expanded-row">
-						<td colspan="6">
-							<div class="expanded-content">
-								<div class="expanded-actions">
-									<a
-										class="details-open-btn"
-										href={resolve('/admin/[CompanyId]/activity/[ActivityId]', {
-										CompanyId: companyId,
-										ActivityId: item.id
-									})}
-										>Ava tegevuse leht</a
-									>
-								</div>
-								<p><strong>ID:</strong> {item.id}</p>
-								<p><strong>Kuupäev:</strong> {formatDate(item.date)}</p>
-								<p><strong>Tegevuse tüüp:</strong> {item.activityTypeName}</p>
-								<p><strong>Kataster:</strong> {cadasterLabel(item)}</p>
+								<svg
+									class={`expand-icon ${isExpanded(item.id) ? 'open' : ''}`}
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2.75"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									aria-hidden="true"
+								>
+									<path d="M6 9l6 6 6-6" />
+								</svg>
+							</button>
+						</td>
+					</tr>
+					{#if isExpanded(item.id)}
+						<tr class="expanded-row">
+							<td colspan="6">
+								<div class="expanded-content">
+									<div class="expanded-actions">
+										<a
+											class="details-open-btn"
+											href={resolve('/admin/[CompanyId]/activity/[ActivityId]', {
+												CompanyId: companyId,
+												ActivityId: item.id
+											})}>Ava tegevuse leht</a
+										>
+									</div>
+									<p><strong>ID:</strong> {item.id}</p>
+									<p><strong>Kuupäev:</strong> {formatDate(item.date)}</p>
+									<p><strong>Tegevuse tüüp:</strong> {item.activityTypeName}</p>
+									<p><strong>Kataster:</strong> {cadasterLabel(item)}</p>
 									<p><strong>Eraldis:</strong> {forestStandLabel(item)}</p>
 									<p><strong>Kinnistu:</strong> {item.landPropertyName || '—'}</p>
 									<p><strong>Kasutaja:</strong> {item.userName}</p>
