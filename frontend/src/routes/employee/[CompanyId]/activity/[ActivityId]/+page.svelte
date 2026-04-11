@@ -6,19 +6,11 @@
 	import { user } from '$lib/stores/auth.store';
 	import { onMount } from 'svelte';
 	import type {
-		ActivityStatus,
-		ActivityDto as ActivityDtoType,
-		ActivityTypeListDto as ActivityTypeListDtoType,
-		ActivityUpdateDto as ActivityUpdateDtoType
+		ActivityDto,
+		ActivityTypeListDto,
+		ActivityUpdateDto
 	} from '$lib/dtos/activity/activity.dto';
 
-	type ActivityStatus = 'Pending' | 'Approved' | 'Rejected';
-
-	type ActivityDto = ActivityDtoType;
-
-	type ActivityTypeListDto = ActivityTypeListDtoType;
-
-	type ActivityUpdateDto = ActivityUpdateDtoType;
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 

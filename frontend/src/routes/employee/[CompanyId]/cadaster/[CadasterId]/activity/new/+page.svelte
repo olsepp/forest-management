@@ -73,7 +73,7 @@
 		})}
 	>
 		<span aria-hidden="true">←</span>
-		<span>Tagasi katastri detailidesse</span>
+		<span>Tagasi katastri juurde</span>
 	</a>
 </p>
 

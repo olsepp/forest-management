@@ -4,12 +4,7 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
 	import { onMount } from 'svelte';
-	import type {
-		ActivityStatus,
-		ActivityDto as ActivityDtoType
-	} from '$lib/dtos/activity/activity.dto';
-
-	type ActivityDto = ActivityDtoType;
+	import type { ActivityDto } from '$lib/dtos/activity/activity.dto';
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 

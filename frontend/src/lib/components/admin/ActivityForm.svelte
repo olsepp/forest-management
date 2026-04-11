@@ -55,6 +55,7 @@
 	let date = $state(new Date().toISOString().slice(0, 16));
 	let activityTypeId = $state('');
 	let selectedCadasterId = $state('');
+	let applicationStatus = $state('');
 
 	$effect(() => {
 		if (lockCadaster && cadasterId) {
@@ -120,7 +121,7 @@
 		const quantityRaw = String(quantity ?? '').trim();
 		const quantityNumber = quantityRaw === '' ? 0 : Number(quantityRaw);
 		if (!Number.isFinite(quantityNumber)) {
-			errorMessage = 'Kogus peab olema korrektne number.';
+			errorMessage = 'Kogus peab olema number!';
 			return;
 		}
 
@@ -133,7 +134,7 @@
 			activityTypeId,
 			cadasterId: selectedCadasterId,
 			forestStandId: forestStandId ?? null,
-			applicationStatus: null
+			applicationStatus: applicationStatus || null
 		};
 
 		try {
@@ -193,7 +194,9 @@
 		<label>
 			<span>Tegevuse tüüp</span>
 			<select bind:value={activityTypeId} disabled={isLoadingActivityTypes} required>
-				<option value="" disabled>{isLoadingActivityTypes ? 'Laadimine...' : 'Vali tegevuse tüüp'}</option>
+				<option value="" disabled
+					>{isLoadingActivityTypes ? 'Laadimine...' : 'Vali tegevuse tüüp'}</option
+				>
 				{#each activityTypes as type (type.id)}
 					<option value={type.id}>{type.activityTypeName}</option>
 				{/each}
@@ -218,6 +221,16 @@
 		<label>
 			<span>Ühik</span>
 			<input type="text" bind:value={unit} placeholder="nt m3, ha" />
+		</label>
+
+		<label>
+			<span>Taotluse staatus</span>
+			<select bind:value={applicationStatus}>
+				<option value=""></option>
+				<option value="Pending">Ootel</option>
+				<option value="Approved">Kinnitatud</option>
+				<option value="Rejected">Tagasi lükatud</option>
+			</select>
 		</label>
 
 		<label class="notes">
