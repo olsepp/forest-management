@@ -147,9 +147,8 @@
 	onMount(loadData);
 </script>
 
-<section class="employee-card page-intro">
-	<p class="kicker">Kinnistud</p>
-	<h1>Aktiivsed kinnistud</h1>
+<section class="employee-card intro">
+	<h1>KINNISTUD</h1>
 	<p>Otsi nime, reg. nr või katastri nr järgi.</p>
 </section>
 
@@ -237,24 +236,17 @@
 {/if}
 
 <style>
-	.page-intro {
+	.intro {
 		margin-bottom: 0.85rem;
 	}
 
-	.kicker {
-		margin: 0;
-		font-size: 0.77rem;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.03em;
-		color: #3f5a4b;
-	}
-
 	h1 {
-		margin: 0.3rem 0 0.4rem;
+		margin: 0;
 		font-size: 1.2rem;
 		line-height: 1.2;
 		color: #17251e;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
 	}
 
 	h2 {
@@ -459,11 +451,11 @@
 		padding: 0.45rem 0.72rem;
 		border: 1px solid #b9c8da;
 		border-radius: 12px;
-		background: #f5f8fc;
+		background: #275f47;
 		text-decoration: none;
-		color: #1f334a;
+		color: white;
 		font-size: 0.9rem;
-		font-weight: 600;
+		font-weight: bold;
 	}
 
 	.cadaster-chip.is-static {
@@ -471,8 +463,16 @@
 		color: #475569;
 	}
 
+	.cadaster-chip.is-static:active {
+		background: #e2e8f0;
+	}
+
 	.cadaster-chip:hover {
 		background: #ebf1f8;
 		border-color: #95abc4;
+	}
+
+	.cadaster-chip:active {
+		background: #1e4633;
 	}
 </style>

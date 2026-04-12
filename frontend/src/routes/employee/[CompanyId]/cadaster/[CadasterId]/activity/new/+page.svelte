@@ -62,8 +62,6 @@
 	onMount(loadCadasterSummary);
 </script>
 
-<h1 class="employee-page-title">Logi tegevus katastri jaoks</h1>
-
 <p class="employee-back-link">
 	<a
 		class="employee-back-link-button"
@@ -88,7 +86,6 @@
 	</div>
 {:else if cadaster}
 	<section class="employee-card summary">
-		<h2>Katastri kontekst</h2>
 		<p><strong>Katastritunnus:</strong> {cadaster.cadastralNumber}</p>
 		<p>
 			<strong>Kinnistu:</strong>
@@ -113,12 +110,6 @@
 {/if}
 
 <style>
-	h2 {
-		margin: 0 0 0.6rem;
-		font-size: 1.05rem;
-		color: #1f2937;
-	}
-
 	.summary {
 		margin-bottom: 0.85rem;
 	}

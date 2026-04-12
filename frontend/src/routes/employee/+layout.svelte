@@ -437,11 +437,8 @@
 	}
 
 	.employee-content-frame {
-		border: 1px solid var(--employee-border);
-		border-radius: calc(var(--employee-radius-lg) + 0.15rem);
-		background: linear-gradient(180deg, #ffffff 0%, #f8fbf9 100%);
+		background: transparent;
 		padding: 0.85rem;
-		box-shadow: var(--employee-shadow-soft);
 	}
 
 	.employee-content {

@@ -11,7 +11,6 @@
 		ActivityUpdateDto
 	} from '$lib/dtos/activity/activity.dto';
 
-
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
 	let isLoading = $state(true);
@@ -52,7 +51,7 @@
 	}
 
 	function formatQuantity(value: number, unit: string | null): string {
-		if (!Number.isFinite(value)) return '—';
+		if (!Number.isFinite(value) || value === 0) return '—';
 		return unit ? `${value} ${unit}` : String(value);
 	}
 
@@ -264,47 +263,35 @@
 		</div>
 
 		<div class="meta-grid">
-			<p><strong>Sisestaja:</strong> {activity.userName || '—'}</p>
+			<p><strong>Sisestas:</strong> {activity.userName || '—'}</p>
 			<p><strong>Kuupäev:</strong> {formatDate(activity.date)}</p>
 			<p><strong>Kogus:</strong> {formatQuantity(activity.quantity, activity.unit)}</p>
-			<p><strong>Staatus:</strong> {activity.applicationStatus || '—'}</p>
+			{#if activity.landPropertyId}
+				<p>
+					<strong>Kinnistu:</strong>
+					{activity.landPropertyName ?? activity.landPropertyId}
+				</p>
+			{/if}
 			<p>
-				<strong>Siht:</strong>
+				<strong>Kataster:</strong>
 				{#if activity.cadasterId}
-					<a
-						href={resolve('/employee/[CompanyId]/cadaster/[CadasterId]', {
-							CompanyId: companyId,
-							CadasterId: activity.cadasterId
-						})}
-					>
-						Kataster {activity.cadasterCadastralNumber ?? activity.cadasterId}
-					</a>
+					{activity.cadasterCadastralNumber ?? activity.cadasterId}
 				{:else if activity.forestStandId}
-					<a
-						href={resolve('/employee/[CompanyId]/foreststand/[ForestStandId]', {
-							CompanyId: companyId,
-							ForestStandId: activity.forestStandId
-						})}
-					>
-						Eraldis {activity.forestStandNumber || activity.forestStandId}
-					</a>
+					{activity.cadasterId || '—'}
 				{:else}
 					—
 				{/if}
 			</p>
-			{#if activity.landPropertyId}
-				<p>
-					<strong>Kinnistu:</strong>
-					<a
-						href={resolve('/employee/[CompanyId]/landproperty/[LandPropertyId]', {
-							CompanyId: companyId,
-							LandPropertyId: activity.landPropertyId
-						})}
-					>
-						{activity.landPropertyName ?? activity.landPropertyId}
-					</a>
-				</p>
-			{/if}
+			<p>
+				<strong>Eraldis:</strong>
+				{#if activity.forestStandId}
+					{activity.forestStandNumber || activity.forestStandId}
+				{:else if activity.cadasterId}
+					—
+				{:else}
+					—
+				{/if}
+			</p>
 		</div>
 	</section>
 
@@ -423,6 +410,10 @@
 		font-weight: 700;
 	}
 
+	.mode-btn:hover:not(:disabled) {
+		cursor: pointer;
+	}
+
 	.mode-btn:disabled {
 		opacity: 0.65;
 	}
@@ -435,12 +426,6 @@
 	.meta-grid p {
 		margin: 0;
 		color: #334155;
-	}
-
-	.meta-grid a {
-		color: #1f5a42;
-		font-weight: 700;
-		text-decoration: none;
 	}
 
 	.detail-form {
@@ -494,6 +479,10 @@
 		color: #f6fbf8;
 		font-size: 0.9rem;
 		font-weight: 700;
+	}
+
+	.btn-save:hover:not(:disabled) {
+		cursor: pointer;
 	}
 
 	.btn-save:disabled {

@@ -86,8 +86,6 @@
 	onMount(loadForestStandSummary);
 </script>
 
-<h1 class="employee-page-title">Logi tegevus eraldise jaoks</h1>
-
 <p class="employee-back-link">
 	<a
 		class="employee-back-link-button"
@@ -97,7 +95,7 @@
 		})}
 	>
 		<span aria-hidden="true">←</span>
-		<span>Tagasi eraldise detailidesse</span>
+		<span>Tagasi eraldise juurde</span>
 	</a>
 </p>
 
@@ -112,7 +110,6 @@
 	</div>
 {:else if forestStand}
 	<section class="employee-card summary">
-		<h2>Eraldise kontekst</h2>
 		<p><strong>Eraldis:</strong> Eraldis {forestStand.number}</p>
 		<p>
 			<strong>Kataster:</strong>
@@ -149,12 +146,6 @@
 {/if}
 
 <style>
-	h2 {
-		margin: 0 0 0.6rem;
-		font-size: 1.05rem;
-		color: #1f2937;
-	}
-
 	.summary {
 		margin-bottom: 0.85rem;
 	}

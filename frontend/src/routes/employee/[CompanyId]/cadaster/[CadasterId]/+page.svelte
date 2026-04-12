@@ -6,7 +6,11 @@
 	import CadastralMap from '$lib/components/shared/CadastralMap.svelte';
 	import { user } from '$lib/stores/auth.store';
 	import { onMount } from 'svelte';
-	import type { CadasterDto, ForestStandListDto, ActivityListDto } from '$lib/dtos/cadaster/cadaster.dto';
+	import type {
+		CadasterDto,
+		ForestStandListDto,
+		ActivityListDto
+	} from '$lib/dtos/cadaster/cadaster.dto';
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
@@ -128,7 +132,6 @@
 	<section class="employee-card summary">
 		<div class="summary-head">
 			<div>
-				<p class="kicker">Katastri detailid</p>
 				<h1>{cadaster.cadastralNumber}</h1>
 			</div>
 			<a
@@ -162,7 +165,7 @@
 		{#if forestStands.length === 0}
 			<div class="employee-state-block is-empty">Eraldisi ei leitud.</div>
 		{:else}
-			<div class="stand-button-grid stands-mobile" aria-label="Eraldised">
+			<div class="stand-button-grid" aria-label="Eraldised">
 				{#each forestStands as stand (stand.id)}
 					<a
 						class="stand-button"
@@ -181,7 +184,7 @@
 
 	<section class="employee-card">
 		<div class="section-head">
-			<h2>Sinu tegevused selles katastris</h2>
+			<h2>Sinu tegevused katastril</h2>
 			<a
 				class="log-activity-link is-secondary"
 				href={resolve('/employee/[CompanyId]/cadaster/[CadasterId]/activity/new', {
@@ -194,7 +197,7 @@
 		</div>
 		{#if activities.length === 0}
 			<div class="employee-state-block is-empty">
-				Selles katastris ei leitud sinu konto tegevusi.
+				Ei leitud.
 			</div>
 		{:else}
 			<div class="employee-stack-cards">
@@ -279,13 +282,10 @@
 		margin-bottom: 0.65rem;
 	}
 
-	.kicker {
-		margin: 0;
-		font-size: 0.77rem;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.03em;
-		color: #3f5a4b;
+	.summary-head h1 {
+		color: #1e553f;
+		font-weight: bold;
+		font-size: 1.8rem;
 	}
 
 	h1 {
@@ -416,10 +416,9 @@
 			width: 100%;
 		}
 	}
-
 	@media (min-width: 768px) {
-		.stands-mobile {
-			display: none;
+		.stand-button-grid {
+			grid-template-columns: repeat(4, minmax(0, 1fr));
 		}
 	}
 </style>

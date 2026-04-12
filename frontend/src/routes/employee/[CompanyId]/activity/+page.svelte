@@ -84,8 +84,7 @@
 </script>
 
 <section class="employee-card summary">
-	<p class="kicker">Tegevuste ajalugu</p>
-	<h1 class="employee-page-title">Sinu ettevõtte tegevuste ajalugu</h1>
+	<h1>TEGEVUSED</h1>
 	<p>Vaata kõiki tegevusi, mille oled selles ettevõttes sisestanud.</p>
 </section>
 
@@ -171,17 +170,17 @@
 		margin-bottom: 0.75rem;
 	}
 
-	.kicker {
+	h1 {
 		margin: 0;
-		font-size: 0.77rem;
-		font-weight: 700;
+		font-size: 1.2rem;
+		line-height: 1.2;
+		color: #17251e;
 		text-transform: uppercase;
 		letter-spacing: 0.03em;
-		color: #3f5a4b;
 	}
 
 	p {
-		margin: 0;
+		margin: 0.4rem 0 0;
 		color: #334155;
 	}
 

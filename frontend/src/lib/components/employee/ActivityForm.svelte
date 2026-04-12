@@ -174,20 +174,6 @@
 
 	<form class="form-grid" onsubmit={submit}>
 		<label>
-			<span>Kataster</span>
-			{#if lockCadaster}
-				<input type="text" value={cadasterLabel || selectedCadasterId} readonly />
-			{:else}
-				<select bind:value={selectedCadasterId} required>
-					<option value="" disabled>Vali kataster</option>
-					{#each cadasterOptions as option (option.id)}
-						<option value={option.id}>{option.label}</option>
-					{/each}
-				</select>
-			{/if}
-		</label>
-
-		<label>
 			<span>Tegevuse tüüp</span>
 			<select bind:value={activityTypeId} disabled={isLoadingActivityTypes} required>
 				<option value="" disabled
@@ -204,11 +190,6 @@
 			<input type="datetime-local" bind:value={date} required />
 		</label>
 
-		<label class="full-width">
-			<span>Kirjeldus</span>
-			<textarea bind:value={description} rows="3" required></textarea>
-		</label>
-
 		<label>
 			<span>Kogus</span>
 			<input type="number" step="any" bind:value={quantity} />
@@ -217,6 +198,11 @@
 		<label>
 			<span>Ühik</span>
 			<input type="text" bind:value={unit} placeholder="nt m3, ha" />
+		</label>
+
+		<label class="full-width">
+			<span>Kirjeldus</span>
+			<textarea bind:value={description} rows="3" required></textarea>
 		</label>
 
 		<label class="full-width">

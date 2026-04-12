@@ -6,16 +6,12 @@
 	import { user } from '$lib/stores/auth.store';
 	import { onMount } from 'svelte';
 	import type {
-		ForestStandDto as ForestStandDtoType,
-		ActivityListDto as ActivityListDtoType
+		ForestStandDto,
+		ActivityListDto
 	} from '$lib/dtos/forest-stand/forest-stand.dto';
-	import type { CadasterSummaryDto as CadasterSummaryDtoType } from '$lib/dtos/forest-stand/forest-stand.dto';
+	import type { CadasterSummaryDto } from '$lib/dtos/forest-stand/forest-stand.dto';
 
-	type ForestStandDto = ForestStandDtoType;
 
-	type CadasterSummaryDto = CadasterSummaryDtoType;
-
-	type ActivityListDto = ActivityListDtoType;
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
@@ -154,7 +150,7 @@
 	<section class="employee-card summary">
 		<div class="summary-head">
 			<div>
-				<p class="kicker">Eraldise detailid</p>
+				
 				<h1>Eraldis #{forestStand.number}</h1>
 			</div>
 			<a
@@ -194,17 +190,14 @@
 		</div>
 
 		<div class="meta-grid">
-			<p><strong>Olek:</strong> {forestStand.isActive ? 'Aktiivne' : 'Mitteaktiivne'}</p>
 			<p><strong>Pindala:</strong> {formatNumber(forestStand.area)}</p>
 			<p><strong>Tagavara kokku:</strong> {formatNumber(forestStand.totalVolume)}</p>
-			<p><strong>Kehtiv alates:</strong> {formatDate(forestStand.validFrom)}</p>
-			<p><strong>Kehtiv kuni:</strong> {formatDate(forestStand.validTo)}</p>
 		</div>
 	</section>
 
 	<section class="employee-card">
 		<div class="section-head">
-			<h2>Sinu tegevused selles eraldises</h2>
+			<h2>Sinu tegevused eraldisel</h2>
 			<a
 				class="log-activity-link is-secondary"
 				href={resolve('/employee/[CompanyId]/foreststand/[ForestStandId]/activity/new', {
@@ -217,7 +210,7 @@
 		</div>
 		{#if activities.length === 0}
 			<div class="employee-state-block is-empty">
-				Selles eraldises ei leitud sinu konto tegevusi.
+				Ei leitud.
 			</div>
 		{:else}
 			<div class="employee-stack-cards activities-mobile">
@@ -327,6 +320,12 @@
 		align-items: center;
 		gap: 0.65rem;
 		margin-bottom: 0.65rem;
+	}
+
+	.summary-head h1 {
+		color: #1e553f;
+		font-weight: bold;
+		font-size: 1.6rem;
 	}
 
 	.kicker {
