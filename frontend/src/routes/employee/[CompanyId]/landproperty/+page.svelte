@@ -5,13 +5,9 @@
 	import { authService } from '$lib/services/auth';
 	import { onMount } from 'svelte';
 	import type {
-		LandPropertyListDto as LandPropertyListDtoType,
-		PropertyCadasterLinkDto as PropertyCadasterLinkDtoType
+		LandPropertyListDto,
+		PropertyCadasterLinkDto
 	} from '$lib/dtos/land-property/land-property-list.dto';
-
-	type LandPropertyListDto = LandPropertyListDtoType;
-
-	type PropertyCadasterLinkDto = PropertyCadasterLinkDtoType;
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 

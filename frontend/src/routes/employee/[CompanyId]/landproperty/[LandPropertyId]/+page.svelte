@@ -5,16 +5,10 @@
 	import { authService } from '$lib/services/auth';
 	import { onMount } from 'svelte';
 	import type {
-		LandPropertyDto as LandPropertyDtoType,
-		CadasterLinkDto as CadasterLinkDtoType,
-		ActivityDto as ActivityDtoType
+		LandPropertyDto,
+		CadasterLinkDto,
+		ActivityDto
 	} from '$lib/dtos/land-property/land-property.dto';
-
-	type LandPropertyDto = LandPropertyDtoType;
-
-	type CadasterLinkDto = CadasterLinkDtoType;
-
-	type ActivityDto = ActivityDtoType;
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
@@ -28,21 +22,6 @@
 
 	let companyId = $derived($page.params.CompanyId ?? '');
 	let propertyId = $derived($page.params.LandPropertyId ?? '');
-
-	function statusLabel(status: LandPropertyDto['status']): string {
-		if (typeof status === 'number') {
-			if (status === 0) return 'Aktiivne';
-			if (status === 2) return 'Müüdud';
-			return 'Mitteaktiivne';
-		}
-
-		const value = String(status ?? '')
-			.trim()
-			.toLowerCase();
-		if (value === 'active') return 'Aktiivne';
-		if (value === 'sold') return 'Müüdud';
-		return 'Mitteaktiivne';
-	}
 
 	function formatDate(value: string | null): string {
 		if (!value) return '—';
@@ -135,7 +114,7 @@
 </script>
 
 {#if isLoading}
-	<div class="employee-state-block is-loading">Laetakse kinnistu detaile…</div>
+	<div class="employee-state-block is-loading">Laetakse kinnistut…</div>
 {:else if errorMessage && !property}
 	<div class="employee-state-block is-error">
 		{errorMessage}
@@ -155,16 +134,12 @@
 	</p>
 
 	<section class="employee-card summary">
-		<p class="kicker">Kinnistu</p>
 		<h1 class="employee-page-title">{property.name}</h1>
-		<p class="status-line">Olek: <strong>{statusLabel(property.status)}</strong></p>
 		<div class="meta-grid">
 			<p><strong>Registrinumber:</strong> {property.registrationNumber}</p>
 			<p><strong>Maakond:</strong> {property.county || '—'}</p>
 			<p><strong>Vald:</strong> {property.parish || '—'}</p>
 			<p><strong>Küla:</strong> {property.village || '—'}</p>
-			<p><strong>Ostetud:</strong> {formatDate(property.boughtDate)}</p>
-			<p><strong>Müüdud:</strong> {formatDate(property.soldDate)}</p>
 		</div>
 	</section>
 
@@ -244,13 +219,11 @@
 		margin-bottom: 0.75rem;
 	}
 
-	.kicker {
+	.employee-page-title {
 		margin: 0;
-		font-size: 0.77rem;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.03em;
-		color: #3f5a4b;
+		color: #1e553f;
+		font-weight: bold;
+		margin-bottom: 1rem;
 	}
 
 	h1 {
@@ -264,11 +237,6 @@
 		margin: 0 0 0.65rem;
 		font-size: 1.05rem;
 		color: #1f2937;
-	}
-
-	.status-line {
-		margin: 0 0 0.55rem;
-		color: #334155;
 	}
 
 	.inline-note {

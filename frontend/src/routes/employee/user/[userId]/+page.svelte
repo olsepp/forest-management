@@ -2,19 +2,16 @@
 	import { resolve } from '$app/paths';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
-	import { user } from '$lib/stores/auth.store';
 	import { onMount } from 'svelte';
 	import type { UserProfileDto } from '$lib/dtos/user/user.dto';
 
 	type ProfileViewModel = {
-		id: string;
 		username: string;
 		email: string;
 		firstName: string;
 		lastName: string;
 		role: string;
 		phoneNumber: string;
-		source: 'api' | 'fallback';
 	};
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
@@ -29,38 +26,15 @@
 		return trimmed || '—';
 	}
 
-	function toProfileViewModel(data: UserProfileDto, source: 'api' | 'fallback'): ProfileViewModel {
-		const id =
-			typeof data.id === 'string' && data.id.trim()
-				? data.id
-				: typeof data.userId === 'string' && data.userId.trim()
-					? data.userId
-					: valueOrDash($user?.userId);
+	function toProfileViewModel(data: UserProfileDto): ProfileViewModel {
 
 		return {
-			id,
 			username: valueOrDash(data.username),
 			email: valueOrDash(data.email),
 			firstName: valueOrDash(data.firstName),
 			lastName: valueOrDash(data.lastName),
 			role: valueOrDash(data.role),
-			phoneNumber: valueOrDash(data.phoneNumber),
-			source
-		};
-	}
-
-	function fallbackFromStore(): ProfileViewModel | null {
-		if (!$user) return null;
-
-		return {
-			id: valueOrDash($user.userId),
-			username: valueOrDash($user.username),
-			email: valueOrDash($user.email),
-			firstName: '—',
-			lastName: '—',
-			role: valueOrDash($user.role),
-			phoneNumber: '—',
-			source: 'fallback'
+			phoneNumber: valueOrDash(data.phoneNumber)
 		};
 	}
 
@@ -75,37 +49,13 @@
 			});
 
 			if (!response.ok) {
-				const fallback = fallbackFromStore();
-				if (fallback) {
-					profile = fallback;
-					errorMessage =
-						response.status === 401
-							? 'Profiili teenus pole saadaval (ligipääs puudub). Kuvatakse sinu seansi kontoandmed.'
-							: response.status === 403
-								? 'Profiili teenus on piiratud. Kuvatakse sinu seansi kontoandmed.'
-								: 'Profiili teenus pole saadaval. Kuvatakse sinu seansi kontoandmed.';
-					return;
-				}
-
-				errorMessage =
-					response.status === 401
-						? 'Ligipääs puudub. Logige uuesti sisse.'
-						: response.status === 403
-							? 'Profiili teenus on sinu rollile piiratud.'
-							: 'Profiili laadimine ebaõnnestus.';
+				errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
 				return;
 			}
 
 			const data = (await response.json()) as UserProfileDto;
-			profile = toProfileViewModel(data, 'api');
+			profile = toProfileViewModel(data);
 		} catch {
-			const fallback = fallbackFromStore();
-			if (fallback) {
-				profile = fallback;
-				errorMessage = 'Profiili teenuse laadimine ebaõnnestus. Kuvatakse sinu seansi kontoandmed.';
-				return;
-			}
-
 			errorMessage = 'Profiili laadimine ebaõnnestus.';
 		} finally {
 			isLoading = false;
@@ -138,17 +88,12 @@
 	{/if}
 
 	<section class="employee-card profile-grid">
-		<p><strong>Kasutaja ID:</strong> {profile.id}</p>
 		<p><strong>Kasutajanimi:</strong> {profile.username}</p>
 		<p><strong>Email:</strong> {profile.email}</p>
 		<p><strong>Eesnimi:</strong> {profile.firstName}</p>
 		<p><strong>Perekonnanimi:</strong> {profile.lastName}</p>
 		<p><strong>Roll:</strong> {profile.role}</p>
 		<p><strong>Telefon:</strong> {profile.phoneNumber}</p>
-		<p>
-			<strong>Andmeallikas:</strong>
-			{profile.source === 'api' ? 'Profiili teenus' : 'Seansi varuandmed'}
-		</p>
 	</section>
 {/if}
 
