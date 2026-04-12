@@ -20,6 +20,18 @@ export type ActivityListDto = {
 	applicationStatus: string | null;
 };
 
+export type RecentActivityDto = {
+	id: string;
+	description: string;
+	quantity: number;
+	unit: string | null;
+	date: string;
+	activityTypeName: string;
+	userName: string;
+	cadasterCadastralNumber: string | null;
+	forestStandNumber: number;
+};
+
 export type CadasterDto = {
 	id: string;
 	cadastralNumber: string;
@@ -36,6 +48,7 @@ export type CadasterDto = {
 	landPropertyId: string;
 	landPropertyName: string;
 	forestStands: ForestStandListDto[];
+	recentActivities: RecentActivityDto[];
 };
 
 export type CadasterUpdateDto = {

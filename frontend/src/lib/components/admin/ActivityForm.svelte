@@ -10,19 +10,11 @@
 		activityTypeName: string;
 	};
 
-	type CadasterOption = {
-		id: string;
-		label: string;
-	};
-
 	type Props = {
 		companyId?: string;
 		cadasterId?: string | null;
-		cadasterLabel?: string;
 		lockCadaster?: boolean;
 		forestStandId?: string | null;
-		cadasterOptions?: CadasterOption[];
-		cancelHref?: string;
 		redirectHref?: string;
 		submitLabel?: string;
 	};
@@ -30,11 +22,8 @@
 	let {
 		companyId = '',
 		cadasterId = null,
-		cadasterLabel = '',
 		lockCadaster = false,
 		forestStandId = null,
-		cadasterOptions = [],
-		cancelHref = '',
 		redirectHref = '',
 		submitLabel = 'Logi tegevus'
 	}: Props = $props();
@@ -173,152 +162,128 @@
 	onMount(loadActivityTypes);
 </script>
 
-<section class="card">
-	<h2>Uus tegevus</h2>
-
-	<form class="form-grid" onsubmit={submit}>
-		<label>
-			<span>Kataster</span>
-			{#if lockCadaster}
-				<input type="text" value={cadasterLabel || selectedCadasterId} readonly />
-			{:else}
-				<select bind:value={selectedCadasterId} required>
-					<option value="" disabled>Vali kataster</option>
-					{#each cadasterOptions as option (option.id)}
-						<option value={option.id}>{option.label}</option>
+<form id="activity-form" class="detail-form" onsubmit={submit}>
+	<section class="form-section">
+		<h2>Tegevuse põhiandmed</h2>
+		<div class="form-grid">
+			<label>
+				<span>Tegevuse tüüp</span>
+				<select bind:value={activityTypeId} disabled={isLoadingActivityTypes} required>
+					<option value="" disabled
+						>{isLoadingActivityTypes ? 'Laadimine...' : 'Vali tegevuse tüüp'}</option
+					>
+					{#each activityTypes as type (type.id)}
+						<option value={type.id}>{type.activityTypeName}</option>
 					{/each}
 				</select>
-			{/if}
-		</label>
+			</label>
 
-		<label>
-			<span>Tegevuse tüüp</span>
-			<select bind:value={activityTypeId} disabled={isLoadingActivityTypes} required>
-				<option value="" disabled
-					>{isLoadingActivityTypes ? 'Laadimine...' : 'Vali tegevuse tüüp'}</option
-				>
-				{#each activityTypes as type (type.id)}
-					<option value={type.id}>{type.activityTypeName}</option>
-				{/each}
-			</select>
-		</label>
+			<label>
+				<span>Kuupäev</span>
+				<input type="datetime-local" bind:value={date} required />
+			</label>
 
-		<label>
-			<span>Kuupäev</span>
-			<input type="datetime-local" bind:value={date} required />
-		</label>
+			<label>
+				<span>Kogus</span>
+				<input type="number" step="any" bind:value={quantity} />
+			</label>
 
-		<label>
-			<span>Kirjeldus</span>
-			<textarea bind:value={description} rows="3" required></textarea>
-		</label>
+			<label>
+				<span>Ühik</span>
+				<input type="text" bind:value={unit} placeholder="nt m3, ha" />
+			</label>
 
-		<label>
-			<span>Kogus</span>
-			<input type="number" step="any" bind:value={quantity} />
-		</label>
-
-		<label>
-			<span>Ühik</span>
-			<input type="text" bind:value={unit} placeholder="nt m3, ha" />
-		</label>
-
-		<label>
-			<span>Taotluse staatus</span>
-			<select bind:value={applicationStatus}>
-				<option value=""></option>
-				<option value="Pending">Ootel</option>
-				<option value="Approved">Kinnitatud</option>
-				<option value="Rejected">Tagasi lükatud</option>
-			</select>
-		</label>
-
-		<label class="notes">
-			<span>Märkused</span>
-			<textarea bind:value={notes} rows="3"></textarea>
-		</label>
-
-		<div class="actions">
-			{#if cancelHref}
-				<a class="ghost" href={resolve(cancelHref as unknown as '/')}>Tühista</a>
-			{/if}
-			<button type="submit" disabled={isSubmitting || isLoadingActivityTypes}>
-				{isSubmitting ? 'Salvestamine...' : submitLabel}
-			</button>
+			<label>
+				<span>Taotluse staatus</span>
+				<select bind:value={applicationStatus}>
+					<option value=""></option>
+					<option value="Pending">Ootel</option>
+					<option value="Approved">Kinnitatud</option>
+					<option value="Rejected">Tagasi lükatud</option>
+				</select>
+			</label>
 		</div>
-	</form>
+	</section>
 
-	{#if errorMessage}
-		<p class="error">{errorMessage}</p>
-	{/if}
+	<section class="form-section">
+		<h2>Kirjeldus ja märkused</h2>
+		<div class="form-grid">
+			<label class="full-width">
+				<span>Kirjeldus</span>
+				<textarea bind:value={description} rows="4" required></textarea>
+			</label>
+			<label class="full-width">
+				<span>Märkused</span>
+				<textarea bind:value={notes} rows="4"></textarea>
+			</label>
+		</div>
+	</section>
 
-	{#if successMessage}
-		<p class="success">{successMessage}</p>
-	{/if}
-</section>
+	<div class="form-actions">
+		<button class="btn-save" type="submit" disabled={isSubmitting || isLoadingActivityTypes}>
+			{isSubmitting ? 'Salvestamine...' : submitLabel}
+		</button>
+	</div>
+</form>
+
+{#if errorMessage}
+	<p class="error">{errorMessage}</p>
+{/if}
+
+{#if successMessage}
+	<p class="success">{successMessage}</p>
+{/if}
 
 <style>
-	.card {
-		padding: 1rem;
-		border: 1px solid #e5e7eb;
-		border-radius: 0.75rem;
-		background: #fff;
+	.detail-form {
+		display: grid;
+		gap: 1rem;
 	}
-
+	.form-section {
+		padding: 1rem;
+		border: 1px solid #cadbcf;
+		border-radius: 0.85rem;
+		background: #f9fcfa;
+		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+	}
+	h2 {
+		margin: 0 0 0.8rem;
+		font-size: 1.03rem;
+	}
 	.form-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 		gap: 0.75rem 1rem;
-		margin-top: 1rem;
 	}
-
 	label {
 		display: flex;
 		flex-direction: column;
-		gap: 0.3rem;
+		gap: 0.35rem;
 	}
-
-	label.notes {
+	.full-width {
 		grid-column: 1 / -1;
 	}
-
-	input,
-	select,
-	textarea {
-		padding: 0.5rem 0.6rem;
-		border: 1px solid #d1d5db;
-		border-radius: 0.5rem;
-		font: inherit;
-	}
-
-	.actions {
-		grid-column: 1 / -1;
+	.form-actions {
 		display: flex;
 		justify-content: flex-end;
-		gap: 0.5rem;
+		gap: 1rem;
 	}
-
-	button,
-	.ghost {
-		border: 1px solid #d1d5db;
-		background: #fff;
-		border-radius: 0.5rem;
-		padding: 0.45rem 0.9rem;
-		cursor: pointer;
-		text-decoration: none;
-		color: inherit;
+	.btn-save {
+		padding: 0.62rem 1.1rem;
+		background: #1f5a42;
+		color: #f8fdfb;
+		border: 1px solid #184835;
+		font-weight: 700;
+		border-radius: 0.65rem;
+		box-shadow: 0 8px 16px rgba(31, 90, 66, 0.24);
 	}
-
-	button:disabled {
-		opacity: 0.65;
-		cursor: not-allowed;
+	.btn-save:hover {
+		background: #174a35;
 	}
-
 	.error {
 		margin-top: 0.75rem;
 		color: #b91c1c;
 	}
-
 	.success {
 		margin-top: 0.75rem;
 		color: #166534;

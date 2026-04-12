@@ -3,7 +3,7 @@
 @plugin '@tailwindcss/typography';
 
 :root {
-	--forest-bg-base: #f8fbf8;
+	--forest-bg-base: #e3e3e3;
 	--forest-ink-soft: #4f8a67;
 	--forest-ink-deep: #2f6c49;
 }

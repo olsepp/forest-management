@@ -115,6 +115,7 @@
 				<tr>
 					<th>Kuupäev</th>
 					<th>Tüüp</th>
+					<th>Kinnistu</th>
 					<th>Kataster</th>
 					<th>Eraldis</th>
 					<th>Kasutaja</th>
@@ -126,6 +127,7 @@
 					<tr>
 						<td>{formatDate(item.date)}</td>
 						<td>{item.activityTypeName}</td>
+						<td>{item.landPropertyName}</td>
 						<td>{cadasterLabel(item)}</td>
 						<td>{forestStandLabel(item)}</td>
 						<td>{item.userName}</td>

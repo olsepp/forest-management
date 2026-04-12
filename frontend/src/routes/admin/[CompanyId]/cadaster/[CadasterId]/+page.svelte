@@ -8,7 +8,8 @@
 	import type {
 		ForestStandListDto,
 		CadasterDto,
-		CadasterUpdateDto
+		CadasterUpdateDto,
+		RecentActivityDto
 	} from '$lib/dtos/cadaster/cadaster.dto';
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
@@ -20,6 +21,7 @@
 	let successMessage = $state('');
 	let cadaster = $state<CadasterDto | null>(null);
 	let forestStands = $state<ForestStandListDto[]>([]);
+	let recentActivities = $state<RecentActivityDto[]>([]);
 	const companyId = $derived($page.params.CompanyId ?? '');
 
 	let form = $state({
@@ -48,6 +50,29 @@
 
 	function sortForestStandsByNumber(items: ForestStandListDto[]): ForestStandListDto[] {
 		return [...items].sort((a, b) => a.number - b.number);
+	}
+
+	function formatDateTime(value: string): string {
+		const date = new Date(value);
+		if (Number.isNaN(date.getTime())) return '—';
+		return date.toLocaleString();
+	}
+
+	function formatActivityQuantity(item: RecentActivityDto): string {
+		const quantity =
+			typeof item.quantity === 'number' && Number.isFinite(item.quantity) ? item.quantity : 0;
+		return item.unit ? `${quantity} ${item.unit}` : String(quantity);
+	}
+
+	function forestStandLabel(item: RecentActivityDto): string {
+		if (
+			typeof item.forestStandNumber === 'number' &&
+			Number.isFinite(item.forestStandNumber) &&
+			item.forestStandNumber > 0
+		) {
+			return String(item.forestStandNumber);
+		}
+		return '—';
 	}
 
 	function fillForm(detail: CadasterDto): void {
@@ -99,6 +124,9 @@
 			cadaster = detail;
 			forestStands = Array.isArray(detail.forestStands)
 				? sortForestStandsByNumber(detail.forestStands)
+				: [];
+			recentActivities = Array.isArray(detail.recentActivities)
+				? detail.recentActivities.filter((a) => Boolean(a?.id))
 				: [];
 			fillForm(detail);
 		} catch {
@@ -224,9 +252,10 @@
 					>
 				</p>
 			</article>
+
 			<article class="meta-card">
-				<p class="meta-label">Eraldiste arv</p>
-				<p class="meta-value">{forestStands.length}</p>
+				<p class="meta-label">Katastrinumber</p>
+				<p class="meta-value">{cadaster.cadastralNumber}</p>
 			</article>
 		</section>
 
@@ -234,14 +263,6 @@
 			<section class="form-section">
 				<h2>Üldised väärtused</h2>
 				<div class="form-grid">
-					<label
-						><span>Katastrinumber</span><input
-							type="text"
-							bind:value={form.cadastralNumber}
-							required
-							readonly={!isEditMode}
-						/></label
-					>
 					<label
 						><span>Boniteet</span><input
 							type="number"
@@ -252,14 +273,14 @@
 						/></label
 					>
 					<label
-						><span>Arvutatud maht</span><input
+						><span>Arvutatud maht (tm)</span><input
 							type="number"
 							bind:value={form.calculatedVolume}
 							readonly={!isEditMode}
 						/></label
 					>
 					<label
-						><span>Mahukasv</span><input
+						><span>Mahukasv (tm/a)</span><input
 							type="number"
 							step="any"
 							bind:value={form.volumeGrowth}
@@ -270,7 +291,7 @@
 			</section>
 
 			<section class="form-section">
-				<h2>Pindalade jaotus</h2>
+				<h2>Pindala jaotus</h2>
 				<div class="form-grid">
 					<label
 						><span>Metsamaa pindala</span><input
@@ -341,34 +362,51 @@
 		<section class="form-section">
 			<h2>Selle katastri eraldised</h2>
 			{#if forestStands.length === 0}
-				<p>Eraldisi ei leitud.</p>
+				<p class="message">Eraldisi ei leitud.</p>
+			{:else}
+				<div class="stand-button-grid stands-mobile" aria-label="Eraldised">
+					{#each forestStands as stand (stand.id)}
+						<a
+							class="stand-button"
+							href={resolve('/admin/[CompanyId]/foreststand/[ForestStandId]', {
+								CompanyId: companyId,
+								ForestStandId: stand.id
+							})}
+							aria-label={`Ava eraldis ${stand.number}`}
+						>
+							#{stand.number}
+						</a>
+					{/each}
+				</div>
+			{/if}
+		</section>
+
+		<section class="form-section">
+			<h2>Tegevused</h2>
+			{#if recentActivities.length === 0}
+				<p class="message">Selle katastri tegevusi ei leitud.</p>
 			{:else}
 				<div class="table-wrapper">
 					<table>
 						<thead>
 							<tr>
-								<th>Eraldise nr</th>
-								<th>Pindala</th>
-								<th>Kogumaht</th>
-								<th>Staatus</th>
-								<th class="actions">Ava</th>
+								<th>Kuupäev</th>
+								<th>Tüüp</th>
+								<th>Eraldis</th>
+								<th>Kasutaja</th>
+								<th>Kogus</th>
+								<th>Kirjeldus</th>
 							</tr>
 						</thead>
 						<tbody>
-							{#each forestStands as stand (stand.id)}
+							{#each recentActivities as activity (activity.id)}
 								<tr>
-									<td>{stand.number}</td>
-									<td>{stand.area}</td>
-									<td>{stand.totalVolume}</td>
-									<td>{stand.isActive ? 'Aktiivne' : 'Mitteaktiivne'}</td>
-									<td class="actions">
-										<a
-											href={resolve('/admin/[CompanyId]/foreststand/[ForestStandId]', {
-												CompanyId: companyId,
-												ForestStandId: stand.id
-											})}>Ava</a
-										>
-									</td>
+									<td>{formatDateTime(activity.date)}</td>
+									<td>{activity.activityTypeName || '—'}</td>
+									<td>{forestStandLabel(activity)}</td>
+									<td>{activity.userName || '—'}</td>
+									<td>{formatActivityQuantity(activity)}</td>
+									<td>{activity.description || '—'}</td>
 								</tr>
 							{/each}
 						</tbody>
@@ -454,6 +492,7 @@
 	}
 	.mode-btn:hover {
 		background: #274f3d;
+		cursor: pointer;
 	}
 	.meta-grid {
 		display: grid;
@@ -528,8 +567,41 @@
 		padding: 0.7rem 0.9rem;
 		border-radius: 0.65rem;
 	}
-	.error {
-		background: #fdebec;
+	.stand-button-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+		gap: 0.55rem;
+	}
+
+	.stand-button {
+		text-decoration: none;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 3rem;
+		padding: 0 0.5rem;
+		border: 1px solid #1f5a42;
+		background: linear-gradient(180deg, #2a6b4f 0%, #1f5a42 100%);
+		box-shadow: 0 6px 16px rgba(15, 42, 31, 0.22);
+		color: #f3fbf7;
+		border-radius: 0.82rem;
+		font-size: 0.95rem;
+		font-weight: 700;
+		white-space: normal;
+		text-align: center;
+	}
+
+	.stand-button:hover {
+		background: linear-gradient(180deg, #2f7657 0%, #245f46 100%);
+		border-color: #184736;
+		color: #ffffff !important;
+		text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+		text-decoration: none;
+	}
+
+	.stand-button:active {
+		transform: translateY(1px);
+		box-shadow: 0 3px 10px rgba(15, 42, 31, 0.2);
 	}
 	.success {
 		background: #e6f7ea;
@@ -537,21 +609,25 @@
 	.table-wrapper {
 		overflow-x: auto;
 	}
+
 	table {
 		width: 100%;
 		border-collapse: collapse;
-		background: #fff;
+		background: #f9fcfa;
+		border: 1px solid #d8e5dd;
+		border-radius: 0.75rem;
+		overflow: hidden;
 	}
+
 	th,
 	td {
-		padding: 0.75rem;
-		border-bottom: 1px solid #e5e7eb;
+		padding: 0.65rem 0.75rem;
 		text-align: left;
-		vertical-align: top;
-	}
-	th.actions,
-	td.actions {
-		text-align: right;
+		border-bottom: 1px solid #e3ece7;
 		white-space: nowrap;
+	}
+
+	tbody tr:last-child td {
+		border-bottom: none;
 	}
 </style>

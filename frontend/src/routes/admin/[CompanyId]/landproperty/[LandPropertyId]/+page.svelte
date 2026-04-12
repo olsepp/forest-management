@@ -303,61 +303,49 @@
 				<p class="meta-value">{property.companyName}</p>
 			</article>
 			<article class="meta-card">
-				<p class="meta-label">Praegune olek</p>
-				<p class="meta-value">{form.status}</p>
+				<p class="meta-label">Nimi</p>
+				<p class="meta-value">{property.name}</p>
+			</article>
+			<article class="meta-card">
+				<p class="meta-label">Registrinumber</p>
+				<p class="meta-value mono">{property.registrationNumber}</p>
+			</article>
+			<article class="meta-card">
+				<p class="meta-label">Maakond</p>
+				<p class="meta-value">{property.county}</p>
+			</article>
+			<article class="meta-card">
+				<p class="meta-label">Vald</p>
+				<p class="meta-value">{property.parish}</p>
+			</article>
+			<article class="meta-card">
+				<p class="meta-label">Küla</p>
+				<p class="meta-value">{property.village}</p>
 			</article>
 		</section>
 
 		<form id="property-form" onsubmit={saveProperty} class="detail-form">
 			<section class="form-section">
-				<h2>Põhiandmed</h2>
+				<h2>Muudatused</h2>
 				<div class="form-grid">
-					<label>
-						<span>Nimi</span>
-						<input type="text" bind:value={form.name} required readonly={!isEditMode} />
-					</label>
-					<label>
-						<span>Registrinumber</span>
-						<input
-							type="number"
-							bind:value={form.registrationNumber}
-							required
-							readonly={!isEditMode}
-						/>
-					</label>
 					<label>
 						<span>Olek</span>
-						<select bind:value={form.status} disabled={!isEditMode}>
-							<option value="Active">Aktiivne</option>
-							<option value="Inactive">Mitteaktiivne</option>
-							<option value="Sold">Müüdud</option>
-						</select>
-					</label>
-				</div>
-			</section>
-
-			<section class="form-section">
-				<h2>Asukoht ja ajajoon</h2>
-				<div class="form-grid">
-					<label>
-						<span>Maakond</span>
-						<input type="text" bind:value={form.county} required readonly={!isEditMode} />
-					</label>
-					<label>
-						<span>Vald</span>
-						<input type="text" bind:value={form.parish} readonly={!isEditMode} />
-					</label>
-					<label>
-						<span>Küla</span>
-						<input type="text" bind:value={form.village} readonly={!isEditMode} />
+						<div class="select-wrapper">
+							<select bind:value={form.status} disabled={!isEditMode}>
+								<option value="Active">Aktiivne</option>
+								<option value="Inactive">Mitteaktiivne</option>
+								<option value="Sold">Müüdud</option>
+							</select>
+							<div class="select-arrow"></div>
+						</div>
 					</label>
 					<label>
 						<span>Ostukuupäev</span>
-						<input type="date" bind:value={form.boughtDate} readonly={!isEditMode} />
+						<input type="date" bind:value={form.boughtDate} disabled={!isEditMode} />
 					</label>
 					<label>
 						<span>Müügikuupäev</span>
-						<input type="date" bind:value={form.soldDate} readonly={!isEditMode} />
+						<input type="date" bind:value={form.soldDate} disabled={!isEditMode} />
 					</label>
 				</div>
 			</section>
@@ -370,7 +358,7 @@
 		</form>
 
 		<section class="activity-section">
-			<h2>Selle kinnistu katastrid</h2>
+			<h2>Kinnistu katastriüksused</h2>
 			{#if cadasterErrorMessage}
 				<p class="message error">{cadasterErrorMessage}</p>
 			{:else if cadasters.length === 0}
@@ -392,7 +380,7 @@
 		</section>
 
 		<section class="activity-section">
-			<h2>Selle kinnistu tegevused</h2>
+			<h2>Tegevused</h2>
 			{#if activityErrorMessage}
 				<p class="message error">{activityErrorMessage}</p>
 			{:else if activities.length === 0}
@@ -517,10 +505,37 @@
 		font-weight: 600;
 	}
 
-	.mono {
-		font-family:
-			ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
-		font-size: 0.88rem;
+	.select-wrapper {
+		position: relative;
+		display: flex;
+		align-items: center;
+	}
+
+	select {
+		-webkit-appearance: none;
+		-moz-appearance: none;
+		appearance: none;
+		padding-right: 2rem;
+		flex: 1;
+	}
+
+	select:disabled {
+		padding-right: 1rem;
+	}
+
+	.select-arrow {
+		position: absolute;
+		right: 0.75rem;
+		width: 0;
+		height: 0;
+		pointer-events: none;
+		border-left: 5px solid transparent;
+		border-right: 5px solid transparent;
+		border-top: 5px solid #2f5f49;
+	}
+
+	select:disabled + .select-arrow {
+		display: none;
 	}
 
 	.detail-form {

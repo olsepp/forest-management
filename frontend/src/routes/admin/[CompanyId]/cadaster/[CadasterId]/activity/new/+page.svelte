@@ -76,26 +76,41 @@
 {:else if errorMessage}
 	<p class="error">{errorMessage}</p>
 {:else if cadaster}
-	<section class="summary card">
-		<h2>Katastri kontekst</h2>
-		<p><strong>Katastrinumber:</strong> {cadaster.cadastralNumber}</p>
-		<p>
-			<strong>Kinnistu:</strong>
-			<a
-				href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
-					CompanyId: companyId,
-					LandPropertyId: cadaster.landPropertyId
-				})}>{cadaster.landPropertyName}</a
-			>
-		</p>
+	<section class="meta-grid">
+		<article class="meta-card">
+			<p class="meta-label">Eraldis</p>
+			<p class="meta-value"></p>
+		</article>
+		<article class="meta-card">
+			<p class="meta-label">Kataster</p>
+			<p class="meta-value">
+				<a
+					href={resolve('/admin/[CompanyId]/cadaster/[CadasterId]', {
+						CompanyId: companyId,
+						CadasterId: cadaster.id
+					})}
+				>
+					{cadaster.cadastralNumber}
+				</a>
+			</p>
+		</article>
+		<article class="meta-card">
+			<p class="meta-label">Kinnistu</p>
+			<p class="meta-value">
+				<a
+					href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
+						CompanyId: companyId,
+						LandPropertyId: cadaster.landPropertyId
+					})}>{cadaster.landPropertyName}</a
+				>
+			</p>
+		</article>
 	</section>
 
 	<ActivityForm
 		{companyId}
 		cadasterId={cadaster.id}
-		cadasterLabel={cadaster.cadastralNumber}
 		lockCadaster={true}
-		cancelHref={`/admin/${companyId}/cadaster/${cadaster.id}`}
 		redirectHref={`/admin/${companyId}/activity`}
 		submitLabel="Logi tegevus"
 	/>
@@ -116,19 +131,35 @@
 		text-decoration: underline;
 	}
 
-	.card {
-		padding: 1rem;
-		border: 1px solid #e5e7eb;
-		border-radius: 0.75rem;
-		background: #fff;
-	}
-
-	.summary {
-		margin-bottom: 1rem;
-	}
-
 	.error {
 		margin-top: 0.75rem;
 		color: #b91c1c;
+	}
+
+	.meta-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+		gap: 0.8rem;
+		margin-bottom: 1rem;
+	}
+
+	.meta-card {
+		padding: 0.9rem;
+		border: 1px solid #c9dace;
+		border-radius: 0.75rem;
+		background: #f4faf6;
+	}
+
+	.meta-label {
+		margin: 0;
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+	}
+
+	.meta-value {
+		margin: 0.35rem 0 0;
+		font-size: 1rem;
+		font-weight: 600;
 	}
 </style>

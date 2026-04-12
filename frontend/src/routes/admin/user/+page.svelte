@@ -95,7 +95,8 @@
 	<h1 class="text-2xl font-semibold text-slate-900">Kasutajad</h1>
 	<a
 		href={resolve('/admin/user/new')}
-		class="inline-flex items-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+		class="inline-flex items-center rounded-lg bg-emerald-800 px-3 py-2 text-sm font-semibold text-white no-underline hover:bg-emerald-900 hover:no-underline"
+		style="color: white !important; text-decoration: none !important;"
 	>
 		Loo kasutaja
 	</a>

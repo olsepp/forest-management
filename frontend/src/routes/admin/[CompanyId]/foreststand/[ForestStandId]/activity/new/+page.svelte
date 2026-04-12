@@ -78,29 +78,35 @@
 {:else if errorMessage}
 	<p class="error">{errorMessage}</p>
 {:else if forestStand}
-	<section class="summary card">
-		<h2>Eraldise kontekst</h2>
-		<p><strong>Eraldis:</strong> Eraldis {forestStand.number}</p>
-		<p>
-			<strong>Kataster:</strong>
-			<a
-				href={resolve('/admin/[CompanyId]/cadaster/[CadasterId]', {
-					CompanyId: companyId,
-					CadasterId: forestStand.cadasterId
-				})}>{forestStand.cadasterCadastralNumber}</a
-			>
-		</p>
-		{#if forestStand.landPropertyId && forestStand.landPropertyName}
-			<p>
-				<strong>Kinnistu:</strong>
+	<section class="meta-grid">
+		<article class="meta-card">
+			<p class="meta-label">Eraldis</p>
+			<p class="meta-value">Eraldis {forestStand.number}</p>
+		</article>
+		<article class="meta-card">
+			<p class="meta-label">Kataster</p>
+			<p class="meta-value">
+				<a
+					href={resolve('/admin/[CompanyId]/cadaster/[CadasterId]', {
+						CompanyId: companyId,
+						CadasterId: forestStand.cadasterId
+					})}
+				>
+					{forestStand.cadasterCadastralNumber}
+				</a>
+			</p>
+		</article>
+		<article class="meta-card">
+			<p class="meta-label">Kinnistu</p>
+			<p class="meta-value">
 				<a
 					href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
 						CompanyId: companyId,
-						LandPropertyId: forestStand.landPropertyId
-					})}>{forestStand.landPropertyName}</a
+						LandPropertyId: forestStand.landPropertyId!}
+				)}>{forestStand.landPropertyName}</a
 				>
 			</p>
-		{/if}
+		</article>
 	</section>
 
 	<ActivityForm
@@ -130,19 +136,35 @@
 		text-decoration: underline;
 	}
 
-	.card {
-		padding: 1rem;
-		border: 1px solid #e5e7eb;
-		border-radius: 0.75rem;
-		background: #fff;
-	}
-
-	.summary {
-		margin-bottom: 1rem;
-	}
-
 	.error {
 		margin-top: 0.75rem;
 		color: #b91c1c;
+	}
+
+	.meta-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+		gap: 0.8rem;
+		margin-bottom: 1rem;
+	}
+
+	.meta-card {
+		padding: 0.9rem;
+		border: 1px solid #c9dace;
+		border-radius: 0.75rem;
+		background: #f4faf6;
+	}
+
+	.meta-label {
+		margin: 0;
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+	}
+
+	.meta-value {
+		margin: 0.35rem 0 0;
+		font-size: 1rem;
+		font-weight: 600;
 	}
 </style>

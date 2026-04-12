@@ -228,16 +228,7 @@
 			<article class="meta-card">
 				<p class="meta-label">Sihtobjekt</p>
 				<p class="meta-value">
-					{#if activity.cadasterId}
-						<a
-							href={resolve('/admin/[CompanyId]/cadaster/[CadasterId]', {
-								CompanyId: companyId,
-								CadasterId: activity.cadasterId
-							})}
-						>
-							Kataster {activity.cadasterCadastralNumber ?? activity.cadasterId}
-						</a>
-					{:else if activity.forestStandId}
+					{#if activity.forestStandId}
 						<a
 							href={resolve('/admin/[CompanyId]/foreststand/[ForestStandId]', {
 								CompanyId: companyId,
@@ -245,6 +236,15 @@
 							})}
 						>
 							Eraldis {activity.forestStandNumber || activity.forestStandId}
+						</a>
+					{:else if activity.cadasterId}
+						<a
+							href={resolve('/admin/[CompanyId]/cadaster/[CadasterId]', {
+								CompanyId: companyId,
+								CadasterId: activity.cadasterId
+							})}
+						>
+							Kataster {activity.cadasterCadastralNumber ?? activity.cadasterId}
 						</a>
 					{:else}
 						—
@@ -293,9 +293,9 @@
 						<input type="text" bind:value={form.unit} readonly={!isEditMode} />
 					</label>
 					<label>
-						<span>Rakenduse staatus</span>
+						<span>Taotluse staatus</span>
 						<select bind:value={form.applicationStatus} disabled={!isEditMode}>
-							<option value="">Määramata</option>
+							<option value=""></option>
 							<option value="Pending">Ootel</option>
 							<option value="Approved">Kinnitatud</option>
 							<option value="Rejected">Tagasi lükatud</option>
@@ -379,6 +379,7 @@
 
 	.mode-btn:hover {
 		background: #274f3d;
+		cursor: pointer;
 	}
 	.meta-grid {
 		display: grid;

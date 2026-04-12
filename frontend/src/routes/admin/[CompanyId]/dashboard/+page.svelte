@@ -4,32 +4,15 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
 	import type { CompanyDto } from '$lib/dtos/company/company.dto';
-	import type {
-		LandPropertyListDto,
-		PropertyCadasterLinkDto,
-		ForestStandListDto,
-		ActivityListDto,
-		ActivityChartPoint
-	} from '$lib/dtos/dashboard/dashboard.dto';
+	import type { ActivityDto } from '$lib/dtos/activity/activity.dto';
 	import { onMount } from 'svelte';
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
-	let company = $state<CompanyDto | null>(null);
-	let isLoading = $state(true);
-	let errorMessage = $state('');
-
-	let totalProperties = $state(0);
-	let totalActiveProperties = $state(0);
-	let totalCadasters = $state(0);
-	let activityChartPoints = $state<ActivityChartPoint[]>([]);
-	let maxDailyActivityCount = $state(0);
-	let recentActivities = $state<ActivityListDto[]>([]);
-	const companyId = $derived($page.params.CompanyId ?? '');
-
-	const chartWidth = 880;
-	const chartHeight = 240;
-	const chartPadding = { top: 16, right: 16, bottom: 28, left: 16 };
+	interface ActivityCountByDay {
+		date: string;
+		count: number;
+	}
 
 	function dayKey(date: Date): string {
 		const year = date.getFullYear();
@@ -56,39 +39,24 @@
 		return keys;
 	}
 
-	function shortLabel(isoDate: string): string {
-		const d = new Date(`${isoDate}T00:00:00`);
-		return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-	}
-
-	function formatDateTime(value: string): string {
-		const date = new Date(value);
-		if (Number.isNaN(date.getTime())) return '—';
-		return date.toLocaleString();
-	}
-
-	function buildActivityChartPoints(activities: ActivityListDto[]): ActivityChartPoint[] {
+	function normalizeAndBuildChartPoints(
+		apiCounts: ActivityCountByDay[]
+	): { label: string; count: number; x: number; y: number }[] {
 		const keys = last30DayKeys();
-		const countsByDay: Record<string, number> = {};
-
-		for (const key of keys) countsByDay[key] = 0;
-
-		for (const activity of activities) {
-			const date = new Date(activity.date);
-			if (Number.isNaN(date.getTime())) continue;
-			const key = dayKey(date);
-			if (key in countsByDay) countsByDay[key] += 1;
+		const countsMap: Record<string, number> = {};
+		for (const key of keys) countsMap[key] = 0;
+		for (const item of apiCounts) {
+			countsMap[item.date] = item.count;
 		}
 
-		const maxCount = Math.max(...keys.map((key) => countsByDay[key]), 0);
-		maxDailyActivityCount = maxCount;
-
+		const countValues = keys.map((key) => countsMap[key] || 0);
+		const maxCount = Math.max(...countValues, 0);
 		const effectiveMax = Math.max(maxCount, 1);
 		const innerWidth = chartWidth - chartPadding.left - chartPadding.right;
 		const innerHeight = chartHeight - chartPadding.top - chartPadding.bottom;
 
 		return keys.map((key, index) => {
-			const count = countsByDay[key];
+			const count = countsMap[key] || 0;
 			const x = chartPadding.left + (index / (keys.length - 1)) * innerWidth;
 			const y = chartPadding.top + (1 - count / effectiveMax) * innerHeight;
 			return {
@@ -100,115 +68,48 @@
 		});
 	}
 
-	const activityPolylinePoints = $derived.by(() =>
-		activityChartPoints.map((point) => `${point.x},${point.y}`).join(' ')
+	interface DashboardSummary {
+		totalProperties: number;
+		totalActiveProperties: number;
+		totalCadasters: number;
+		activityCountsByDay: ActivityCountByDay[];
+		recentActivities: ActivityDto[];
+	}
+
+	let company = $state<CompanyDto | null>(null);
+	let isLoading = $state(true);
+	let errorMessage = $state('');
+
+	let totalProperties = $state(0);
+	let totalActiveProperties = $state(0);
+	let totalCadasters = $state(0);
+	let maxDailyActivityCount = $state(0);
+	let recentActivities = $state<ActivityDto[]>([]);
+	let activityCountsByDay = $state<ActivityCountByDay[]>([]);
+	let activityChartPointsArray = $state<{ label: string; count: number; x: number; y: number }[]>(
+		[]
 	);
 
-	function normalizeStatus(status: LandPropertyListDto['status'] | null | undefined): string {
-		if (typeof status === 'string') {
-			return status.toLowerCase();
-		}
+	const companyId = $derived($page.params.CompanyId ?? '');
 
-		if (typeof status === 'number') {
-			if (status === 0) return 'active';
-			if (status === 1) return 'inactive';
-			if (status === 2) return 'sold';
-		}
+	const chartWidth = 880;
+	const chartHeight = 240;
+	const chartPadding = { top: 16, right: 16, bottom: 28, left: 16 };
 
-		return 'inactive';
+	function shortLabel(isoDate: string): string {
+		const d = new Date(`${isoDate}T00:00:00`);
+		return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 	}
 
-	async function mapWithConcurrency<T, R>(
-		items: T[],
-		limit: number,
-		mapper: (item: T, index: number) => Promise<R>
-	): Promise<R[]> {
-		if (items.length === 0) return [];
-
-		const results: R[] = new Array(items.length);
-		const safeLimit = Math.max(1, Math.floor(limit));
-		let nextIndex = 0;
-
-		async function worker(): Promise<void> {
-			while (true) {
-				const currentIndex = nextIndex;
-				if (currentIndex >= items.length) return;
-				nextIndex += 1;
-				results[currentIndex] = await mapper(items[currentIndex], currentIndex);
-			}
-		}
-
-		const workers = Array.from({ length: Math.min(safeLimit, items.length) }, () => worker());
-		await Promise.all(workers);
-
-		return results;
+	function formatDateTime(value: string): string {
+		const date = new Date(value);
+		if (Number.isNaN(date.getTime())) return '—';
+		return date.toLocaleString();
 	}
 
-	async function loadCadastersForProperty(
-		propertyId: string,
-		token: string
-	): Promise<PropertyCadasterLinkDto[]> {
-		const response = await fetch(`${apiBaseUrl}/api/cadasters/by-land-property/${propertyId}`, {
-			headers: {
-				Authorization: `Bearer ${token}`
-			}
-		});
-
-		if (!response.ok) return [];
-
-		const data = (await response.json()) as PropertyCadasterLinkDto[];
-		return Array.isArray(data)
-			? data.filter((item) => Boolean(item?.id) && Boolean(item?.cadastralNumber))
-			: [];
-	}
-
-	async function loadActivitiesForCadaster(
-		cadasterId: string,
-		token: string
-	): Promise<ActivityListDto[]> {
-		const response = await fetch(`${apiBaseUrl}/api/activities/by-cadaster/${cadasterId}`, {
-			headers: {
-				Authorization: `Bearer ${token}`
-			}
-		});
-
-		if (!response.ok) return [];
-
-		const data = (await response.json()) as ActivityListDto[];
-		return Array.isArray(data) ? data.filter((item) => Boolean(item?.id)) : [];
-	}
-
-	async function loadForestStandsForCadaster(
-		cadasterId: string,
-		token: string
-	): Promise<ForestStandListDto[]> {
-		const response = await fetch(`${apiBaseUrl}/api/foreststands/by-cadaster/${cadasterId}`, {
-			headers: {
-				Authorization: `Bearer ${token}`
-			}
-		});
-
-		if (!response.ok) return [];
-
-		const data = (await response.json()) as ForestStandListDto[];
-		return Array.isArray(data) ? data.filter((item) => Boolean(item?.id)) : [];
-	}
-
-	async function loadActivitiesForForestStand(
-		forestStandId: string,
-		token: string
-	): Promise<ActivityListDto[]> {
-		const response = await fetch(`${apiBaseUrl}/api/activities/by-foreststand/${forestStandId}`, {
-			headers: {
-				Authorization: `Bearer ${token}`
-			}
-		});
-
-		if (!response.ok) return [];
-
-		const data = (await response.json()) as ActivityListDto[];
-		return Array.isArray(data) ? data.filter((item) => Boolean(item?.id)) : [];
-	}
+	const activityPolylinePoints = $derived.by(() =>
+		activityChartPointsArray.map((point) => `${point.x},${point.y}`).join(' ')
+	);
 
 	onMount(async () => {
 		try {
@@ -223,13 +124,13 @@
 
 			const token = await authService.ensureValidToken();
 
-			const [companyResponse, propertiesResponse] = await Promise.all([
+			const [companyResponse, dashboardResponse] = await Promise.all([
 				fetch(`${apiBaseUrl}/api/companies/${companyId}`, {
 					headers: {
 						Authorization: `Bearer ${token}`
 					}
 				}),
-				fetch(`${apiBaseUrl}/api/landproperties/search?companyId=${companyId}`, {
+				fetch(`${apiBaseUrl}/api/dashboard/${companyId}/summary`, {
 					headers: {
 						Authorization: `Bearer ${token}`
 					}
@@ -244,79 +145,25 @@
 				return;
 			}
 
-			if (!propertiesResponse.ok) {
+			if (!dashboardResponse.ok) {
 				errorMessage =
-					propertiesResponse.status === 401
+					dashboardResponse.status === 401
 						? 'Ligipääs puudub. Logige uuesti sisse.'
 						: 'Töölaua andmete laadimine ebaõnnestus.';
 				return;
 			}
 
 			company = await companyResponse.json();
-			const properties = (await propertiesResponse.json()) as LandPropertyListDto[];
+			const summary = (await dashboardResponse.json()) as DashboardSummary;
+			console.log('Dashboard summary:', summary);
 
-			totalProperties = properties.length;
-			totalActiveProperties = properties.filter(
-				(item) => normalizeStatus(item.status) === 'active'
-			).length;
-
-			const cadasterResults = await mapWithConcurrency(properties, 6, (property) =>
-				loadCadastersForProperty(property.id, token)
-			);
-
-			totalCadasters = cadasterResults.reduce((sum, cadasters) => sum + cadasters.length, 0);
-
-			const cadasterIds = [
-				...new Set(
-					cadasterResults
-						.flat()
-						.map((cadaster) => cadaster.id)
-						.filter((id) => Boolean(id))
-				)
-			];
-
-			const activitiesByCadaster = await mapWithConcurrency(cadasterIds, 8, (cadasterId) =>
-				loadActivitiesForCadaster(cadasterId, token)
-			);
-
-			const forestStandsByCadaster = await mapWithConcurrency(cadasterIds, 8, (cadasterId) =>
-				loadForestStandsForCadaster(cadasterId, token)
-			);
-
-			const forestStandIds = [
-				...new Set(
-					forestStandsByCadaster
-						.flat()
-						.map((forestStand) => forestStand.id)
-						.filter((id) => Boolean(id))
-				)
-			];
-
-			const activitiesByForestStand = await mapWithConcurrency(forestStandIds, 6, (forestStandId) =>
-				loadActivitiesForForestStand(forestStandId, token)
-			);
-
-			const activityById: Record<string, ActivityListDto> = {};
-			for (const activities of [...activitiesByCadaster, ...activitiesByForestStand]) {
-				for (const activity of activities) {
-					if (!activity?.id) continue;
-					activityById[activity.id] = activity;
-				}
-			}
-
-			const allActivities = Object.values(activityById);
-
-			activityChartPoints = buildActivityChartPoints(allActivities);
-			recentActivities = [...allActivities]
-				.filter((item) => Boolean(item?.id))
-				.sort((a, b) => {
-					const aTime = new Date(a.date).getTime();
-					const bTime = new Date(b.date).getTime();
-					const safeA = Number.isNaN(aTime) ? 0 : aTime;
-					const safeB = Number.isNaN(bTime) ? 0 : bTime;
-					return safeB - safeA;
-				})
-				.slice(0, 5);
+			totalProperties = summary.totalProperties;
+			totalActiveProperties = summary.totalActiveProperties;
+			totalCadasters = summary.totalCadasters;
+			activityCountsByDay = summary.activityCountsByDay ?? [];
+			activityChartPointsArray = normalizeAndBuildChartPoints(activityCountsByDay);
+			maxDailyActivityCount = Math.max(...activityCountsByDay.map((d) => d.count), 0);
+			recentActivities = summary.recentActivities ?? [];
 		} catch {
 			errorMessage = 'Töölaua andmete laadimine ebaõnnestus.';
 		} finally {
@@ -335,7 +182,7 @@
 </p>
 
 {#if isLoading}
-	<p class="text-slate-600">Laetakse töölauda...</p>
+	<p class="text-slate-600">Laadakse töölauda...</p>
 {:else if errorMessage}
 	<div class="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
 		{errorMessage}
@@ -368,7 +215,7 @@
 			<p class="text-xs text-slate-500">Maks/päev: {maxDailyActivityCount}</p>
 		</div>
 
-		{#if activityChartPoints.length === 0}
+		{#if !activityChartPointsArray.length && !recentActivities.length}
 			<p class="text-sm text-slate-600">Tegevusandmed puuduvad.</p>
 		{:else}
 			<div class="chart-wrap">
@@ -393,11 +240,11 @@
 						stroke-linecap="round"
 						stroke-linejoin="round"
 					/>
-					{#each activityChartPoints as point, index (point.label)}
+					{#each activityChartPointsArray as point, index (point.label)}
 						<circle cx={point.x} cy={point.y} r="2.75" fill="#0f766e">
 							<title>{point.label}: {point.count} tegevust</title>
 						</circle>
-						{#if index % 5 === 0 || index === activityChartPoints.length - 1}
+						{#if index % 5 === 0 || index === activityChartPointsArray.length - 1}
 							<text
 								x={point.x}
 								y={chartHeight - 8}
