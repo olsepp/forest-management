@@ -53,4 +53,9 @@ public interface IActivityRepository : IRepository<Activity>
     /// Get activities by land property ID and user ID
     /// </summary>
     Task<IEnumerable<Activity>> GetByLandPropertyIdAndUserIdAsync(Guid landPropertyId, Guid userId);
+
+    /// <summary>
+    /// Get recent activities by user ID, optionally filtered by company ID
+    /// </summary>
+    Task<IEnumerable<Activity>> GetRecentByUserIdAsync(Guid userId, int count, Guid? companyId = null);
 }

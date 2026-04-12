@@ -66,6 +66,12 @@ public class ActivityService : IActivityService
         return activities.Select(MapToRecentDto);
     }
 
+    public async Task<IEnumerable<RecentActivityDto>> GetRecentByUserIdAsync(Guid userId, int count, Guid? companyId = null)
+    {
+        var activities = await _uow.Activities.GetRecentByUserIdAsync(userId, count, companyId);
+        return activities.Select(MapToRecentDto);
+    }
+
     public async Task<ActivityDto> CreateAsync(ActivityCreateDto dto, Guid userId)
     {
         // Validate ApplicationStatus if provided
@@ -200,8 +206,18 @@ public class ActivityService : IActivityService
         Quantity = a.Quantity,
         Unit = a.Unit,
         Date = a.Date,
-        ForestStandNumber = a.ForestStand?.Number ?? 0,
         ActivityTypeName = a.ActivityType?.ActivityTypeName ?? string.Empty,
-        UserName = a.User?.UserName ?? string.Empty
+        UserName = a.User?.UserName ?? string.Empty,
+        
+        // IDs
+        CadasterId = a.CadasterId ?? a.ForestStand?.CadasterId,
+        ForestStandId = a.ForestStandId,
+        
+        // If activity on ForestStand → return ForestStandNumber + CadasterCadastralNumber (from ForestStand.Cadaster)
+        // If activity on Cadaster directly → return CadasterCadastralNumber (from Cadaster)
+        ForestStandNumber = a.ForestStandId.HasValue ? a.ForestStand?.Number : null,
+        CadasterCadastralNumber = a.CadasterId.HasValue 
+            ? a.Cadaster?.CadastralNumber 
+            : a.ForestStand?.Cadaster?.CadastralNumber
     };
 }

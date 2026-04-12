@@ -83,6 +83,16 @@ public class ActivitiesController : ApiControllerBase
         return Ok(items);
     }
 
+    [HttpGet("by-user/{userId:guid}/recent")]
+    public async Task<ActionResult<IEnumerable<RecentActivityDto>>> GetRecentByUser(
+        Guid userId, 
+        [FromQuery] int count = 5, 
+        [FromQuery] Guid? companyId = null)
+    {
+        var items = await _service.GetRecentByUserIdAsync(userId, count, companyId);
+        return Ok(items);
+    }
+
     [HttpPost]
     public async Task<ActionResult<ActivityDto>> Create([FromBody] ActivityCreateDto dto)
     {

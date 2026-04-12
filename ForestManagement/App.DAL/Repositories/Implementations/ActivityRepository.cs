@@ -111,4 +111,22 @@ public class ActivityRepository : Repository<Activity>, IActivityRepository
             .OrderByDescending(a => a.Date)
             .ToListAsync();
     }
+
+    public async Task<IEnumerable<Activity>> GetRecentByUserIdAsync(Guid userId, int count, Guid? companyId = null)
+    {
+        var query = QueryWithDetails()
+            .Where(a => a.UserId == userId);
+
+        if (companyId.HasValue)
+        {
+            query = query.Where(a =>
+                (a.Cadaster != null && a.Cadaster.LandProperty.CompanyId == companyId.Value) ||
+                (a.ForestStand != null && a.ForestStand.Cadaster.LandProperty.CompanyId == companyId.Value));
+        }
+
+        return await query
+            .OrderByDescending(a => a.Date)
+            .Take(count)
+            .ToListAsync();
+    }
 }

@@ -14,6 +14,8 @@ public class RecentActivityDto
     public string UserName { get; set; } = string.Empty;
     
     // Context for where the activity was logged
+    public Guid? CadasterId { get; set; }
+    public Guid? ForestStandId { get; set; }
     public string? CadasterCadastralNumber { get; set; }
     public int? ForestStandNumber { get; set; }
 }
