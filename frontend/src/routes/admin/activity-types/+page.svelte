@@ -213,15 +213,15 @@
 
 <h1 class="mb-4 text-2xl font-semibold text-slate-900">Tegevuse tüübid</h1>
 
-<section class="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-	<h2 class="mb-3 text-lg font-semibold text-slate-800">Loo tegevuse tüüp</h2>
+<section class="mb-6 rounded-xl border border-slate-300 bg-[#174834] p-5 shadow-sm">
+	<h2 class="mb-4 text-lg font-semibold !text-white">Loo tegevuse tüüp</h2>
 	<label class="create-row text-sm text-slate-700">
-		<span class="create-label font-medium">Nimi</span>
+		<span class="create-label font-medium !text-slate-100">Nimi</span>
 		<input
 			type="text"
 			bind:value={createName}
 			placeholder="nt Istutamine"
-			class="rounded-lg border border-slate-300 px-3 py-2 transition outline-none focus:border-emerald-500"
+			class="create-input rounded-lg border border-slate-300 px-3 py-2 text-slate-900 transition outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
 			class:create-input={true}
 		/>
 	</label>
@@ -231,9 +231,9 @@
 			type="button"
 			onclick={createActivityType}
 			disabled={isSubmitting}
-			class="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
+			class="inline-flex items-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
 		>
-			Loo
+			{isSubmitting ? 'Loomisel...' : 'Loo'}
 		</button>
 	</div>
 </section>

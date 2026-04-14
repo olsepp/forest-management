@@ -266,7 +266,7 @@
 </script>
 
 {#if isLoading}
-	<p>Laetakse kinnistu detaile...</p>
+	<p>Laetakse kinnistut...</p>
 {:else if errorMessage && !property}
 	<p class="message error">{errorMessage}</p>
 {:else if property}
@@ -281,7 +281,6 @@
 			<div>
 				<p class="eyebrow">Kinnistu</p>
 				<h1>{property.name}</h1>
-				<p class="subtitle">Selle kinnistu kirje- ja olekuhaldus.</p>
 			</div>
 			<button
 				type="button"
@@ -326,7 +325,7 @@
 
 		<form id="property-form" onsubmit={saveProperty} class="detail-form">
 			<section class="form-section">
-				<h2>Muudatused</h2>
+				<h2>Detailid</h2>
 				<div class="form-grid">
 					<label>
 						<span>Olek</span>
@@ -358,11 +357,11 @@
 		</form>
 
 		<section class="activity-section">
-			<h2>Kinnistu katastriüksused</h2>
+			<h2>Katastriüksused</h2>
 			{#if cadasterErrorMessage}
 				<p class="message error">{cadasterErrorMessage}</p>
 			{:else if cadasters.length === 0}
-				<p class="message">Selle kinnistuga pole seotud ühtegi katastrit.</p>
+				<p class="message">Ei leitud.</p>
 			{:else}
 				<div class="cadaster-links">
 					{#each cadasters as cadaster (cadaster.id)}
@@ -461,9 +460,6 @@
 		font-size: 1.6rem;
 	}
 
-	.subtitle {
-		margin: 0;
-	}
 
 	.mode-btn {
 		white-space: nowrap;

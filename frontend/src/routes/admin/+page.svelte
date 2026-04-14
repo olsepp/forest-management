@@ -54,12 +54,12 @@
 {:else if companies.length === 0}
 	<p>Ettevõtteid ei leitud.</p>
 {:else}
-	<p class="intro-text">Jätkamiseks valige ettevõte:</p>
+	<p class="intro-text">Valige ettevõte:</p>
 	<div class="company-grid" role="list">
 		{#each companies as company (company.id)}
 			<button class="company-card" type="button" onclick={() => openCompany(company.id)}>
 				<span class="company-name">{company.name}</span>
-				<span class="company-action">Ava ettevõte</span>
+				<!-- <span class="company-action">Ava ettevõte</span> -->
 			</button>
 		{/each}
 	</div>
@@ -78,24 +78,23 @@
 	}
 
 	.company-card {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		justify-content: space-between;
-		min-height: 130px;
-		width: 100%;
-		padding: 1.2rem;
-		border: 1px solid #d1d5db;
-		border-radius: 0.75rem;
-		background: #ffffff;
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
-		cursor: pointer;
-		text-align: left;
-		transition:
-			transform 0.16s ease,
-			box-shadow 0.16s ease,
-			border-color 0.16s ease;
-	}
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			min-height: 130px;
+			width: 100%;
+			padding: 1.2rem;
+			background: #cecfcf !important;
+			border: 1px solid #d1d5db;
+			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+			cursor: pointer;
+			text-align: left;
+			transition:
+				transform 0.16s ease,
+				box-shadow 0.16s ease,
+				border-color 0.16s ease;
+		}
 
 	.company-card:hover,
 	.company-card:focus-visible {

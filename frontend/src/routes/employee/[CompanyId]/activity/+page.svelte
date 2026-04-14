@@ -191,7 +191,7 @@
 	}
 
 	.activities-table {
-		display: none;
+		display: none !important;
 	}
 
 	.activity-card {
@@ -213,16 +213,27 @@
 		align-items: center;
 		justify-content: center;
 		align-self: start;
-		min-height: 2.75rem;
+		min-height: 3rem;
 		margin-top: 0.2rem;
-		padding: 0.45rem 0.8rem;
-		border: 1px solid #bfd0c8;
-		border-radius: 0.75rem;
-		background: #f8fbf9;
+		padding: 0.5rem 0.9rem;
+		border: 1px solid #1f5a42;
+		border-radius: 0.82rem;
+		background: linear-gradient(180deg, #2a6b4f 0%, #1f5a42 100%);
+		box-shadow: 0 6px 16px rgba(15, 42, 31, 0.22);
 		font-size: 0.95rem;
 		font-weight: 700;
-		color: #184334;
+		color: #f3fbf7;
 		text-decoration: none;
+	}
+
+	.activity-link:hover {
+		background: linear-gradient(180deg, #2f7657 0%, #245f46 100%);
+		border-color: #184736;
+	}
+
+	.activity-link:active {
+		transform: translateY(1px);
+		box-shadow: 0 3px 10px rgba(15, 42, 31, 0.2);
 	}
 
 	.activity-head {
@@ -234,14 +245,6 @@
 	@media (min-width: 768px) {
 		h1 {
 			font-size: 1.35rem;
-		}
-
-		.activities-mobile {
-			display: none;
-		}
-
-		.activities-table {
-			display: block;
 		}
 	}
 </style>

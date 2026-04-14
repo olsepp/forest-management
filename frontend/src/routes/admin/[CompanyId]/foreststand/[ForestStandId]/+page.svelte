@@ -195,7 +195,7 @@
 </script>
 
 {#if isLoading}
-	<p>Laetakse eraldise detaile...</p>
+	<p>Laetakse eraldist...</p>
 {:else if errorMessage && !forestStand}
 	<p class="message error">{errorMessage}</p>
 {:else if forestStand}
@@ -213,7 +213,6 @@
 			<div>
 				<p class="eyebrow">Eraldis</p>
 				<h1>Eraldis {forestStand.number}</h1>
-				<p class="subtitle">Halda eraldise väärtusi ja vaata hiljutisi tegevusi.</p>
 			</div>
 			<button
 				type="button"
@@ -264,7 +263,7 @@
 
 		<form id="foreststand-form" onsubmit={saveForestStand} class="detail-form">
 			<section class="form-section">
-				<h2>Põhiväärtused</h2>
+				<h2>Detailid</h2>
 				<div class="form-grid">
 					<label
 						><span>Eraldise nr</span><input
@@ -289,10 +288,6 @@
 							readonly={!isEditMode}
 						/></label
 					>
-					<label class="checkbox-label">
-						<span>Aktiivne</span>
-						<input type="checkbox" bind:checked={form.isActive} disabled={!isEditMode} />
-					</label>
 					<label
 						><span>Kehtib alates</span><input
 							type="date"
@@ -318,24 +313,6 @@
 		</form>
 
 		<section class="form-section">
-			<h2>Kehtivuse ülevaade</h2>
-			<div class="meta-grid">
-				<article class="meta-card">
-					<p class="meta-label">Kehtib alates</p>
-					<p class="meta-value">{formatDate(forestStand.validFrom)}</p>
-				</article>
-				<article class="meta-card">
-					<p class="meta-label">Kehtib kuni</p>
-					<p class="meta-value">{formatDate(forestStand.validTo)}</p>
-				</article>
-				<article class="meta-card">
-					<p class="meta-label">Staatus</p>
-					<p class="meta-value">{forestStand.isActive ? 'Aktiivne' : 'Mitteaktiivne'}</p>
-				</article>
-			</div>
-		</section>
-
-		<section class="form-section">
 			<div class="section-head">
 				<h2>Hiljutised tegevused</h2>
 				<a
@@ -347,7 +324,7 @@
 				>
 			</div>
 			{#if recentActivities.length === 0}
-				<p>Selle eraldise jaoks tegevusi ei leitud.</p>
+				<p>Ei leitud.</p>
 			{:else}
 				<div class="table-wrapper">
 					<table>
@@ -423,9 +400,7 @@
 		margin: 0.2rem 0 0.35rem;
 		font-size: 1.6rem;
 	}
-	.subtitle {
-		margin: 0;
-	}
+	
 	.mode-btn {
 		padding: 0.58rem 1rem;
 		background: #2f5f49;

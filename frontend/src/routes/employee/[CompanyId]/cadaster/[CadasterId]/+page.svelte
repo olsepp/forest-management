@@ -107,7 +107,7 @@
 </script>
 
 {#if isLoading}
-	<div class="employee-state-block is-loading">Laetakse katastri detaile…</div>
+	<div class="employee-state-block is-loading">Laetakse katastrit…</div>
 {:else if errorMessage && !cadaster}
 	<div class="employee-state-block is-error">
 		{errorMessage}
@@ -185,20 +185,9 @@
 	<section class="employee-card">
 		<div class="section-head">
 			<h2>Sinu tegevused katastril</h2>
-			<a
-				class="log-activity-link is-secondary"
-				href={resolve('/employee/[CompanyId]/cadaster/[CadasterId]/activity/new', {
-					CompanyId: companyId,
-					CadasterId: cadaster.id
-				})}
-			>
-				Logi uus tegevus
-			</a>
 		</div>
 		{#if activities.length === 0}
-			<div class="employee-state-block is-empty">
-				Ei leitud.
-			</div>
+			<div class="employee-state-block is-empty">Ei leitud.</div>
 		{:else}
 			<div class="employee-stack-cards">
 				{#each activities as activity (activity.id)}
@@ -223,6 +212,15 @@
 				{/each}
 			</div>
 		{/if}
+		<a
+			class="log-activity-link is-secondary"
+			href={resolve('/employee/[CompanyId]/cadaster/[CadasterId]/activity/new', {
+				CompanyId: companyId,
+				CadasterId: cadaster.id
+			})}
+		>
+			Logi uus tegevus
+		</a>
 	</section>
 
 	<section class="employee-card">
@@ -311,21 +309,38 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		min-height: 3rem;
+		min-height: 3.5rem;
 		padding: 0.6rem 1rem;
 		border: 1px solid #1f5a42;
 		border-radius: 0.85rem;
-		background: #1f5a42;
-		color: #f6fbf8;
-		font-size: 0.96rem;
+		background: linear-gradient(180deg, #2a6b4f 0%, #1f5a42 100%);
+		box-shadow: 0 6px 16px rgba(15, 42, 31, 0.22);
+		color: #f3fbf7;
+		font-size: 1rem;
 		font-weight: 700;
 		text-decoration: none;
 	}
 
+	.log-activity-link:hover {
+		background: linear-gradient(180deg, #2f7657 0%, #245f46 100%);
+		border-color: #184736;
+	}
+
+	.log-activity-link:active {
+		transform: translateY(1px);
+		box-shadow: 0 3px 10px rgba(15, 42, 31, 0.2);
+	}
+
 	.log-activity-link.is-secondary {
-		border-color: #b7cbc1;
-		background: #f7fbf9;
-		color: #184434;
+		background: linear-gradient(180deg, #3d7a5a 0%, #2d6148 100%);
+		color: #ffffff;
+		box-shadow: 0 4px 12px rgba(15, 42, 31, 0.15);
+		min-height: 3.25rem;
+		margin-top: 1rem;
+	}
+
+	.log-activity-link.is-secondary:hover {
+		background: linear-gradient(180deg, #458664 0%, #356b52 100%);
 	}
 
 	.meta-grid {

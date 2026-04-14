@@ -48,17 +48,20 @@
 </script>
 
 <section class="employee-card hero">
-	{#if currentUserId}
-		<a
-			class="profile-shortcut"
-			href={resolve('/employee/user/[userId]', { userId: currentUserId })}
-		>
-			Minu profiil
-		</a>
-	{/if}
-	<p class="kicker">Ettevõtte valik</p>
-	<h1 class="employee-page-title">Vali ettevõte</h1>
-	<!-- <p>Valige ettevõte, et avada oma töötajate tööruum.</p> -->
+	<div class="hero-content">
+		<div class="hero-text">
+			<p class="kicker">Ettevõtte valik</p>
+			<h1 class="employee-page-title">Vali ettevõte</h1>
+		</div>
+		{#if currentUserId}
+			<a
+				class="profile-shortcut"
+				href={resolve('/employee/user/[userId]', { userId: currentUserId })}
+			>
+				Minu andmed
+			</a>
+		{/if}
+	</div>
 </section>
 
 {#if isLoading}
@@ -72,7 +75,6 @@
 		{#each companies as company (company.id)}
 			<button class="company-card" type="button" onclick={() => openCompany(company.id)}>
 				<span class="company-name">{company.name}</span>
-				<span class="company-meta">Reg. nr: {company.registrationNumber}</span>
 			</button>
 		{/each}
 	</div>
@@ -84,6 +86,20 @@
 		padding: 1rem;
 		background: linear-gradient(180deg, #ffffff 0%, #f5f8fc 100%);
 		border-color: #d3dde8;
+	}
+
+	.hero-content {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+	}
+
+	.hero-text {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
 	}
 
 	.kicker {
@@ -99,10 +115,8 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		align-self: flex-start;
 		min-height: 3rem;
 		padding: 0.65rem 0.95rem;
-		margin-bottom: 0.7rem;
 		border-radius: 0.85rem;
 		border: 1px solid #97b6a6;
 		background: #eaf5ef;
@@ -140,16 +154,15 @@
 
 	.company-card {
 		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 0.4rem;
+		align-items: center;
+		justify-content: center;
 		width: 100%;
-		min-height: 2.75rem;
+		min-height: 4.5rem;
 		padding: 0.92rem;
 		border: 1px solid #cfd8e3;
 		border-radius: 1rem;
 		background: #fff;
-		text-align: left;
+		text-align: center;
 		cursor: pointer;
 		transition:
 			border-color 0.18s ease,
@@ -164,7 +177,7 @@
 	}
 
 	.company-card:active {
-		transform: translateY(1px);
+		transform: scale(0.97);
 	}
 
 	.company-card:focus-visible {
@@ -173,7 +186,7 @@
 	}
 
 	.company-name {
-		font-size: 1rem;
+		font-size: 1.25rem;
 		font-weight: 700;
 		color: #0f172a;
 	}

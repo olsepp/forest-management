@@ -33,8 +33,39 @@
 			: [...expandedUserIds, userId];
 	}
 
+	const fieldLabels: Record<string, string> = {
+		id: 'ID',
+		firstName: 'Eesnimi',
+		lastName: 'Perekonnanimi',
+		email: 'Email',
+		role: 'Roll',
+		companyId: 'Ettevõte ID',
+		phone: 'Telefon',
+		createdAt: 'Loodud',
+		updatedAt: 'Muudetud',
+		lastLogin: 'Viimane sisselogimine',
+		isActive: 'Aktiivne',
+		employeeId: 'Töötaja ID'
+	};
+
 	function detailEntries(user: UserDetailsDto): [string, unknown][] {
 		return Object.entries(user).sort(([a], [b]) => a.localeCompare(b));
+	}
+
+	const roleLabels: Record<string, string> = {
+		employee: 'Töötaja',
+		Employee: 'Töötaja',
+		admin: 'Admin',
+		Admin: 'Admin'
+	};
+
+	function getFieldLabel(key: string): string {
+		return fieldLabels[key] ?? key;
+	}
+
+	function getFieldValue(key: string, value: unknown): string {
+		if (key === 'role' && typeof value === 'string') return roleLabels[value] ?? value;
+		return typeof value === 'string' ? value : JSON.stringify(value);
 	}
 
 	onMount(async () => {
@@ -159,15 +190,15 @@
 						<tr class="bg-slate-50/60">
 							<td colspan="4" class="px-4 py-3">
 								<div class="rounded-lg border border-slate-200 bg-white p-3">
-									<p class="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
-										Kõik saadaolevad kasutaja väljad
+									<p class="mb-2 text-sm font-semibold tracking-wide text-slate-500 uppercase">
+										Kasutaja andmed
 									</p>
 									<dl class="grid grid-cols-1 gap-2 sm:grid-cols-2">
 										{#each detailEntries(userDetailsById[user.id] ?? user) as [key, value] (key)}
 											<div class="rounded border border-slate-200 bg-slate-50 p-2">
-												<dt class="text-xs font-semibold text-slate-600">{key}</dt>
-												<dd class="mt-0.5 font-mono text-xs break-all text-slate-800">
-													{typeof value === 'string' ? value : JSON.stringify(value)}
+												<dt class="text-sm font-semibold text-slate-600">{getFieldLabel(key)}</dt>
+												<dd class="mt-0.5 font-mono text-sm break-all text-slate-800">
+													{getFieldValue(key, value)}
 												</dd>
 											</div>
 										{/each}

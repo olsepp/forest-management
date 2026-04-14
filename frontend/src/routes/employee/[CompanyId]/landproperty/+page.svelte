@@ -144,7 +144,7 @@
 </script>
 
 <section class="employee-card intro">
-	<h1>KINNISTUD</h1>
+	<h1>Kinnistud</h1>
 	<p>Otsi nime, reg. nr või katastri nr järgi.</p>
 </section>
 
@@ -461,11 +461,6 @@
 
 	.cadaster-chip.is-static:active {
 		background: #e2e8f0;
-	}
-
-	.cadaster-chip:hover {
-		background: #ebf1f8;
-		border-color: #95abc4;
 	}
 
 	.cadaster-chip:active {

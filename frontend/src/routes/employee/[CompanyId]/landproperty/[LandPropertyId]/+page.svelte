@@ -157,15 +157,7 @@
 							CadasterId: cadaster.id
 						})}
 					>
-						<div class="cadaster-row-main">
-							<p class="cadaster-row-kicker">Kataster</p>
-							<p class="cadaster-row-number">{cadaster.cadastralNumber || cadaster.id}</p>
-							<div class="cadaster-row-meta">
-								{#if typeof cadaster.forestArea === 'number'}
-									<span>Metsamaa: {cadaster.forestArea}</span>
-								{/if}
-							</div>
-						</div>
+						{cadaster.cadastralNumber || cadaster.id}
 					</a>
 				{/each}
 			</div>
@@ -260,72 +252,41 @@
 		gap: 0.55rem;
 	}
 
+	@media (min-width: 480px) {
+		.cadaster-list {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+
 	.cadaster-row {
-		display: flex;
-		align-items: center;
-		justify-content: flex-start;
-		gap: 0.65rem;
-		min-height: 3.15rem;
-		padding: 0.8rem 0.9rem;
-		border: 1px solid #9ec6b0;
-		border-radius: 0.95rem;
-		background: linear-gradient(180deg, #eef8f2 0%, #e6f4ec 100%);
 		text-decoration: none;
-		color: #173328;
-		box-shadow: 0 4px 14px rgba(15, 40, 30, 0.12);
-		position: relative;
-		overflow: hidden;
-	}
-
-	.cadaster-row::before {
-		content: '';
-		position: absolute;
-		left: 0;
-		top: 0;
-		bottom: 0;
-		width: 0.34rem;
-		background: linear-gradient(180deg, #4f8b70 0%, #2d6b4f 100%);
-	}
-
-	.cadaster-row-main {
-		display: grid;
-		gap: 0.14rem;
-		min-width: 0;
-		padding-left: 0.3rem;
-	}
-
-	.cadaster-row-kicker {
-		margin: 0;
-		font-size: 0.72rem;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 3.5rem;
+		border: 1px solid #1f5a42;
+		background: linear-gradient(180deg, #2a6b4f 0%, #1f5a42 100%);
+		box-shadow: 0 6px 16px rgba(15, 42, 31, 0.22);
+		color: #f3fbf7;
+		border-radius: 0.82rem;
+		font-size: 1.15rem;
 		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.03em;
-		color: #537666;
 	}
 
-	.cadaster-row-number {
-		margin: 0;
-		font-size: 1rem;
-		font-weight: 700;
-		line-height: 1.2;
-		color: #173328;
-	}
-
-	.cadaster-row-meta {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.35rem;
-	}
-
-	.cadaster-row-meta span {
-		font-size: 0.83rem;
-		font-weight: 600;
-		color: #456657;
+	.cadaster-row:hover {
+		background: linear-gradient(180deg, #2f7657 0%, #245f46 100%);
+		border-color: #184736;
 	}
 
 	.cadaster-row:active {
 		transform: translateY(1px);
-		background: #edf6f1;
+		box-shadow: 0 3px 10px rgba(15, 42, 31, 0.2);
+	}
+
+	@media (min-width: 768px) {
+		.cadaster-list {
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+		}
 	}
 
 	.activity-card {
@@ -352,10 +313,10 @@
 		padding: 0.45rem 0.8rem;
 		border: 1px solid #bfd0c8;
 		border-radius: 0.75rem;
-		background: #f8fbf9;
+		background: linear-gradient(180deg, #2a6b4f 0%, #1f5a42 100%);
 		font-size: 0.95rem;
 		font-weight: 700;
-		color: #184334;
+		color: white;
 		text-decoration: none;
 	}
 

@@ -301,7 +301,7 @@
 
 	.employee-layout {
 		color: var(--employee-ink);
-		background: linear-gradient(180deg, #f4f8f5 0%, #ebf2ee 100%);
+		background: linear-gradient(180deg, #b6b5b5 0%, #cecfcf 100%);
 		background-color: var(--employee-shell-bg);
 		display: grid;
 		grid-template-rows: auto auto 1fr;
@@ -542,7 +542,7 @@
 		overflow: hidden;
 	}
 
-	:global(.employee-card:is(.hero, .intro, .summary, .page-intro)::before) {
+	/* :global(.employee-card:is(.hero, .intro, .summary, .page-intro)::before) {
 		content: '';
 		position: absolute;
 		left: 0;
@@ -550,7 +550,7 @@
 		bottom: 0;
 		width: 0.3rem;
 		background: linear-gradient(180deg, #88b7a0 0%, #5e8f78 100%);
-	}
+	} */
 
 	:global(.employee-table-wrap) {
 		overflow-x: auto;

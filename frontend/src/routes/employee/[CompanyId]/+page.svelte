@@ -62,11 +62,14 @@
 			activitiesLoading = true;
 			activitiesError = '';
 			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/activities/by-user/${userId}/recent?count=5&companyId=${companyId}`, {
-				headers: {
-					Authorization: `Bearer ${token}`
+			const response = await fetch(
+				`${apiBaseUrl}/api/activities/by-user/${userId}/recent?count=5&companyId=${companyId}`,
+				{
+					headers: {
+						Authorization: `Bearer ${token}`
+					}
 				}
-			});
+			);
 			if (!response.ok) {
 				activitiesError = 'Tegevuste ajalugu ei õnnestunud laadida.';
 				return;
@@ -169,43 +172,46 @@
 		{/each}
 	</section>
 {/if}
-
 {#if activitiesLoading}
 	<div class="activities-block is-loading">Laetakse tegevusi…</div>
 {:else if activitiesError}
 	<div class="activities-block is-error">{activitiesError}</div>
-{:else if activities.length > 0}
+{:else}
 	<section class="activities-section" aria-label="Hiljutised tegevused">
 		<h2 class="activities-title">Hiljutised tegevused</h2>
-		<ul class="activities-list">
-			{#each activities as activity (activity.id)}
-				<li>
-					<a
-						href={resolve('/employee/[CompanyId]/activity/[ActivityId]', {
-							CompanyId: companyId,
-							ActivityId: activity.id
-						})}
-						class="activity-item"
-					>
-						<div class="activity-header">
-							<span class="activity-type">{activity.activityTypeName}</span>
-							<span class="activity-date">{formatDate(activity.date)}</span>
-						</div>
-						<p class="activity-description">{activity.description}</p>
-						<div class="activity-meta">
-							{#if activity.forestStandNumber !== null}
-								<span class="activity-location"
-									>{activity.cadasterCadastralNumber} / Eraldis {activity.forestStandNumber}</span
-								>
-							{:else if activity.cadasterCadastralNumber}
-								<span class="activity-location">{activity.cadasterCadastralNumber}</span>
-							{/if}
-							<span class="activity-quantity">{activity.quantity} {activity.unit}</span>
-						</div>
-					</a>
-				</li>
-			{/each}
-		</ul>
+		{#if activities.length > 0}
+			<ul class="activities-list">
+				{#each activities as activity (activity.id)}
+					<li>
+						<a
+							href={resolve('/employee/[CompanyId]/activity/[ActivityId]', {
+								CompanyId: companyId,
+								ActivityId: activity.id
+							})}
+							class="activity-item"
+						>
+							<div class="activity-header">
+								<span class="activity-type">{activity.activityTypeName}</span>
+								<span class="activity-date">{formatDate(activity.date)}</span>
+							</div>
+							<p class="activity-description">{activity.description}</p>
+							<div class="activity-meta">
+								{#if activity.forestStandNumber !== null}
+									<span class="activity-location"
+										>{activity.cadasterCadastralNumber} / Eraldis {activity.forestStandNumber}</span
+									>
+								{:else if activity.cadasterCadastralNumber}
+									<span class="activity-location">{activity.cadasterCadastralNumber}</span>
+								{/if}
+								<span class="activity-quantity">{activity.quantity} {activity.unit}</span>
+							</div>
+						</a>
+					</li>
+				{/each}
+			</ul>
+		{:else}
+			<p class="activities-empty">Ei leitud.</p>
+		{/if}
 	</section>
 {/if}
 
@@ -283,9 +289,8 @@
 		padding: 0.45rem 0.85rem;
 		font-size: 0.9rem;
 		font-weight: 700;
-		color: #184334;
-		background: #f6fbf9;
-		border: 1px solid #bfd0c8;
+		color: #ffffff;
+		background: #174834;
 		border-radius: 0.72rem;
 	}
 
@@ -400,6 +405,16 @@
 	.activities-block.is-error {
 		color: #b91c1c;
 		background: #fef2f2;
+	}
+
+	.activities-empty {
+		margin: 0;
+		padding: 1rem;
+		text-align: center;
+		font-size: 0.95rem;
+		color: #64748b;
+		background: #f8fafc;
+		border-radius: 0.85rem;
 	}
 
 	@media (min-width: 768px) {

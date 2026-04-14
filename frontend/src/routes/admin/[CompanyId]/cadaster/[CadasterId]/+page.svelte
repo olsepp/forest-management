@@ -200,7 +200,7 @@
 </script>
 
 {#if isLoading}
-	<p>Laetakse katastri detaile...</p>
+	<p>Laetakse katastrit...</p>
 {:else if errorMessage && !cadaster}
 	<p class="message error">{errorMessage}</p>
 {:else if cadaster}
@@ -215,7 +215,6 @@
 			<div>
 				<p class="eyebrow">Kataster</p>
 				<h1>{cadaster.cadastralNumber}</h1>
-				<p class="subtitle">Halda katastri väärtusi ja vaata seotud eraldise kirjeid.</p>
 			</div>
 			<div class="head-actions">
 				<a
@@ -261,7 +260,7 @@
 
 		<form id="cadaster-form" onsubmit={saveCadaster} class="detail-form">
 			<section class="form-section">
-				<h2>Üldised väärtused</h2>
+				<h2>Detailid</h2>
 				<div class="form-grid">
 					<label
 						><span>Boniteet</span><input
@@ -360,7 +359,7 @@
 		</form>
 
 		<section class="form-section">
-			<h2>Selle katastri eraldised</h2>
+			<h2>Eraldised</h2>
 			{#if forestStands.length === 0}
 				<p class="message">Eraldisi ei leitud.</p>
 			{:else}
@@ -384,7 +383,7 @@
 		<section class="form-section">
 			<h2>Tegevused</h2>
 			{#if recentActivities.length === 0}
-				<p class="message">Selle katastri tegevusi ei leitud.</p>
+				<p class="message">Ei leitud.</p>
 			{:else}
 				<div class="table-wrapper">
 					<table>
@@ -458,9 +457,7 @@
 		margin: 0.2rem 0 0.35rem;
 		font-size: 1.6rem;
 	}
-	.subtitle {
-		margin: 0;
-	}
+	
 	.head-actions {
 		display: flex;
 		gap: 0.6rem;
