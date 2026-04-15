@@ -73,46 +73,47 @@
 
 	.company-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-		gap: 1rem;
+		grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+		gap: 1.25rem;
 	}
 
 	.company-card {
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			justify-content: center;
-			min-height: 130px;
-			width: 100%;
-			padding: 1.2rem;
-			background: #cecfcf !important;
-			border: 1px solid #d1d5db;
-			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
-			cursor: pointer;
-			text-align: left;
-			transition:
-				transform 0.16s ease,
-				box-shadow 0.16s ease,
-				border-color 0.16s ease;
-		}
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		min-height: 140px;
+		width: 100%;
+		padding: 1.5rem;
+		background: linear-gradient(135deg, #1f5a42, #2d6f52);
+		border: none;
+		border-radius: 12px;
+		box-shadow: 0 4px 12px rgba(31, 90, 66, 0.25);
+		cursor: pointer;
+		text-align: center;
+		transition:
+			transform 0.2s ease,
+			box-shadow 0.2s ease,
+			background 0.2s ease;
+	}
 
 	.company-card:hover,
 	.company-card:focus-visible {
-		transform: translateY(-2px);
-		border-color: #9ca3af;
-		box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+		transform: translateY(-3px);
+		box-shadow: 0 10px 24px rgba(31, 90, 66, 0.35);
+		background: linear-gradient(135deg, #174834, #1f5a42);
 		outline: none;
 	}
 
-	.company-name {
-		font-size: 1.05rem;
-		font-weight: 600;
-		color: #111827;
+	.company-card:active {
+		transform: translateY(-1px);
+		box-shadow: 0 6px 12px rgba(31, 90, 66, 0.3);
+		background: linear-gradient(135deg, #143d2c, #174834);
 	}
 
-	.company-action {
-		margin-top: 0.75rem;
-		font-size: 0.9rem;
-		color: #2563eb;
+	.company-name {
+		font-size: 1.2rem;
+		font-weight: 700;
+		color: #ffffff;
 	}
 </style>

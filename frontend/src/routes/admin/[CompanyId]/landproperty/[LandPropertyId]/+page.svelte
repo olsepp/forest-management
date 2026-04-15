@@ -460,7 +460,6 @@
 		font-size: 1.6rem;
 	}
 
-
 	.mode-btn {
 		white-space: nowrap;
 		padding: 0.58rem 1rem;

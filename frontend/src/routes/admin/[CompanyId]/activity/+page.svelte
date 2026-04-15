@@ -119,7 +119,7 @@
 					<th>Kataster</th>
 					<th>Eraldis</th>
 					<th>Kasutaja</th>
-					<th class="actions">Toimingud</th>
+					<th class="actions"></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -158,7 +158,7 @@
 					</tr>
 					{#if isExpanded(item.id)}
 						<tr class="expanded-row">
-							<td colspan="6">
+							<td colspan="7">
 								<div class="expanded-content">
 									<div class="expanded-actions">
 										<a
@@ -166,20 +166,57 @@
 											href={resolve('/admin/[CompanyId]/activity/[ActivityId]', {
 												CompanyId: companyId,
 												ActivityId: item.id
-											})}>Ava tegevuse leht</a
+											})}>Ava tegevus</a
 										>
 									</div>
-									<p><strong>ID:</strong> {item.id}</p>
-									<p><strong>Kuupäev:</strong> {formatDate(item.date)}</p>
-									<p><strong>Tegevuse tüüp:</strong> {item.activityTypeName}</p>
-									<p><strong>Kataster:</strong> {cadasterLabel(item)}</p>
-									<p><strong>Eraldis:</strong> {forestStandLabel(item)}</p>
-									<p><strong>Kinnistu:</strong> {item.landPropertyName || '—'}</p>
-									<p><strong>Kasutaja:</strong> {item.userName}</p>
-									<p><strong>Kirjeldus:</strong> {item.description || '—'}</p>
-									<p><strong>Kogus:</strong> {formatQuantity(item)}</p>
-									<p><strong>Ühik:</strong> {item.unit || '—'}</p>
-									<p><strong>Staatus:</strong> {applicationStatusLabel(item.applicationStatus)}</p>
+									<div class="details-grid">
+										<div class="detail-item">
+											<span class="detail-label">ID</span>
+											<span class="detail-value">{item.id}</span>
+										</div>
+										<div class="detail-item">
+											<span class="detail-label">Kuupäev</span>
+											<span class="detail-value">{formatDate(item.date)}</span>
+										</div>
+										<div class="detail-item">
+											<span class="detail-label">Tegevuse tüüp</span>
+											<span class="detail-value">{item.activityTypeName}</span>
+										</div>
+										<div class="detail-item">
+											<span class="detail-label">Kataster</span>
+											<span class="detail-value">{cadasterLabel(item)}</span>
+										</div>
+										<div class="detail-item">
+											<span class="detail-label">Eraldis</span>
+											<span class="detail-value">{forestStandLabel(item)}</span>
+										</div>
+										<div class="detail-item">
+											<span class="detail-label">Kinnistu</span>
+											<span class="detail-value">{item.landPropertyName || '—'}</span>
+										</div>
+										<div class="detail-item">
+											<span class="detail-label">Kasutaja</span>
+											<span class="detail-value">{item.userName}</span>
+										</div>
+										<div class="detail-item">
+											<span class="detail-label">Kirjeldus</span>
+											<span class="detail-value">{item.description || '—'}</span>
+										</div>
+										<div class="detail-item">
+											<span class="detail-label">Kogus</span>
+											<span class="detail-value">{formatQuantity(item)}</span>
+										</div>
+										<div class="detail-item">
+											<span class="detail-label">Ühik</span>
+											<span class="detail-value">{item.unit || '—'}</span>
+										</div>
+										<div class="detail-item">
+											<span class="detail-label">Staatus</span>
+											<span class="detail-value"
+												>{applicationStatusLabel(item.applicationStatus)}</span
+											>
+										</div>
+									</div>
 								</div>
 							</td>
 						</tr>
@@ -235,36 +272,63 @@
 	}
 
 	.expanded-row td {
-		background: #f8fafc;
+		background: #f4f7f5;
 	}
 
 	.expanded-content {
-		display: grid;
-		gap: 0.35rem;
+		padding: 0.5rem 0;
 	}
 
 	.expanded-actions {
 		display: flex;
 		justify-content: flex-end;
-		margin-bottom: 0.5rem;
+		margin-bottom: 0.75rem;
 	}
 
 	.details-open-btn {
 		display: inline-flex;
 		align-items: center;
-		border: 1px solid #d1d5db;
+		background: #1f5a42;
+		border: 1px solid #1f5a42;
 		border-radius: 0.5rem;
 		padding: 0.4rem 0.75rem;
 		text-decoration: none;
 		font-weight: 600;
+		color: #ffffff;
+		transition:
+			background 0.2s ease,
+			border-color 0.2s ease;
 	}
 
 	.details-open-btn:hover {
+		background: #174834;
+		border-color: #174834;
+		color: #ffffff;
 		text-decoration: none;
 	}
 
-	.expanded-content p {
-		margin: 0;
+	.details-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+		gap: 0.75rem;
+	}
+
+	.detail-item {
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+	}
+
+	.detail-label {
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+		color: var(--admin-text-muted);
+	}
+
+	.detail-value {
+		font-weight: 500;
+		color: var(--admin-text);
 	}
 
 	.error {

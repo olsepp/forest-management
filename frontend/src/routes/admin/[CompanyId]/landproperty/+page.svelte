@@ -17,6 +17,7 @@
 	let expandedPropertyIds = $state<string[]>([]);
 	let searchQuery = $state('');
 	let selectedCounty = $state('');
+	let countyDropdownOpen = $state(false);
 	let companyId = $derived($page.params.CompanyId ?? '');
 	let normalizedSearchQuery = $derived(searchQuery.trim().toLowerCase());
 	let availableCounties = $derived.by(() => {
@@ -183,12 +184,56 @@
 		</label>
 		<label class="county-filter">
 			<span class="sr-only">Filtreeri maakonna järgi</span>
-			<select bind:value={selectedCounty}>
-				<option value="">Kõik maakonnad</option>
-				{#each availableCounties as county (county)}
-					<option value={county}>{county}</option>
-				{/each}
-			</select>
+			<div class="custom-dropdown">
+				<button
+					type="button"
+					class="dropdown-trigger"
+					onclick={() => (countyDropdownOpen = !countyDropdownOpen)}
+					aria-expanded={countyDropdownOpen}
+				>
+					<span>{selectedCounty || 'Kõik maakonnad'}</span>
+					<svg
+						class="dropdown-arrow"
+						class:open={countyDropdownOpen}
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2.5"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<path d="M6 9l6 6 6-6" />
+					</svg>
+				</button>
+				{#if countyDropdownOpen}
+					<div class="dropdown-menu">
+						<button
+							type="button"
+							class="dropdown-option"
+							class:selected={selectedCounty === ''}
+							onclick={() => {
+								selectedCounty = '';
+								countyDropdownOpen = false;
+							}}
+						>
+							Kõik maakonnad
+						</button>
+						{#each availableCounties as county (county)}
+							<button
+								type="button"
+								class="dropdown-option"
+								class:selected={selectedCounty === county}
+								onclick={() => {
+									selectedCounty = county;
+									countyDropdownOpen = false;
+								}}
+							>
+								{county}
+							</button>
+						{/each}
+					</div>
+				{/if}
+			</div>
 		</label>
 		{#if searchQuery.trim()}
 			<button type="button" class="clear-search" onclick={() => (searchQuery = '')}
@@ -214,7 +259,7 @@
 						<th>Maakond</th>
 						<th>Olek</th>
 						<th>Katastrinumbrid</th>
-						<th class="actions">Detailid</th>
+						<th class="actions"></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -287,7 +332,7 @@
 											href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
 												CompanyId: companyId,
 												LandPropertyId: property.id
-											})}>Ava kinnistu leht</a
+											})}>Ava kinnistu</a
 										>
 									</div>
 									<div class="details-grid">
@@ -346,16 +391,97 @@
 		flex: 1;
 	}
 
-	.county-filter select {
-		padding: 0.5rem 0.75rem;
-		border: 1px solid #d1d5db;
-		border-radius: 0.5rem;
-		background: #fff;
+	.custom-dropdown {
+		position: relative;
 	}
 
-	.county-filter select:focus {
-		outline: 2px solid #99f6e4;
-		outline-offset: 1px;
+	.dropdown-trigger {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		padding: 0.5rem 0.75rem;
+		min-width: 160px;
+		border: 1px solid #cad6cf;
+		border-radius: 0.6rem;
+		background: #fcfdfc;
+		color: #1f2a24;
+		font-size: 0.9rem;
+		cursor: pointer;
+		transition:
+			border-color 0.15s ease,
+			box-shadow 0.15s ease;
+	}
+
+	.dropdown-trigger:hover {
+		border-color: #96b1a4;
+	}
+
+	.dropdown-trigger:focus {
+		outline: none;
+		border-color: #1f5a42;
+		box-shadow: 0 0 0 3px rgba(31, 90, 66, 0.12);
+	}
+
+	.dropdown-arrow {
+		width: 1rem;
+		height: 1rem;
+		color: #56645d;
+		transition: transform 0.2s ease;
+	}
+
+	.dropdown-arrow.open {
+		transform: rotate(180deg);
+	}
+
+	.dropdown-menu {
+		position: absolute;
+		top: calc(100% + 4px);
+		left: 0;
+		right: 0;
+		z-index: 50;
+		background: #fcfdfc !important;
+		border: 1px solid #cad6cf;
+		border-radius: 0.6rem;
+		box-shadow: 0 4px 14px rgba(21, 41, 32, 0.12);
+		max-height: 240px;
+		overflow-y: auto;
+	}
+
+	.dropdown-option {
+		display: block;
+		width: 100%;
+		padding: 0.6rem 0.75rem;
+		border: none !important;
+		background: transparent !important;
+		color: #1f2a24;
+		font-size: 0.9rem;
+		text-align: left;
+		cursor: pointer;
+		transition: background 0.15s ease;
+	}
+
+	.dropdown-option:hover {
+		background: #174834 !important;
+		color: #ffffff !important;
+	}
+
+	.dropdown-option.selected {
+		background: #1f5a42 !important;
+		color: #ffffff !important;
+		font-weight: 600;
+	}
+
+	.dropdown-option:first-child {
+		border-radius: 0.6rem 0.6rem 0 0;
+	}
+
+	.dropdown-option:last-child {
+		border-radius: 0 0 0.6rem 0.6rem;
+	}
+
+	.dropdown-menu:has(.dropdown-option:first-child:last-child) .dropdown-option {
+		border-radius: 0.6rem;
 	}
 
 	.search-input input {
@@ -462,7 +588,7 @@
 	}
 
 	.details-row td {
-		background: #f8fafc;
+		background: #f4f7f5;
 	}
 
 	.details-grid {
@@ -480,16 +606,21 @@
 
 	.details-actions a {
 		display: inline-block;
-		border: 1px solid #d1d5db;
-		background: #fff;
+		background: #1f5a42;
+		border: 1px solid #1f5a42;
 		border-radius: 0.5rem;
 		padding: 0.35rem 0.7rem;
 		text-decoration: none;
-		color: inherit;
+		color: #ffffff;
+		transition:
+			background 0.2s ease,
+			border-color 0.2s ease;
 	}
 
 	.details-actions a:hover {
-		background: #f9fafb;
+		background: #174834;
+		border-color: #174834;
+		color: #ffffff;
 	}
 
 	.cadaster-links a {

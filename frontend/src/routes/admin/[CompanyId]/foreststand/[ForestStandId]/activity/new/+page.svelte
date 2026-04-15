@@ -5,7 +5,10 @@
 	import ActivityForm from '$lib/components/admin/ActivityForm.svelte';
 	import { authService } from '$lib/services/auth';
 	import { onMount } from 'svelte';
-	import type { ForestStandSummaryDto } from '$lib/dtos/forest-stand/forest-stand.dto';
+	import type {
+		ForestStandSummaryDto,
+		CadasterSummaryDto
+	} from '$lib/dtos/forest-stand/forest-stand.dto';
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
@@ -14,6 +17,23 @@
 	let errorMessage = $state('');
 	const companyId = $derived($page.params.CompanyId ?? '');
 	const forestStandId = $derived($page.params.ForestStandId ?? '');
+
+	async function loadCadasterFallback(cadasterId: string, token: string): Promise<void> {
+		const response = await fetch(`${apiBaseUrl}/api/cadasters/${cadasterId}`, {
+			headers: {
+				Authorization: `Bearer ${token}`
+			}
+		});
+
+		if (!response.ok) return;
+
+		const cadaster = (await response.json()) as CadasterSummaryDto;
+		forestStand = {
+			...forestStand!,
+			landPropertyId: cadaster.landPropertyId ?? forestStand?.landPropertyId,
+			landPropertyName: cadaster.landPropertyName ?? forestStand?.landPropertyName
+		};
+	}
 
 	async function loadForestStandSummary() {
 		try {
@@ -52,6 +72,10 @@
 				landPropertyId: dto.landPropertyId,
 				landPropertyName: dto.landPropertyName
 			};
+
+			if ((!forestStand.landPropertyId || !forestStand.landPropertyName) && dto.cadasterId) {
+				await loadCadasterFallback(dto.cadasterId, token);
+			}
 		} catch {
 			errorMessage = 'Eraldise laadimine ebaõnnestus.';
 		} finally {
@@ -69,7 +93,7 @@
 		href={resolve('/admin/[CompanyId]/foreststand/[ForestStandId]', {
 			CompanyId: companyId,
 			ForestStandId: forestStandId
-		})}>← Tagasi eraldise detailidesse</a
+		})}>← Tagasi eraldise juurde</a
 	>
 </p>
 
@@ -102,8 +126,8 @@
 				<a
 					href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
 						CompanyId: companyId,
-						LandPropertyId: forestStand.landPropertyId!}
-				)}>{forestStand.landPropertyName}</a
+						LandPropertyId: forestStand.landPropertyId!
+					})}>{forestStand.landPropertyName}</a
 				>
 			</p>
 		</article>
@@ -112,10 +136,8 @@
 	<ActivityForm
 		{companyId}
 		cadasterId={forestStand.cadasterId}
-		cadasterLabel={forestStand.cadasterCadastralNumber}
 		forestStandId={forestStand.id}
 		lockCadaster={true}
-		cancelHref={`/admin/${companyId}/foreststand/${forestStand.id}`}
 		redirectHref={`/admin/${companyId}/activity`}
 		submitLabel="Logi tegevus"
 	/>

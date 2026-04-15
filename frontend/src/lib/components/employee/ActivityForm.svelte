@@ -197,7 +197,7 @@
 
 		<label>
 			<span>Ühik</span>
-			<input type="text" bind:value={unit} placeholder="nt m3, ha" />
+			<input type="text" bind:value={unit} placeholder="m3, ha, ..." />
 		</label>
 
 		<label class="full-width">

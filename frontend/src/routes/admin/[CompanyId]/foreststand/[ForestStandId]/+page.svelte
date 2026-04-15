@@ -214,14 +214,23 @@
 				<p class="eyebrow">Eraldis</p>
 				<h1>Eraldis {forestStand.number}</h1>
 			</div>
-			<button
-				type="button"
-				class="mode-btn"
-				onclick={() => (isEditMode = !isEditMode)}
-				disabled={isSaving}
-			>
-				{isEditMode ? 'Tühista muutmine' : 'Luba muutmine'}
-			</button>
+			<div class="head-actions">
+				<a
+					class="btn-log-activity"
+					href={resolve('/admin/[CompanyId]/foreststand/[ForestStandId]/activity/new', {
+						CompanyId: companyId,
+						ForestStandId: forestStand.id
+					})}>Logi tegevus</a
+				>
+				<button
+					type="button"
+					class="mode-btn"
+					onclick={() => (isEditMode = !isEditMode)}
+					disabled={isSaving}
+				>
+					{isEditMode ? 'Tühista muutmine' : 'Luba muutmine'}
+				</button>
+			</div>
 		</header>
 
 		<section class="meta-grid">
@@ -313,16 +322,7 @@
 		</form>
 
 		<section class="form-section">
-			<div class="section-head">
-				<h2>Hiljutised tegevused</h2>
-				<a
-					class="inline-link"
-					href={resolve('/admin/[CompanyId]/foreststand/[ForestStandId]/activity/new', {
-						CompanyId: companyId,
-						ForestStandId: forestStand.id
-					})}>Logi tegevus</a
-				>
-			</div>
+			<h2>Hiljutised tegevused</h2>
 			{#if recentActivities.length === 0}
 				<p>Ei leitud.</p>
 			{:else}
@@ -389,6 +389,27 @@
 		align-items: flex-start;
 		gap: 1rem;
 	}
+	.head-actions {
+		display: flex;
+		gap: 0.6rem;
+		align-items: center;
+	}
+	.btn-log-activity {
+		white-space: nowrap;
+		padding: 0.58rem 1rem;
+		background: #1f5a42;
+		color: #f7fcf9;
+		border: 1px solid #184835;
+		border-radius: 0.65rem;
+		font-weight: 700;
+		box-shadow: 0 8px 16px rgba(31, 90, 66, 0.24);
+		text-decoration: none;
+	}
+	.btn-log-activity:hover {
+		background: #174a35;
+		color: #ffffff;
+		text-decoration: none;
+	}
 	.eyebrow {
 		margin: 0;
 		font-size: 0.78rem;
@@ -400,7 +421,7 @@
 		margin: 0.2rem 0 0.35rem;
 		font-size: 1.6rem;
 	}
-	
+
 	.mode-btn {
 		padding: 0.58rem 1rem;
 		background: #2f5f49;
@@ -450,27 +471,9 @@
 		background: #f9fcfa;
 		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
 	}
-	.section-head {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: 0.75rem;
-		margin-bottom: 0.8rem;
-	}
 	h2 {
 		margin: 0 0 0.8rem;
 		font-size: 1.03rem;
-	}
-	.section-head h2 {
-		margin: 0;
-	}
-	.inline-link {
-		text-decoration: none;
-		font-weight: 600;
-		color: #0f766e;
-	}
-	.inline-link:hover {
-		text-decoration: underline;
 	}
 	.form-grid {
 		display: grid;

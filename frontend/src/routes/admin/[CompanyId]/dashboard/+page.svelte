@@ -274,32 +274,45 @@
 		{#if recentActivities.length === 0}
 			<p class="text-sm text-slate-600">Tegevused puuduvad.</p>
 		{:else}
-			<div class="overflow-x-auto">
+			<div class="overflow-hidden rounded-lg border border-slate-200">
 				<table class="min-w-full text-sm">
 					<thead>
-						<tr class="border-b border-slate-200 text-left text-slate-500">
-							<th class="py-2 pr-3">Kuupäev</th>
-							<th class="py-2 pr-3">Tüüp</th>
-							<th class="py-2 pr-3">Kirjeldus</th>
-							<th class="py-2 pr-3">Kasutaja</th>
-							<th class="py-2 text-right">Ava</th>
+						<tr class="border-b border-slate-200">
+							<th class="px-3 py-2.5 text-left font-semibold text-slate-600">Kuupäev</th>
+							<th class="px-3 py-2.5 text-left font-semibold text-slate-600">Tüüp</th>
+							<th class="px-3 py-2.5 text-left font-semibold text-slate-600">Kirjeldus</th>
+							<th class="px-3 py-2.5 text-left font-semibold text-slate-600">Kasutaja</th>
+							<th class="px-3 py-2.5 text-right font-semibold text-slate-600"></th>
 						</tr>
 					</thead>
 					<tbody>
 						{#each recentActivities as activity (activity.id)}
 							<tr class="border-b border-slate-100 text-slate-700">
-								<td class="py-2 pr-3">{formatDateTime(activity.date)}</td>
-								<td class="py-2 pr-3">{activity.activityTypeName ?? '—'}</td>
-								<td class="py-2 pr-3">{activity.description ?? '—'}</td>
-								<td class="py-2 pr-3">{activity.userName ?? '—'}</td>
-								<td class="py-2 text-right">
+								<td class="px-3 py-2.5">{formatDateTime(activity.date)}</td>
+								<td class="px-3 py-2.5">{activity.activityTypeName ?? '—'}</td>
+								<td class="px-3 py-2.5">{activity.description ?? '—'}</td>
+								<td class="px-3 py-2.5">{activity.userName ?? '—'}</td>
+								<td class="px-3 py-2.5 text-right">
 									<a
-										class="font-medium text-teal-700 hover:text-teal-800"
+										class="group inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#cad6cf] bg-white text-[#1f5a42] shadow-sm transition-all hover:border-[#1f5a42] hover:bg-[#174834]"
 										href={resolve('/admin/[CompanyId]/activity/[ActivityId]', {
 											CompanyId: companyId,
 											ActivityId: activity.id
-										})}>Ava</a
+										})}
+										aria-label="Vaata tegevust"
 									>
+										<svg
+											class="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:stroke-white"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+											stroke-width="2.5"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+										>
+											<path d="M5 12h14M12 5l7 7-7 7" />
+										</svg>
+									</a>
 								</td>
 							</tr>
 						{/each}

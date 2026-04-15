@@ -143,8 +143,8 @@
 	<p>Kasutajaid ei leitud.</p>
 {:else}
 	<div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-		<table class="min-w-full divide-y divide-slate-200 text-sm">
-			<thead class="bg-slate-50">
+		<table class="min-w-full divide-y divide-slate-200 text-base">
+			<thead>
 				<tr>
 					<th class="px-4 py-3 text-left font-semibold text-slate-700">Eesnimi</th>
 					<th class="px-4 py-3 text-left font-semibold text-slate-700">Perekonnanimi</th>
@@ -190,14 +190,14 @@
 						<tr class="bg-slate-50/60">
 							<td colspan="4" class="px-4 py-3">
 								<div class="rounded-lg border border-slate-200 bg-white p-3">
-									<p class="mb-2 text-sm font-semibold tracking-wide text-slate-500 uppercase">
+									<p class="mb-2 text-base font-semibold tracking-wide text-slate-500 uppercase">
 										Kasutaja andmed
 									</p>
 									<dl class="grid grid-cols-1 gap-2 sm:grid-cols-2">
 										{#each detailEntries(userDetailsById[user.id] ?? user) as [key, value] (key)}
 											<div class="rounded border border-slate-200 bg-slate-50 p-2">
-												<dt class="text-sm font-semibold text-slate-600">{getFieldLabel(key)}</dt>
-												<dd class="mt-0.5 font-mono text-sm break-all text-slate-800">
+												<dt class="text-base font-semibold text-slate-600">{getFieldLabel(key)}</dt>
+												<dd class="mt-0.5 font-mono text-base break-all text-slate-800">
 													{getFieldValue(key, value)}
 												</dd>
 											</div>

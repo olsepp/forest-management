@@ -13,8 +13,7 @@
 	min-height: 100vh;
 	background:
 		radial-gradient(circle at 100% 0%, rgba(99, 122, 85, 0.08), transparent 32%),
-		radial-gradient(circle at 0% 100%, rgba(31, 90, 66, 0.08), transparent 40%),
-		var(--admin-bg);
+		radial-gradient(circle at 0% 100%, rgba(31, 90, 66, 0.08), transparent 40%), var(--admin-bg);
 	color: var(--admin-text);
 }
 
@@ -83,6 +82,7 @@
 	font-size: 0.875rem;
 	font-weight: 600;
 	transition: background 0.18s ease;
+	cursor: pointer;
 }
 
 .admin-signout:hover {
@@ -154,7 +154,16 @@
 }
 
 .admin-theme thead {
-	background: #edf2ee !important;
+	background: var(--admin-bg) !important;
+}
+
+.admin-theme thead th {
+	color: #ffffff !important;
+	font-weight: 600;
+}
+
+.admin-theme tbody tr {
+	border-bottom: 1px solid var(--admin-border) !important;
 }
 
 .admin-theme th,
@@ -220,7 +229,7 @@
 
 .admin-theme .details-row td,
 .admin-theme .expanded-row td {
-	background: linear-gradient(180deg, #f7faf8 0%, #f1f6f3 100%) !important;
+	background: #f4f7f5 !important;
 	border-top: 1px solid #d4dfd8 !important;
 	padding-top: 1rem !important;
 	padding-bottom: 1rem !important;
@@ -229,11 +238,10 @@
 .admin-theme .details-grid,
 .admin-theme .expanded-content,
 .admin-theme dl {
-	background: #ffffffcc;
-	border: 1px solid #d9e3dd;
-	border-radius: 0.8rem;
-	padding: 0.85rem;
-	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+	background: transparent;
+	border: none;
+	border-radius: 0;
+	padding: 0;
 }
 
 .admin-theme .details-actions a,
@@ -323,18 +331,18 @@
 }
 
 .admin-theme .company-card {
-	border: 1px solid var(--admin-border) !important;
-	background: var(--admin-surface) !important;
-	box-shadow: 0 4px 14px rgba(21, 41, 32, 0.05);
+	border: none !important;
+	background: linear-gradient(135deg, #1f5a42, #2d6f52) !important;
+	box-shadow: 0 4px 12px rgba(31, 90, 66, 0.25);
 }
 
 .admin-theme .company-card:hover,
 .admin-theme .company-card:focus-visible {
-	border-color: #adc0b4 !important;
-	box-shadow: 0 10px 20px rgba(21, 41, 32, 0.12);
+	border: none !important;
+	box-shadow: 0 10px 24px rgba(31, 90, 66, 0.35);
+	background: linear-gradient(135deg, #174834, #1f5a42) !important;
 }
 
-.admin-theme .company-action {
-	color: var(--admin-primary) !important;
+.admin-theme .company-name {
+	color: #ffffff !important;
 }
-
