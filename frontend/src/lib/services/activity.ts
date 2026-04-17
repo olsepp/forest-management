@@ -52,6 +52,23 @@ class ActivityService {
 		return response.json();
 	}
 
+	async getMyByCompany(companyId: string, fetchFn?: FetchFn): Promise<ActivityDto[]> {
+		const token = await authService.ensureValidToken();
+		const response = await (fetchFn ?? fetch)(
+			`${API_BASE_URL}/api/activities/by-company/${companyId}/my`,
+			{
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`
+				}
+			}
+		);
+		if (!response.ok) {
+			throw new Error(`Failed to fetch my activities: ${response.statusText}`);
+		}
+		return response.json();
+	}
+
 	async getByCadaster(cadasterId: string, fetchFn?: FetchFn): Promise<ActivityDto[]> {
 		const token = await authService.ensureValidToken();
 		const response = await (fetchFn ?? fetch)(
@@ -99,6 +116,31 @@ class ActivityService {
 		);
 		if (!response.ok) {
 			throw new Error(`Failed to fetch activities: ${response.statusText}`);
+		}
+		return response.json();
+	}
+
+	async getRecentByUser(
+		userId: string,
+		count: number = 5,
+		companyId?: string,
+		fetchFn?: FetchFn
+	): Promise<ActivityDto[]> {
+		const token = await authService.ensureValidToken();
+		const queryParams = new URLSearchParams();
+		queryParams.append('count', count.toString());
+		if (companyId) queryParams.append('companyId', companyId);
+		const response = await (fetchFn ?? fetch)(
+			`${API_BASE_URL}/api/activities/by-user/${userId}/recent?${queryParams.toString()}`,
+			{
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`
+				}
+			}
+		);
+		if (!response.ok) {
+			throw new Error(`Failed to fetch recent activities: ${response.statusText}`);
 		}
 		return response.json();
 	}

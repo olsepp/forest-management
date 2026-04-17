@@ -327,10 +327,10 @@
 		padding: 0.45rem 0.8rem;
 		border: 1px solid #bfd0c8;
 		border-radius: 0.75rem;
-		background: #f8fbf9;
+		background: linear-gradient(180deg, #2a6b4f 0%, #1f5a42 100%);
 		font-size: 0.95rem;
 		font-weight: 700;
-		color: #184334;
+		color: white;
 		text-decoration: none;
 	}
 

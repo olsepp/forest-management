@@ -163,12 +163,12 @@
 }
 
 .admin-theme tbody tr {
-	border-bottom: 1px solid var(--admin-border) !important;
+	border-bottom: 1px solid var(--admin-bg) !important;
 }
 
 .admin-theme th,
 .admin-theme td {
-	border-bottom: 1px solid var(--admin-border) !important;
+	border-bottom: 1px solid var(--admin-bg) !important;
 	vertical-align: top;
 }
 

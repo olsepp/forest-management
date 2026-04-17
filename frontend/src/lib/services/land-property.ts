@@ -39,26 +39,28 @@ class LandPropertyService {
 	}
 
 	async getByCompany(companyId: string, fetchFn?: FetchFn): Promise<LandPropertyDto[]> {
-		const token = await authService.ensureValidToken();
-		const response = await (fetchFn ?? fetch)(
-			`${API_BASE_URL}/api/landproperties/by-company/${companyId}`,
-			{
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`
-				}
-			}
-		);
-		if (!response.ok) {
-			throw new Error(`Failed to fetch land properties: ${response.statusText}`);
-		}
-		return response.json();
+		return this.search({ companyId, status: 'Active' }, fetchFn);
 	}
 
-	async search(companyId: string, fetchFn?: FetchFn): Promise<LandPropertyDto[]> {
+	async search(
+		params: {
+			companyId?: string;
+			status?: string;
+			searchName?: string;
+			county?: string;
+			city?: string;
+		},
+		fetchFn?: FetchFn
+	): Promise<LandPropertyDto[]> {
 		const token = await authService.ensureValidToken();
+		const queryParams = new URLSearchParams();
+		if (params.companyId) queryParams.append('companyId', params.companyId);
+		if (params.status) queryParams.append('Status', params.status);
+		if (params.searchName) queryParams.append('SearchName', params.searchName);
+		if (params.county) queryParams.append('County', params.county);
+		if (params.city) queryParams.append('City', params.city);
 		const response = await (fetchFn ?? fetch)(
-			`${API_BASE_URL}/api/landproperties/search?companyId=${companyId}`,
+			`${API_BASE_URL}/api/landproperties/search?${queryParams.toString()}`,
 			{
 				headers: {
 					'Content-Type': 'application/json',

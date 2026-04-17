@@ -1,6 +1,10 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
+	import { get } from 'svelte/store';
+	import { onMount } from 'svelte';
+	import { user } from '$lib/stores/auth.store';
+	import { activityService } from '$lib/services/activity';
 	import type { CompanyDto } from '$lib/dtos/company/company.dto';
 	import type { ActivityDto } from '$lib/dtos/activity/activity.dto';
 
@@ -10,12 +14,13 @@
 		kind: 'properties' | 'activities';
 	};
 
-	let { data }: { data: { company: CompanyDto | null; activities: ActivityDto[] } } = $props();
+	let { data }: { data: { company: CompanyDto | null } } = $props();
 	let company = $derived(data.company);
-	let activities = $derived(data.activities ?? []);
 	let isLoading = $derived(!company);
 
 	let companyId = $derived($page.params.CompanyId ?? '');
+
+	let recentActivities: ActivityDto[] = $state([]);
 
 	let quickActions = $derived.by(() => {
 		if (!companyId) return [] as QuickAction[];
@@ -34,10 +39,16 @@
 		];
 	});
 
-	function formatDate(dateStr: string): string {
-		const date = new Date(dateStr);
-		return date.toLocaleDateString('et-EE', { day: 'numeric', month: 'short', year: 'numeric' });
-	}
+	onMount(async () => {
+		const currentUser = get(user);
+		if (currentUser && companyId) {
+			try {
+				recentActivities = await activityService.getRecentByUser(currentUser.userId, 5, companyId);
+			} catch (error) {
+				console.error('Failed to load recent activities:', error);
+			}
+		}
+	});
 </script>
 
 <section class="intro employee-card">
@@ -73,39 +84,41 @@
 			{/if}
 		{/each}
 	</section>
-{/if}
-{#if activities.length > 0}
-	<ul class="activities-list">
-		{#each activities as activity (activity.id)}
-			<li>
-				<a
-					href={resolve('/employee/[CompanyId]/activity/[ActivityId]', {
-						CompanyId: companyId,
-						ActivityId: activity.id
-					})}
-					class="activity-item"
-				>
-					<div class="activity-header">
-						<span class="activity-type">{activity.activityTypeName}</span>
-						<span class="activity-date">{formatDate(activity.date)}</span>
-					</div>
-					<p class="activity-description">{activity.description}</p>
-					<div class="activity-meta">
-						{#if activity.forestStandNumber !== null}
-							<span class="activity-location"
-								>{activity.cadasterCadastralNumber} / Eraldis {activity.forestStandNumber}</span
-							>
-						{:else if activity.cadasterCadastralNumber}
-							<span class="activity-location">{activity.cadasterCadastralNumber}</span>
-						{/if}
-						<span class="activity-quantity">{activity.quantity} {activity.unit}</span>
-					</div>
-				</a>
-			</li>
-		{/each}
-	</ul>
-{:else}
-	<p class="activities-empty">Ei leitud.</p>
+
+	<section class="recent-activities employee-card">
+		<h2>Viimased tegevused</h2>
+		{#if recentActivities.length === 0}
+			<p class="activities-empty">Tegevusi pole veel.</p>
+		{:else}
+			<ul class="activities-list">
+				{#each recentActivities as activity (activity.id)}
+					<li>
+						<a
+							class="activity-item"
+							href={resolve('/employee/[CompanyId]/activity/[ActivityId]', {
+								CompanyId: companyId,
+								ActivityId: activity.id
+							})}
+						>
+							<div class="activity-header">
+								<span class="activity-type">{activity.activityTypeName}</span>
+								<span class="activity-date">{new Date(activity.date).toLocaleDateString()}</span>
+							</div>
+							<p class="activity-description">{activity.description}</p>
+							<div class="activity-meta">
+								<span class="activity-location"
+									>{activity.landPropertyName ||
+										activity.cadasterCadastralNumber ||
+										'Teadmata'}</span
+								>
+								<span class="activity-quantity">{activity.quantity} {activity.unit || ''}</span>
+							</div>
+						</a>
+					</li>
+				{/each}
+			</ul>
+		{/if}
+	</section>
 {/if}
 
 <style>
@@ -197,13 +210,10 @@
 		}
 	}
 
-	.activities-list {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 0.65rem;
+	@media (min-width: 768px) {
+		h1 {
+			font-size: 1.45rem;
+		}
 	}
 
 	.activity-item {
@@ -278,8 +288,31 @@
 		border-radius: 0.85rem;
 	}
 
-	@media (min-width: 768px) {
+	.recent-activities {
+		margin-top: 1rem;
+		padding: 1rem;
+		background: #fff;
+		border: 1px solid #cfd8e3;
+		border-radius: 0.85rem;
+	}
 
+	.recent-activities h2 {
+		margin: 0 0 1rem 0;
+		font-size: 1.1rem;
+		font-weight: 600;
+		color: #0f172a;
+	}
+
+	.activities-list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	@media (min-width: 768px) {
 		.activity-item {
 			padding: 1rem;
 		}

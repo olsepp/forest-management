@@ -124,7 +124,7 @@
 		{#if activities.length === 0}
 			<div class="employee-state-block is-empty">Ei leitud.</div>
 		{:else}
-			<div class="employee-stack-cards activities-mobile">
+			<div class="employee-stack-cards">
 				{#each activities as activity (activity.id)}
 					<article class="activity-card">
 						<p class="activity-head">
@@ -143,40 +143,6 @@
 						</a>
 					</article>
 				{/each}
-			</div>
-
-			<div class="employee-table-wrap activities-table">
-				<table>
-					<thead>
-						<tr>
-							<th>Kuupäev</th>
-							<th>Tüüp</th>
-							<th>Kirjeldus</th>
-							<th>Kogus</th>
-							<th>Ava</th>
-						</tr>
-					</thead>
-					<tbody>
-						{#each activities as activity (activity.id)}
-							<tr>
-								<td>{formatDate(activity.date)}</td>
-								<td>{activity.activityTypeName || '—'}</td>
-								<td>{activity.description || '—'}</td>
-								<td>{formatActivityQuantity(activity)}</td>
-								<td>
-									<a
-										href={resolve('/employee/[CompanyId]/activity/[ActivityId]', {
-											CompanyId: companyId,
-											ActivityId: activity.id
-										})}
-									>
-										Ava
-									</a>
-								</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
 			</div>
 		{/if}
 	</section>
@@ -267,21 +233,37 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		min-height: 3rem;
+		min-height: 3.5rem;
 		padding: 0.6rem 1rem;
 		border: 1px solid #1f5a42;
 		border-radius: 0.85rem;
-		background: #1f5a42;
-		color: #f6fbf8;
-		font-size: 0.96rem;
+		background: linear-gradient(180deg, #2a6b4f 0%, #1f5a42 100%);
+		box-shadow: 0 6px 16px rgba(15, 42, 31, 0.22);
+		color: #f3fbf7;
+		font-size: 1rem;
 		font-weight: 700;
 		text-decoration: none;
 	}
 
+	.log-activity-link:hover {
+		background: linear-gradient(180deg, #2f7657 0%, #245f46 100%);
+		border-color: #184736;
+	}
+
+	.log-activity-link:active {
+		transform: translateY(1px);
+		box-shadow: 0 3px 10px rgba(15, 42, 31, 0.2);
+	}
+
 	.log-activity-link.is-secondary {
-		border-color: #b7cbc1;
-		background: #f7fbf9;
-		color: #184434;
+		background: linear-gradient(180deg, #3d7a5a 0%, #2d6148 100%);
+		color: #ffffff;
+		box-shadow: 0 4px 12px rgba(15, 42, 31, 0.15);
+		min-height: 3.25rem;
+	}
+
+	.log-activity-link.is-secondary:hover {
+		background: linear-gradient(180deg, #458664 0%, #356b52 100%);
 	}
 
 	.context-grid,
@@ -304,10 +286,6 @@
 		color: #1f5a42;
 		font-weight: 700;
 		text-decoration: none;
-	}
-
-	.activities-table {
-		display: none;
 	}
 
 	.activity-card {
@@ -334,10 +312,10 @@
 		padding: 0.45rem 0.8rem;
 		border: 1px solid #bfd0c8;
 		border-radius: 0.75rem;
-		background: #f8fbf9;
+		background: linear-gradient(180deg, #2a6b4f 0%, #1f5a42 100%);
 		font-size: 0.95rem;
 		font-weight: 700;
-		color: #184334;
+		color: white;
 		text-decoration: none;
 	}
 
@@ -355,16 +333,6 @@
 
 		.log-activity-link.is-secondary {
 			width: 100%;
-		}
-	}
-
-	@media (min-width: 768px) {
-		.activities-mobile {
-			display: none;
-		}
-
-		.activities-table {
-			display: block;
 		}
 	}
 </style>

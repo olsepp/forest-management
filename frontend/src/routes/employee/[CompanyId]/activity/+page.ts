@@ -2,7 +2,7 @@ import type { PageLoad } from './$types';
 import { activityService } from '$lib/services/activity';
 
 export const load: PageLoad = async ({ params, fetch: fetchFn }) => {
-	const activities = await activityService.getByCompany(params.CompanyId, fetchFn);
+	const activities = await activityService.getMyByCompany(params.CompanyId, fetchFn);
 
 	const sortedActivities = (activities ?? [])
 		.filter((item) => Boolean(item?.id))
