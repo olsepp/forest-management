@@ -1,18 +1,47 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { authService } from '$lib/services/auth';
 	import type { CompanyDto } from '$lib/dtos/company/company.dto';
 	import type { ActivityDto } from '$lib/dtos/activity/activity.dto';
-	import { onMount } from 'svelte';
-
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
 	interface ActivityCountByDay {
 		date: string;
 		count: number;
 	}
+
+	interface DashboardSummary {
+		totalProperties: number;
+		totalActiveProperties: number;
+		totalCadasters: number;
+		activityCountsByDay: ActivityCountByDay[];
+		recentActivities: ActivityDto[];
+	}
+
+	let {
+		data
+	}: {
+		data: {
+			company: CompanyDto | null;
+			summary: DashboardSummary | null;
+		};
+	} = $props();
+
+	let company = $derived(data.company);
+	let summary = $derived(data.summary);
+	let isLoading = $derived(!company);
+
+	let totalProperties = $derived(summary?.totalProperties ?? 0);
+	let totalActiveProperties = $derived(summary?.totalActiveProperties ?? 0);
+	let totalCadasters = $derived(summary?.totalCadasters ?? 0);
+	let recentActivities = $derived(summary?.recentActivities ?? []);
+	let activityCountsByDay = $derived(summary?.activityCountsByDay ?? []);
+	let maxDailyActivityCount = $derived(Math.max(...activityCountsByDay.map((d) => d.count), 0));
+
+	const companyId = $derived($page.params.CompanyId ?? '');
+
+	const chartWidth = 880;
+	const chartHeight = 240;
+	const chartPadding = { top: 16, right: 16, bottom: 28, left: 16 };
 
 	function dayKey(date: Date): string {
 		const year = date.getFullYear();
@@ -38,6 +67,19 @@
 
 		return keys;
 	}
+
+	function shortLabel(isoDate: string): string {
+		const d = new Date(`${isoDate}T00:00:00`);
+		return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+	}
+
+	function formatDateTime(value: string): string {
+		const date = new Date(value);
+		if (Number.isNaN(date.getTime())) return '—';
+		return date.toLocaleString();
+	}
+
+	let activityChartPointsArray = $derived(normalizeAndBuildChartPoints(activityCountsByDay));
 
 	function normalizeAndBuildChartPoints(
 		apiCounts: ActivityCountByDay[]
@@ -68,108 +110,9 @@
 		});
 	}
 
-	interface DashboardSummary {
-		totalProperties: number;
-		totalActiveProperties: number;
-		totalCadasters: number;
-		activityCountsByDay: ActivityCountByDay[];
-		recentActivities: ActivityDto[];
-	}
-
-	let company = $state<CompanyDto | null>(null);
-	let isLoading = $state(true);
-	let errorMessage = $state('');
-
-	let totalProperties = $state(0);
-	let totalActiveProperties = $state(0);
-	let totalCadasters = $state(0);
-	let maxDailyActivityCount = $state(0);
-	let recentActivities = $state<ActivityDto[]>([]);
-	let activityCountsByDay = $state<ActivityCountByDay[]>([]);
-	let activityChartPointsArray = $state<{ label: string; count: number; x: number; y: number }[]>(
-		[]
-	);
-
-	const companyId = $derived($page.params.CompanyId ?? '');
-
-	const chartWidth = 880;
-	const chartHeight = 240;
-	const chartPadding = { top: 16, right: 16, bottom: 28, left: 16 };
-
-	function shortLabel(isoDate: string): string {
-		const d = new Date(`${isoDate}T00:00:00`);
-		return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-	}
-
-	function formatDateTime(value: string): string {
-		const date = new Date(value);
-		if (Number.isNaN(date.getTime())) return '—';
-		return date.toLocaleString();
-	}
-
 	const activityPolylinePoints = $derived.by(() =>
 		activityChartPointsArray.map((point) => `${point.x},${point.y}`).join(' ')
 	);
-
-	onMount(async () => {
-		try {
-			errorMessage = '';
-			isLoading = true;
-
-			const companyId = $page.params.CompanyId;
-			if (!companyId) {
-				errorMessage = 'Puudub ettevõtte ID.';
-				return;
-			}
-
-			const token = await authService.ensureValidToken();
-
-			const [companyResponse, dashboardResponse] = await Promise.all([
-				fetch(`${apiBaseUrl}/api/companies/${companyId}`, {
-					headers: {
-						Authorization: `Bearer ${token}`
-					}
-				}),
-				fetch(`${apiBaseUrl}/api/dashboard/${companyId}/summary`, {
-					headers: {
-						Authorization: `Bearer ${token}`
-					}
-				})
-			]);
-
-			if (!companyResponse.ok) {
-				errorMessage =
-					companyResponse.status === 401
-						? 'Ligipääs puudub. Logige uuesti sisse.'
-						: 'Ettevõtte laadimine ebaõnnestus.';
-				return;
-			}
-
-			if (!dashboardResponse.ok) {
-				errorMessage =
-					dashboardResponse.status === 401
-						? 'Ligipääs puudub. Logige uuesti sisse.'
-						: 'Töölaua andmete laadimine ebaõnnestus.';
-				return;
-			}
-
-			company = await companyResponse.json();
-			const summary = (await dashboardResponse.json()) as DashboardSummary;
-			console.log('Dashboard summary:', summary);
-
-			totalProperties = summary.totalProperties;
-			totalActiveProperties = summary.totalActiveProperties;
-			totalCadasters = summary.totalCadasters;
-			activityCountsByDay = summary.activityCountsByDay ?? [];
-			activityChartPointsArray = normalizeAndBuildChartPoints(activityCountsByDay);
-			maxDailyActivityCount = Math.max(...activityCountsByDay.map((d) => d.count), 0);
-			recentActivities = summary.recentActivities ?? [];
-		} catch {
-			errorMessage = 'Töölaua andmete laadimine ebaõnnestus.';
-		} finally {
-			isLoading = false;
-		}
-	});
 </script>
 
 <h1 class="mb-2 text-2xl font-semibold text-slate-900">Ettevõtte töölaud</h1>
@@ -183,10 +126,6 @@
 
 {#if isLoading}
 	<p class="text-slate-600">Laadakse töölauda...</p>
-{:else if errorMessage}
-	<div class="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
-		{errorMessage}
-	</div>
 {:else}
 	<div class="grid gap-4 md:grid-cols-3">
 		<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">

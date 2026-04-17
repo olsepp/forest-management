@@ -1,76 +1,32 @@
 <script lang="ts">
-	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { authService } from '$lib/services/auth';
+	import { goto } from '$app/navigation';
 	import type { CompanyDto } from '$lib/dtos/company/company.dto';
-	import { onMount } from 'svelte';
 
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
-
-	let company = $state<CompanyDto | null>(null);
-	let isLoading = $state(true);
-	let errorMessage = $state('');
-
-	onMount(async () => {
-		try {
-			errorMessage = '';
-			isLoading = true;
-			const companyId = $page.params.CompanyId;
-			if (!companyId) {
-				errorMessage = 'Puudub ettevõtte ID.';
-				return;
-			}
-
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/companies/${companyId}`, {
-				headers: {
-					Authorization: `Bearer ${token}`
-				}
-			});
-
-			if (!response.ok) {
-				errorMessage =
-					response.status === 401
-						? 'Ligipääs puudub. Logige uuesti sisse.'
-						: 'Ettevõtte laadimine ebaõnnestus.';
-				return;
-			}
-
-			company = await response.json();
-		} catch {
-			errorMessage = 'Ettevõtte laadimine ebaõnnestus.';
-		} finally {
-			isLoading = false;
-		}
-	});
+	let { data }: { data: { company: CompanyDto } } = $props();
 
 	function openSection(path: string) {
 		goto(resolve(path as unknown as '/'));
 	}
 
 	const companyActions = $derived.by(() => {
-		if (!company) return [] as { label: string; path: string }[];
+		if (!data.company) return [] as { label: string; path: string }[];
 
 		return [
-			{ label: 'Ava töölaud', path: `/admin/${company.id}/dashboard` },
-			{ label: 'Ava kinnistud', path: `/admin/${company.id}/landproperty` },
-			{ label: 'Ava tegevused', path: `/admin/${company.id}/activity` }
+			{ label: 'Ava töölaud', path: `/admin/${data.company.id}/dashboard` },
+			{ label: 'Ava kinnistud', path: `/admin/${data.company.id}/landproperty` },
+			{ label: 'Ava tegevused', path: `/admin/${data.company.id}/activity` }
 		];
 	});
 </script>
 
 <h1>Ettevõtte tööruum</h1>
 
-{#if isLoading}
-	<p>Laetakse ettevõtet...</p>
-{:else if errorMessage}
-	<p class="error">{errorMessage}</p>
-{:else if company}
+{#if data.company}
 	<section class="card">
 		<p class="meta">Valitud ettevõte</p>
-		<h2>{company.name}</h2>
-		<p><strong>Ettevõtte ID:</strong> {company.id}</p>
+		<h2>{data.company.name}</h2>
+		<p><strong>Ettevõtte ID:</strong> {data.company.id}</p>
 
 		<div class="actions">
 			{#each companyActions as action (action.path)}

@@ -1,46 +1,12 @@
 <script lang="ts">
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { authService } from '$lib/services/auth';
 	import { user } from '$lib/stores/auth.store';
 	import type { CompanyListDto } from '$lib/dtos/company/company.dto';
-	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
+	let { data }: { data: { companies: CompanyListDto[] } } = $props();
 
-	let companies = $state<CompanyListDto[]>([]);
-	let isLoading = $state(true);
-	let errorMessage = $state('');
 	let currentUserId = $derived($user?.userId?.trim() ?? '');
-
-	onMount(async () => {
-		try {
-			errorMessage = '';
-			isLoading = true;
-
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/companies`, {
-				headers: {
-					Authorization: `Bearer ${token}`
-				}
-			});
-
-			if (!response.ok) {
-				errorMessage =
-					response.status === 401
-						? 'Lubatud pääs puudub. Logige uuesti sisse.'
-						: 'Ettevõtteid ei õnnestunud laadida.';
-				return;
-			}
-
-			companies = (await response.json()) as CompanyListDto[];
-		} catch {
-			errorMessage = 'Ettevõtteid ei õnnestunud laadida.';
-		} finally {
-			isLoading = false;
-		}
-	});
 
 	function openCompany(companyId: string) {
 		goto(resolve('/employee/[CompanyId]', { CompanyId: companyId }));
@@ -64,15 +30,11 @@
 	</div>
 </section>
 
-{#if isLoading}
-	<div class="employee-state-block is-loading">Laetakse ettevõtteid…</div>
-{:else if errorMessage}
-	<div class="employee-state-block is-error">{errorMessage}</div>
-{:else if companies.length === 0}
+{#if data.companies.length === 0}
 	<div class="employee-state-block is-empty">Ettevõtteid ei leitud.</div>
 {:else}
 	<div class="company-grid" role="list" aria-label="Saadaval olevad ettevõtted">
-		{#each companies as company (company.id)}
+		{#each data.companies as company (company.id)}
 			<button class="company-card" type="button" onclick={() => openCompany(company.id)}>
 				<span class="company-name">{company.name}</span>
 			</button>
@@ -189,11 +151,6 @@
 		font-size: 1.25rem;
 		font-weight: 700;
 		color: #0f172a;
-	}
-
-	.company-meta {
-		font-size: 0.88rem;
-		color: #475569;
 	}
 
 	@media (min-width: 640px) {

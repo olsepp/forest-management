@@ -1,89 +1,15 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
-	import { PUBLIC_API_URL } from '$env/static/public';
 	import ActivityForm from '$lib/components/admin/ActivityForm.svelte';
-	import { authService } from '$lib/services/auth';
-	import { onMount } from 'svelte';
-	import type {
-		ForestStandSummaryDto,
-		CadasterSummaryDto
-	} from '$lib/dtos/forest-stand/forest-stand.dto';
+	import type { ForestStandSummaryDto } from '$lib/dtos/forest-stand/forest-stand.dto';
 
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
+	let { data }: { data: { forestStand: ForestStandSummaryDto } } = $props();
+	let forestStand = $derived(data.forestStand);
+	let isLoading = $derived(!forestStand);
 
-	let forestStand = $state<ForestStandSummaryDto | null>(null);
-	let isLoading = $state(true);
-	let errorMessage = $state('');
 	const companyId = $derived($page.params.CompanyId ?? '');
 	const forestStandId = $derived($page.params.ForestStandId ?? '');
-
-	async function loadCadasterFallback(cadasterId: string, token: string): Promise<void> {
-		const response = await fetch(`${apiBaseUrl}/api/cadasters/${cadasterId}`, {
-			headers: {
-				Authorization: `Bearer ${token}`
-			}
-		});
-
-		if (!response.ok) return;
-
-		const cadaster = (await response.json()) as CadasterSummaryDto;
-		forestStand = {
-			...forestStand!,
-			landPropertyId: cadaster.landPropertyId ?? forestStand?.landPropertyId,
-			landPropertyName: cadaster.landPropertyName ?? forestStand?.landPropertyName
-		};
-	}
-
-	async function loadForestStandSummary() {
-		try {
-			errorMessage = '';
-			isLoading = true;
-
-			const forestStandId = $page.params.ForestStandId;
-			if (!forestStandId) {
-				errorMessage = 'Puudub eraldise ID.';
-				return;
-			}
-
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/foreststands/${forestStandId}`, {
-				headers: {
-					Authorization: `Bearer ${token}`
-				}
-			});
-
-			if (!response.ok) {
-				errorMessage =
-					response.status === 404
-						? 'Eraldist ei leitud.'
-						: response.status === 401
-							? 'Ligipääs puudub. Logige uuesti sisse.'
-							: 'Eraldise laadimine ebaõnnestus.';
-				return;
-			}
-
-			const dto = (await response.json()) as ForestStandSummaryDto;
-			forestStand = {
-				id: dto.id,
-				number: dto.number,
-				cadasterId: dto.cadasterId,
-				cadasterCadastralNumber: dto.cadasterCadastralNumber,
-				landPropertyId: dto.landPropertyId,
-				landPropertyName: dto.landPropertyName
-			};
-
-			if ((!forestStand.landPropertyId || !forestStand.landPropertyName) && dto.cadasterId) {
-				await loadCadasterFallback(dto.cadasterId, token);
-			}
-		} catch {
-			errorMessage = 'Eraldise laadimine ebaõnnestus.';
-		} finally {
-			isLoading = false;
-		}
-	}
-
-	onMount(loadForestStandSummary);
 </script>
 
 <h1>Logi tegevus eraldisele</h1>
@@ -98,9 +24,7 @@
 </p>
 
 {#if isLoading}
-	<p>Laetakse eraldist...</p>
-{:else if errorMessage}
-	<p class="error">{errorMessage}</p>
+	<p>Laadakse eraldist...</p>
 {:else if forestStand}
 	<section class="meta-grid">
 		<article class="meta-card">

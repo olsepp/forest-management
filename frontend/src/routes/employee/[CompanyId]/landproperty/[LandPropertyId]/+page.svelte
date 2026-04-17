@@ -1,27 +1,27 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { authService } from '$lib/services/auth';
-	import { onMount } from 'svelte';
 	import type {
 		LandPropertyDto,
 		CadasterLinkDto,
 		ActivityDto
 	} from '$lib/dtos/land-property/land-property.dto';
 
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
-
-	let isLoading = $state(true);
-	let errorMessage = $state('');
-	let isUnauthorized = $state(false);
-
-	let property = $state<LandPropertyDto | null>(null);
-	let cadasters = $state<CadasterLinkDto[]>([]);
-	let activities = $state<ActivityDto[]>([]);
+	let {
+		data
+	}: {
+		data: {
+			property: LandPropertyDto | null;
+			cadasters: CadasterLinkDto[];
+			activities: ActivityDto[];
+		};
+	} = $props();
+	let property = $derived(data.property);
+	let cadasters = $derived(data.cadasters ?? []);
+	let activities = $derived(data.activities ?? []);
+	let isLoading = $derived(!property);
 
 	let companyId = $derived($page.params.CompanyId ?? '');
-	let propertyId = $derived($page.params.LandPropertyId ?? '');
 
 	function formatDate(value: string | null): string {
 		if (!value) return '—';
@@ -34,94 +34,10 @@
 		const quantity = Number.isFinite(activity.quantity) ? String(activity.quantity) : '—';
 		return activity.unit ? `${quantity} ${activity.unit}` : quantity;
 	}
-
-	async function loadData() {
-		if (!companyId || !propertyId) {
-			errorMessage = 'Marsruudi parameetrid puuduvad.';
-			isLoading = false;
-			return;
-		}
-
-		try {
-			errorMessage = '';
-			isUnauthorized = false;
-			isLoading = true;
-
-			const token = await authService.ensureValidToken();
-
-			const propertyResponse = await fetch(`${apiBaseUrl}/api/landproperties/${propertyId}`, {
-				headers: { Authorization: `Bearer ${token}` }
-			});
-
-			if (!propertyResponse.ok) {
-				if (propertyResponse.status === 401) {
-					isUnauthorized = true;
-					errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
-					return;
-				}
-
-				errorMessage =
-					propertyResponse.status === 404
-						? 'Kinnistut ei leitud.'
-						: 'Kinnistu laadimine ebaõnnestus.';
-				return;
-			}
-
-			property = (await propertyResponse.json()) as LandPropertyDto;
-
-			const cadastersResponse = await fetch(
-				`${apiBaseUrl}/api/cadasters/by-land-property/${propertyId}`,
-				{
-					headers: { Authorization: `Bearer ${token}` }
-				}
-			);
-
-			cadasters = cadastersResponse.ok
-				? (((await cadastersResponse.json()) as CadasterLinkDto[]) ?? []).filter((item) =>
-						Boolean(item?.id)
-					)
-				: [];
-
-			const activitiesResponse = await fetch(
-				`${apiBaseUrl}/api/activities/by-property/${propertyId}/my`,
-				{
-					headers: { Authorization: `Bearer ${token}` }
-				}
-			);
-
-			if (!activitiesResponse.ok) {
-				if (activitiesResponse.status === 401 || activitiesResponse.status === 403) {
-					isUnauthorized = true;
-					errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
-					return;
-				}
-
-				errorMessage = 'Kinnistu detailide laadimine ebaõnnestus.';
-				return;
-			}
-
-			activities = (((await activitiesResponse.json()) as ActivityDto[]) ?? [])
-				.filter((item) => Boolean(item?.id))
-				.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-		} catch {
-			errorMessage = 'Kinnistu detailide laadimine ebaõnnestus.';
-		} finally {
-			isLoading = false;
-		}
-	}
-
-	onMount(loadData);
 </script>
 
 {#if isLoading}
 	<div class="employee-state-block is-loading">Laetakse kinnistut…</div>
-{:else if errorMessage && !property}
-	<div class="employee-state-block is-error">
-		{errorMessage}
-		{#if isUnauthorized}
-			<span class="inline-note">Teie sessioon võib olla aegunud.</span>
-		{/if}
-	</div>
 {:else if property}
 	<p class="employee-back-link">
 		<a
@@ -200,10 +116,6 @@
 			</div>
 		{/if}
 	</section>
-
-	{#if errorMessage}
-		<div class="employee-state-block is-error">{errorMessage}</div>
-	{/if}
 {/if}
 
 <style>

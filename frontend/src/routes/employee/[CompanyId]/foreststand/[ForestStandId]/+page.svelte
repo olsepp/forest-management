@@ -1,32 +1,31 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { authService } from '$lib/services/auth';
 	import { user } from '$lib/stores/auth.store';
-	import { onMount } from 'svelte';
-	import type {
-		ForestStandDto,
-		ActivityListDto
-	} from '$lib/dtos/forest-stand/forest-stand.dto';
-	import type { CadasterSummaryDto } from '$lib/dtos/forest-stand/forest-stand.dto';
+	import type { ForestStandDto, ActivityListDto } from '$lib/dtos/forest-stand/forest-stand.dto';
 
-
-
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
-
-	let isLoading = $state(true);
-	let errorMessage = $state('');
-	let isUnauthorized = $state(false);
-
-	let forestStand = $state<ForestStandDto | null>(null);
-	let activities = $state<ActivityListDto[]>([]);
-	let linkedLandPropertyId = $state('');
-	let linkedLandPropertyName = $state('');
+	let {
+		data
+	}: {
+		data: {
+			forestStand: ForestStandDto | null;
+			cadaster: { landPropertyId: string; landPropertyName: string } | null;
+			activities: ActivityListDto[];
+		};
+	} = $props();
+	let forestStand = $derived(data.forestStand);
+	let cadaster = $derived(data.cadaster);
+	let activities = $derived(data.activities ?? []);
+	let linkedLandPropertyId = $derived(
+		cadaster?.landPropertyId ?? forestStand?.landPropertyId ?? ''
+	);
+	let linkedLandPropertyName = $derived(
+		cadaster?.landPropertyName ?? forestStand?.landPropertyName ?? ''
+	);
+	let isLoading = $derived(!forestStand);
 
 	let companyId = $derived($page.params.CompanyId ?? '');
 	let forestStandId = $derived($page.params.ForestStandId ?? '');
-	let currentUsername = $derived(($user?.username ?? '').trim().toLowerCase());
 
 	function formatDate(value: string | null): string {
 		if (!value) return '—';
@@ -44,95 +43,10 @@
 		const quantity = Number.isFinite(activity.quantity) ? String(activity.quantity) : '—';
 		return activity.unit ? `${quantity} ${activity.unit}` : quantity;
 	}
-
-	async function loadCadasterPropertyFallback(cadasterId: string, token: string): Promise<void> {
-		const response = await fetch(`${apiBaseUrl}/api/cadasters/${cadasterId}`, {
-			headers: { Authorization: `Bearer ${token}` }
-		});
-
-		if (!response.ok) return;
-
-		const cadaster = (await response.json()) as CadasterSummaryDto;
-		linkedLandPropertyId = cadaster.landPropertyId ?? linkedLandPropertyId;
-		linkedLandPropertyName = cadaster.landPropertyName ?? linkedLandPropertyName;
-	}
-
-	async function loadData() {
-		if (!companyId || !forestStandId) {
-			errorMessage = 'Marsruudi parameetrid puuduvad.';
-			isLoading = false;
-			return;
-		}
-
-		try {
-			errorMessage = '';
-			isUnauthorized = false;
-			isLoading = true;
-
-			const token = await authService.ensureValidToken();
-
-			const [forestStandResponse, activityResponse] = await Promise.all([
-				fetch(`${apiBaseUrl}/api/foreststands/${forestStandId}`, {
-					headers: { Authorization: `Bearer ${token}` }
-				}),
-				fetch(`${apiBaseUrl}/api/activities/by-foreststand/${forestStandId}`, {
-					headers: { Authorization: `Bearer ${token}` }
-				})
-			]);
-
-			if (!forestStandResponse.ok) {
-				if (forestStandResponse.status === 401) {
-					isUnauthorized = true;
-					errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
-					return;
-				}
-
-				errorMessage =
-					forestStandResponse.status === 404
-						? 'Eraldist ei leitud.'
-						: 'Eraldise laadimine ebaõnnestus.';
-				return;
-			}
-
-			forestStand = (await forestStandResponse.json()) as ForestStandDto;
-			linkedLandPropertyId = forestStand.landPropertyId ?? '';
-			linkedLandPropertyName = forestStand.landPropertyName ?? '';
-
-			if ((!linkedLandPropertyId || !linkedLandPropertyName) && forestStand.cadasterId) {
-				await loadCadasterPropertyFallback(forestStand.cadasterId, token);
-			}
-
-			if (activityResponse.status === 401) {
-				isUnauthorized = true;
-				errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
-				activities = [];
-				return;
-			}
-
-			activities = activityResponse.ok
-				? (((await activityResponse.json()) as ActivityListDto[]) ?? [])
-						.filter((item) => (item.userName ?? '').trim().toLowerCase() === currentUsername)
-						.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-				: [];
-		} catch {
-			errorMessage = 'Eraldise laadimine ebaõnnestus.';
-		} finally {
-			isLoading = false;
-		}
-	}
-
-	onMount(loadData);
 </script>
 
 {#if isLoading}
 	<div class="employee-state-block is-loading">Laetakse eraldise detaile…</div>
-{:else if errorMessage && !forestStand}
-	<div class="employee-state-block is-error">
-		{errorMessage}
-		{#if isUnauthorized}
-			<span class="inline-note">Teie sessioon võib olla aegunud.</span>
-		{/if}
-	</div>
 {:else if forestStand}
 	<p class="back-link">
 		<a
@@ -150,7 +64,6 @@
 	<section class="employee-card summary">
 		<div class="summary-head">
 			<div>
-				
 				<h1>Eraldis #{forestStand.number}</h1>
 			</div>
 			<a
@@ -209,9 +122,7 @@
 			</a>
 		</div>
 		{#if activities.length === 0}
-			<div class="employee-state-block is-empty">
-				Ei leitud.
-			</div>
+			<div class="employee-state-block is-empty">Ei leitud.</div>
 		{:else}
 			<div class="employee-stack-cards activities-mobile">
 				{#each activities as activity (activity.id)}
@@ -269,10 +180,6 @@
 			</div>
 		{/if}
 	</section>
-
-	{#if errorMessage}
-		<div class="employee-state-block is-error">{errorMessage}</div>
-	{/if}
 {/if}
 
 <style>

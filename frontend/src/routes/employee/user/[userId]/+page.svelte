@@ -1,8 +1,5 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { authService } from '$lib/services/auth';
-	import { onMount } from 'svelte';
 	import type { UserProfileDto } from '$lib/dtos/user/user.dto';
 
 	type ProfileViewModel = {
@@ -14,11 +11,8 @@
 		phoneNumber: string;
 	};
 
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
-
-	let isLoading = $state(true);
-	let errorMessage = $state('');
-	let profile = $state<ProfileViewModel | null>(null);
+	let { data }: { data: { profile: UserProfileDto | null } } = $props();
+	let isLoading = $derived(!data.profile);
 
 	function valueOrDash(value: unknown): string {
 		if (typeof value !== 'string') return '—';
@@ -27,7 +21,6 @@
 	}
 
 	function toProfileViewModel(data: UserProfileDto): ProfileViewModel {
-
 		return {
 			username: valueOrDash(data.username),
 			email: valueOrDash(data.email),
@@ -38,31 +31,7 @@
 		};
 	}
 
-	async function loadProfile() {
-		try {
-			errorMessage = '';
-			isLoading = true;
-
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/users/profile`, {
-				headers: { Authorization: `Bearer ${token}` }
-			});
-
-			if (!response.ok) {
-				errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
-				return;
-			}
-
-			const data = (await response.json()) as UserProfileDto;
-			profile = toProfileViewModel(data);
-		} catch {
-			errorMessage = 'Profiili laadimine ebaõnnestus.';
-		} finally {
-			isLoading = false;
-		}
-	}
-
-	onMount(loadProfile);
+	let profile = $derived(data.profile ? toProfileViewModel(data.profile) : null);
 </script>
 
 <p class="employee-back-link">
@@ -81,12 +50,8 @@
 {#if isLoading}
 	<div class="employee-state-block is-loading">Laetakse profiili…</div>
 {:else if !profile}
-	<div class="employee-state-block is-error">{errorMessage || 'Profiil pole saadaval.'}</div>
+	<div class="employee-state-block is-error">Profiil pole saadaval.</div>
 {:else}
-	{#if errorMessage}
-		<div class="employee-state-block is-error">{errorMessage}</div>
-	{/if}
-
 	<section class="employee-card profile-grid">
 		<p><strong>Kasutajanimi:</strong> {profile.username}</p>
 		<p><strong>Email:</strong> {profile.email}</p>

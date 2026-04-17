@@ -1,24 +1,19 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { authService } from '$lib/services/auth';
 	import { resolve } from '$app/paths';
-	import { onMount } from 'svelte';
 	import type {
 		LandPropertyListDto,
 		PropertyCadasterLinkDto
 	} from '$lib/dtos/land-property/land-property-list.dto';
 
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
+	let { data }: { data: { properties: LandPropertyListDto[] } } = $props();
 
-	let isLoading = $state(true);
-	let errorMessage = $state('');
-	let properties = $state<LandPropertyListDto[]>([]);
 	let expandedPropertyIds = $state<string[]>([]);
 	let searchQuery = $state('');
 	let selectedCounty = $state('');
 	let countyDropdownOpen = $state(false);
-	let companyId = $derived($page.params.CompanyId ?? '');
+	const companyId = $derived($page.params.CompanyId ?? '');
+	let properties = $derived(data.properties);
 	let normalizedSearchQuery = $derived(searchQuery.trim().toLowerCase());
 	let availableCounties = $derived.by(() => {
 		const counties = properties
@@ -115,62 +110,11 @@
 
 		expandedPropertyIds = [...expandedPropertyIds, propertyId];
 	}
-
-	onMount(async () => {
-		try {
-			errorMessage = '';
-			isLoading = true;
-
-			if (!companyId) {
-				errorMessage = 'Puudub ettevõtte ID.';
-				return;
-			}
-
-			const token = await authService.ensureValidToken();
-			const response = await fetch(
-				`${apiBaseUrl}/api/landproperties/search?companyId=${companyId}`,
-				{
-					headers: {
-						Authorization: `Bearer ${token}`
-					}
-				}
-			);
-
-			if (!response.ok) {
-				errorMessage =
-					response.status === 401
-						? 'Ligipääs puudub. Logige uuesti sisse.'
-						: 'Kinnistute laadimine ebaõnnestus.';
-				return;
-			}
-
-			const data = (await response.json()) as LandPropertyListDto[];
-			properties = Array.isArray(data)
-				? data.map((item) => ({
-						...item,
-						cadasters: Array.isArray(item.cadasters)
-							? item.cadasters.filter(
-									(cadaster) => Boolean(cadaster?.id) && Boolean(cadaster?.cadastralNumber)
-								)
-							: [],
-						cadastralNumbers: Array.isArray(item.cadastralNumbers) ? item.cadastralNumbers : []
-					}))
-				: [];
-		} catch {
-			errorMessage = 'Kinnistute laadimine ebaõnnestus.';
-		} finally {
-			isLoading = false;
-		}
-	});
 </script>
 
 <h1>Kinnistud</h1>
 
-{#if isLoading}
-	<p>Laetakse kinnistuid...</p>
-{:else if errorMessage}
-	<p>{errorMessage}</p>
-{:else if properties.length === 0}
+{#if data.properties.length === 0}
 	<p>Selle ettevõtte jaoks kinnistuid ei leitud.</p>
 {:else}
 	<div class="search-row">

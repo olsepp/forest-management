@@ -1,27 +1,33 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { authService } from '$lib/services/auth';
+	import { cadasterService } from '$lib/services/cadaster';
 	import CadastralMap from '$lib/components/shared/CadastralMap.svelte';
-	import { onMount } from 'svelte';
-	import type {
+import type {
 		ForestStandListDto,
 		CadasterDto,
 		CadasterUpdateDto,
-		RecentActivityDto
+		ActivityListDto
 	} from '$lib/dtos/cadaster/cadaster.dto';
 
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
+	let {
+		data
+	}: {
+		data: {
+			cadaster: CadasterDto | null;
+			forestStands: ForestStandListDto[];
+			activities: ActivityListDto[];
+		};
+	} = $props();
 
-	let isLoading = $state(true);
+	let cadaster = $derived(data.cadaster);
+	let forestStands = $derived(data.forestStands ?? []);
+	let activities = $derived(data.activities ?? []);
+	let isLoading = $derived(!cadaster);
 	let isSaving = $state(false);
 	let isEditMode = $state(false);
 	let errorMessage = $state('');
 	let successMessage = $state('');
-	let cadaster = $state<CadasterDto | null>(null);
-	let forestStands = $state<ForestStandListDto[]>([]);
-	let recentActivities = $state<RecentActivityDto[]>([]);
 	const companyId = $derived($page.params.CompanyId ?? '');
 
 	let form = $state({
@@ -58,13 +64,13 @@
 		return date.toLocaleString();
 	}
 
-	function formatActivityQuantity(item: RecentActivityDto): string {
+	function formatActivityQuantity(item: ActivityListDto): string {
 		const quantity =
 			typeof item.quantity === 'number' && Number.isFinite(item.quantity) ? item.quantity : 0;
 		return item.unit ? `${quantity} ${item.unit}` : String(quantity);
 	}
 
-	function forestStandLabel(item: RecentActivityDto): string {
+	function forestStandLabel(item: ActivityListDto): string {
 		if (
 			typeof item.forestStandNumber === 'number' &&
 			Number.isFinite(item.forestStandNumber) &&
@@ -89,51 +95,6 @@
 			calculatedVolume: toStringNumber(detail.calculatedVolume),
 			volumeGrowth: toStringNumber(detail.volumeGrowth)
 		};
-	}
-
-	async function loadCadaster() {
-		try {
-			errorMessage = '';
-			successMessage = '';
-			isLoading = true;
-
-			const cadasterId = $page.params.CadasterId;
-			if (!cadasterId) {
-				errorMessage = 'Puudub katastri ID.';
-				return;
-			}
-
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/cadasters/${cadasterId}`, {
-				headers: {
-					Authorization: `Bearer ${token}`
-				}
-			});
-
-			if (!response.ok) {
-				errorMessage =
-					response.status === 404
-						? 'Katastrit ei leitud.'
-						: response.status === 401
-							? 'Ligipääs puudub. Logige uuesti sisse.'
-							: 'Katastri laadimine ebaõnnestus.';
-				return;
-			}
-
-			const detail = (await response.json()) as CadasterDto;
-			cadaster = detail;
-			forestStands = Array.isArray(detail.forestStands)
-				? sortForestStandsByNumber(detail.forestStands)
-				: [];
-			recentActivities = Array.isArray(detail.recentActivities)
-				? detail.recentActivities.filter((a) => Boolean(a?.id))
-				: [];
-			fillForm(detail);
-		} catch {
-			errorMessage = 'Katastri laadimine ebaõnnestus.';
-		} finally {
-			isLoading = false;
-		}
 	}
 
 	async function saveCadaster(event: SubmitEvent) {
@@ -161,27 +122,7 @@
 		};
 
 		try {
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/cadasters/${cadaster.id}`, {
-				method: 'PUT',
-				headers: {
-					Authorization: `Bearer ${token}`,
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(payload)
-			});
-
-			if (!response.ok) {
-				errorMessage =
-					response.status === 400
-						? 'Valideerimine ebaõnnestus. Kontrollige sisestatud väärtusi.'
-						: response.status === 404
-							? 'Katastrit ei leitud.'
-							: 'Muudatuste salvestamine ebaõnnestus.';
-				return;
-			}
-
-			const updated = (await response.json()) as CadasterDto;
+			const updated = await cadasterService.update(cadaster.id, payload);
 			cadaster = updated;
 			forestStands = Array.isArray(updated.forestStands)
 				? sortForestStandsByNumber(updated.forestStands)
@@ -196,13 +137,15 @@
 		}
 	}
 
-	onMount(loadCadaster);
+	$effect(() => {
+		if (cadaster) {
+			fillForm(cadaster);
+		}
+	});
 </script>
 
 {#if isLoading}
 	<p>Laetakse katastrit...</p>
-{:else if errorMessage && !cadaster}
-	<p class="message error">{errorMessage}</p>
 {:else if cadaster}
 	<div class="detail-page">
 		<p class="breadcrumb">
@@ -382,7 +325,7 @@
 
 		<section class="form-section">
 			<h2>Tegevused</h2>
-			{#if recentActivities.length === 0}
+			{#if activities.length === 0}
 				<p class="message">Ei leitud.</p>
 			{:else}
 				<div class="table-wrapper">
@@ -398,7 +341,7 @@
 							</tr>
 						</thead>
 						<tbody>
-							{#each recentActivities as activity (activity.id)}
+							{#each activities as activity (activity.id)}
 								<tr>
 									<td>{formatDateTime(activity.date)}</td>
 									<td>{activity.activityTypeName || '—'}</td>
@@ -457,7 +400,7 @@
 		margin: 0.2rem 0 0.35rem;
 		font-size: 1.6rem;
 	}
-	
+
 	.head-actions {
 		display: flex;
 		gap: 0.6rem;

@@ -1,13 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { authService } from '$lib/services/auth';
-	import { user as authUser } from '$lib/stores/auth.store';
 	import type { CompanyDto } from '$lib/dtos/company/company.dto';
-	import { onMount } from 'svelte';
-
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
+	import type { ActivityDto } from '$lib/dtos/activity/activity.dto';
 
 	type QuickAction = {
 		label: string;
@@ -15,29 +10,12 @@
 		kind: 'properties' | 'activities';
 	};
 
-	type Activity = {
-		id: string;
-		description: string;
-		quantity: number;
-		unit: string;
-		date: string;
-		activityTypeName: string;
-		cadasterId: string | null;
-		cadasterCadastralNumber: string | null;
-		forestStandId: string | null;
-		forestStandNumber: number | null;
-	};
-
-	let company = $state<CompanyDto | null>(null);
-	let activities = $state<Activity[]>([]);
-	let isLoading = $state(true);
-	let activitiesLoading = $state(false);
-	let activitiesError = $state('');
-	let errorMessage = $state('');
-	let isUnauthorized = $state(false);
+	let { data }: { data: { company: CompanyDto | null; activities: ActivityDto[] } } = $props();
+	let company = $derived(data.company);
+	let activities = $derived(data.activities ?? []);
+	let isLoading = $derived(!company);
 
 	let companyId = $derived($page.params.CompanyId ?? '');
-	let userId = $derived($authUser?.userId ?? '');
 
 	let quickActions = $derived.by(() => {
 		if (!companyId) return [] as QuickAction[];
@@ -56,75 +34,6 @@
 		];
 	});
 
-	async function loadActivities() {
-		if (!userId) return;
-		try {
-			activitiesLoading = true;
-			activitiesError = '';
-			const token = await authService.ensureValidToken();
-			const response = await fetch(
-				`${apiBaseUrl}/api/activities/by-user/${userId}/recent?count=5&companyId=${companyId}`,
-				{
-					headers: {
-						Authorization: `Bearer ${token}`
-					}
-				}
-			);
-			if (!response.ok) {
-				activitiesError = 'Tegevuste ajalugu ei õnnestunud laadida.';
-				return;
-			}
-			const data = (await response.json()) as Activity[];
-			activities = data.slice(0, 5);
-		} catch {
-			activitiesError = 'Tegevuste ajalugu ei õnnestunud laadida.';
-		} finally {
-			activitiesLoading = false;
-		}
-	}
-
-	onMount(async () => {
-		if (!companyId) {
-			errorMessage = 'Puudub ettevõtte ID.';
-			isLoading = false;
-			return;
-		}
-
-		try {
-			errorMessage = '';
-			isUnauthorized = false;
-			isLoading = true;
-
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/companies/${companyId}`, {
-				headers: {
-					Authorization: `Bearer ${token}`
-				}
-			});
-
-			if (!response.ok) {
-				if (response.status === 401) {
-					isUnauthorized = true;
-					errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
-					return;
-				}
-
-				errorMessage = 'Ettevõtte andmeid ei õnnestunud laadida.';
-				return;
-			}
-
-			company = (await response.json()) as CompanyDto;
-		} catch {
-			errorMessage = 'Ettevõtte andmeid ei õnnestunud laadida.';
-		} finally {
-			isLoading = false;
-		}
-
-		if (userId) {
-			await loadActivities();
-		}
-	});
-
 	function formatDate(dateStr: string): string {
 		const date = new Date(dateStr);
 		return date.toLocaleDateString('et-EE', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -138,13 +47,6 @@
 
 {#if isLoading}
 	<div class="employee-state-block is-loading">Laetakse ettevõtte töölauda…</div>
-{:else if errorMessage}
-	<div class="employee-state-block is-error">
-		{errorMessage}
-		{#if isUnauthorized}
-			<span class="inline-note">Teie sessioon võib olla aegunud.</span>
-		{/if}
-	</div>
 {:else if quickActions.length === 0}
 	<div class="employee-state-block is-empty">Toimingud puuduvad.</div>
 {:else}
@@ -172,47 +74,38 @@
 		{/each}
 	</section>
 {/if}
-{#if activitiesLoading}
-	<div class="activities-block is-loading">Laetakse tegevusi…</div>
-{:else if activitiesError}
-	<div class="activities-block is-error">{activitiesError}</div>
+{#if activities.length > 0}
+	<ul class="activities-list">
+		{#each activities as activity (activity.id)}
+			<li>
+				<a
+					href={resolve('/employee/[CompanyId]/activity/[ActivityId]', {
+						CompanyId: companyId,
+						ActivityId: activity.id
+					})}
+					class="activity-item"
+				>
+					<div class="activity-header">
+						<span class="activity-type">{activity.activityTypeName}</span>
+						<span class="activity-date">{formatDate(activity.date)}</span>
+					</div>
+					<p class="activity-description">{activity.description}</p>
+					<div class="activity-meta">
+						{#if activity.forestStandNumber !== null}
+							<span class="activity-location"
+								>{activity.cadasterCadastralNumber} / Eraldis {activity.forestStandNumber}</span
+							>
+						{:else if activity.cadasterCadastralNumber}
+							<span class="activity-location">{activity.cadasterCadastralNumber}</span>
+						{/if}
+						<span class="activity-quantity">{activity.quantity} {activity.unit}</span>
+					</div>
+				</a>
+			</li>
+		{/each}
+	</ul>
 {:else}
-	<section class="activities-section" aria-label="Hiljutised tegevused">
-		<h2 class="activities-title">Hiljutised tegevused</h2>
-		{#if activities.length > 0}
-			<ul class="activities-list">
-				{#each activities as activity (activity.id)}
-					<li>
-						<a
-							href={resolve('/employee/[CompanyId]/activity/[ActivityId]', {
-								CompanyId: companyId,
-								ActivityId: activity.id
-							})}
-							class="activity-item"
-						>
-							<div class="activity-header">
-								<span class="activity-type">{activity.activityTypeName}</span>
-								<span class="activity-date">{formatDate(activity.date)}</span>
-							</div>
-							<p class="activity-description">{activity.description}</p>
-							<div class="activity-meta">
-								{#if activity.forestStandNumber !== null}
-									<span class="activity-location"
-										>{activity.cadasterCadastralNumber} / Eraldis {activity.forestStandNumber}</span
-									>
-								{:else if activity.cadasterCadastralNumber}
-									<span class="activity-location">{activity.cadasterCadastralNumber}</span>
-								{/if}
-								<span class="activity-quantity">{activity.quantity} {activity.unit}</span>
-							</div>
-						</a>
-					</li>
-				{/each}
-			</ul>
-		{:else}
-			<p class="activities-empty">Ei leitud.</p>
-		{/if}
-	</section>
+	<p class="activities-empty">Ei leitud.</p>
 {/if}
 
 <style>
@@ -235,12 +128,6 @@
 	p {
 		margin: 0;
 		color: #334155;
-	}
-
-	.inline-note {
-		display: block;
-		margin-top: 0.35rem;
-		font-size: 0.88rem;
 	}
 
 	.action-card {
@@ -308,17 +195,6 @@
 		.action-card {
 			padding: 1rem;
 		}
-	}
-
-	.activities-section {
-		margin-top: 1.5rem;
-	}
-
-	.activities-title {
-		margin: 0 0 0.75rem;
-		font-size: 1.05rem;
-		font-weight: 600;
-		color: #0f172a;
 	}
 
 	.activities-list {
@@ -392,21 +268,6 @@
 		color: #475569;
 	}
 
-	.activities-block {
-		margin-top: 1.5rem;
-		padding: 1rem;
-		text-align: center;
-		font-size: 0.95rem;
-		color: #64748b;
-		background: #f8fafc;
-		border-radius: 0.85rem;
-	}
-
-	.activities-block.is-error {
-		color: #b91c1c;
-		background: #fef2f2;
-	}
-
 	.activities-empty {
 		margin: 0;
 		padding: 1rem;
@@ -418,13 +279,6 @@
 	}
 
 	@media (min-width: 768px) {
-		.activities-section {
-			margin-top: 2rem;
-		}
-
-		.activities-title {
-			font-size: 1.15rem;
-		}
 
 		.activity-item {
 			padding: 1rem;

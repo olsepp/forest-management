@@ -1,14 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { authService } from '$lib/services/auth';
 	import { onMount } from 'svelte';
-
-	type ActivityTypeListDto = {
-		id: string;
-		activityTypeName: string;
-	};
+	import { activityTypeService } from '$lib/services/activity-type';
+	import { activityService } from '$lib/services/activity';
 
 	type Props = {
 		companyId?: string;
@@ -28,14 +23,12 @@
 		submitLabel = 'Logi tegevus'
 	}: Props = $props();
 
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
-
 	let isSubmitting = $state(false);
 	let isLoadingActivityTypes = $state(true);
 	let errorMessage = $state('');
 	let successMessage = $state('');
 
-	let activityTypes = $state<ActivityTypeListDto[]>([]);
+	let activityTypes = $state<{ id: string; activityTypeName: string }[]>([]);
 
 	let description = $state('');
 	let quantity = $state('');
@@ -61,21 +54,8 @@
 		try {
 			errorMessage = '';
 			isLoadingActivityTypes = true;
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/activitytypes`, {
-				headers: {
-					Authorization: `Bearer ${token}`
-				}
-			});
-
-			if (!response.ok) {
-				errorMessage = 'Tegevuse tüüpe ei õnnestunud laadida.';
-				activityTypes = [];
-				return;
-			}
-
-			const data = (await response.json()) as ActivityTypeListDto[];
-			activityTypes = Array.isArray(data) ? data : [];
+			const types = await activityTypeService.getAll();
+			activityTypes = Array.isArray(types) ? types : [];
 			activityTypeId = activityTypes[0]?.id ?? '';
 		} catch {
 			errorMessage = 'Tegevuse tüüpe ei õnnestunud laadida.';
@@ -128,32 +108,19 @@
 
 		try {
 			isSubmitting = true;
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/activities`, {
-				method: 'POST',
-				headers: {
-					Authorization: `Bearer ${token}`,
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(payload)
-			});
-
-			if (!response.ok) {
-				errorMessage =
-					response.status === 400
-						? 'Valideerimine ebaõnnestus. Kontrollige kohustuslikke välju.'
-						: response.status === 401
-							? 'Ligipääs puudub. Logige uuesti sisse.'
-							: 'Tegevuse loomine ebaõnnestus.';
-				return;
-			}
-
+			await activityService.create(payload);
 			successMessage = 'Tegevus logiti edukalt.';
 			if (redirectHref) {
 				await goto(resolve(redirectHref as unknown as '/'));
 			}
-		} catch {
-			errorMessage = 'Tegevuse loomine ebaõnnestus.';
+		} catch (err) {
+			const message = err instanceof Error ? err.message : '';
+			errorMessage = message.includes('400')
+				? 'Valideerimine ebaõnnestus. Kontrollige kohustuslikke välju.'
+				: message.includes('401')
+					? 'Ligipääs puudub. Logige uuesti sisse.'
+					: 'Tegevuse loomine ebaõnnestus.';
+			return;
 		} finally {
 			isSubmitting = false;
 		}

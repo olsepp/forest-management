@@ -1,18 +1,12 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { authService } from '$lib/services/auth';
-	import { onMount } from 'svelte';
 	import type { ActivityDto } from '$lib/dtos/land-property/land-property.dto';
 
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
+	let { data }: { data: { activities: ActivityDto[] } } = $props();
 
-	let isLoading = $state(true);
-	let errorMessage = $state('');
-	let activities = $state<ActivityDto[]>([]);
-	let expandedActivityIds = $state<string[]>([]);
 	const companyId = $derived($page.params.CompanyId ?? '');
+	let expandedActivityIds = $state<string[]>([]);
 
 	function isExpanded(activityId: string): boolean {
 		return expandedActivityIds.includes(activityId);
@@ -62,52 +56,12 @@
 		if (status === 2) return 'Tagasi lükatud';
 		return String(status);
 	}
-
-	onMount(async () => {
-		try {
-			errorMessage = '';
-			isLoading = true;
-
-			const companyId = $page.params.CompanyId;
-			if (!companyId) {
-				errorMessage = 'Puudub ettevõtte ID.';
-				return;
-			}
-
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/activities/by-company/${companyId}`, {
-				headers: {
-					Authorization: `Bearer ${token}`
-				}
-			});
-
-			if (!response.ok) {
-				errorMessage =
-					response.status === 401 || response.status === 403
-						? 'Ligipääs puudub. Logige uuesti sisse.'
-						: 'Tegevuste laadimine ebaõnnestus.';
-				return;
-			}
-
-			activities = (((await response.json()) as ActivityDto[]) ?? [])
-				.filter((item) => Boolean(item?.id))
-				.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-		} catch {
-			errorMessage = 'Tegevuste laadimine ebaõnnestus.';
-		} finally {
-			isLoading = false;
-		}
-	});
 </script>
 
 <h1>Tegevused</h1>
 
-{#if isLoading}
-	<p>Laetakse tegevusi...</p>
-{:else if errorMessage}
-	<p class="error">{errorMessage}</p>
-{:else if activities.length === 0}
-	<p>Selle ettevõtte jaoks tegevusi ei leitud.</p>
+{#if data.activities.length === 0}
+	<p>Tegevusi ei leitud.</p>
 {:else}
 	<div class="table-wrapper">
 		<table>
@@ -123,7 +77,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each activities as item (item.id)}
+				{#each data.activities as item (item.id)}
 					<tr>
 						<td>{formatDate(item.date)}</td>
 						<td>{item.activityTypeName}</td>

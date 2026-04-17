@@ -1,65 +1,15 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
-	import { PUBLIC_API_URL } from '$env/static/public';
 	import ActivityForm from '$lib/components/employee/ActivityForm.svelte';
-	import { authService } from '$lib/services/auth';
-	import { onMount } from 'svelte';
 	import type { CadasterSummaryDto } from '$lib/dtos/forest-stand/forest-stand.dto';
 
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
+	let { data }: { data: { cadaster: CadasterSummaryDto } } = $props();
+	let cadaster = $derived(data.cadaster);
+	let isLoading = $derived(!cadaster);
 
-	let cadaster = $state<CadasterSummaryDto | null>(null);
-	let isLoading = $state(true);
-	let errorMessage = $state('');
-	let isUnauthorized = $state(false);
 	const companyId = $derived($page.params.CompanyId ?? '');
 	const cadasterId = $derived($page.params.CadasterId ?? '');
-
-	async function loadCadasterSummary() {
-		try {
-			errorMessage = '';
-			isUnauthorized = false;
-			isLoading = true;
-
-			const cadasterId = $page.params.CadasterId;
-			if (!cadasterId) {
-				errorMessage = 'Puudub katastri ID.';
-				return;
-			}
-
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/cadasters/${cadasterId}`, {
-				headers: { Authorization: `Bearer ${token}` }
-			});
-
-			if (!response.ok) {
-				if (response.status === 401) {
-					isUnauthorized = true;
-					errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
-					return;
-				}
-
-				errorMessage =
-					response.status === 404 ? 'Katasterit ei leitud.' : 'Katastri laadimine ebaõnnestus.';
-				return;
-			}
-
-			const dto = (await response.json()) as CadasterSummaryDto;
-			cadaster = {
-				id: dto.id,
-				cadastralNumber: dto.cadastralNumber,
-				landPropertyId: dto.landPropertyId,
-				landPropertyName: dto.landPropertyName
-			};
-		} catch {
-			errorMessage = 'Katastri laadimine ebaõnnestus.';
-		} finally {
-			isLoading = false;
-		}
-	}
-
-	onMount(loadCadasterSummary);
 </script>
 
 <p class="employee-back-link">
@@ -77,13 +27,6 @@
 
 {#if isLoading}
 	<div class="employee-state-block is-loading">Laetakse katastrit…</div>
-{:else if errorMessage}
-	<div class="employee-state-block is-error">
-		{errorMessage}
-		{#if isUnauthorized}
-			<span class="inline-note">Teie sessioon võib olla aegunud.</span>
-		{/if}
-	</div>
 {:else if cadaster}
 	<section class="employee-card summary">
 		<p><strong>Katastritunnus:</strong> {cadaster.cadastralNumber}</p>

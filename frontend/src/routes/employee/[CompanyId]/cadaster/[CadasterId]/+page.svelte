@@ -1,30 +1,28 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { authService } from '$lib/services/auth';
 	import CadastralMap from '$lib/components/shared/CadastralMap.svelte';
-	import { user } from '$lib/stores/auth.store';
-	import { onMount } from 'svelte';
 	import type {
 		CadasterDto,
 		ForestStandListDto,
 		ActivityListDto
 	} from '$lib/dtos/cadaster/cadaster.dto';
 
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
-
-	let isLoading = $state(true);
-	let errorMessage = $state('');
-	let isUnauthorized = $state(false);
-
-	let cadaster = $state<CadasterDto | null>(null);
-	let forestStands = $state<ForestStandListDto[]>([]);
-	let activities = $state<ActivityListDto[]>([]);
+	let {
+		data
+	}: {
+		data: {
+			cadaster: CadasterDto | null;
+			forestStands: ForestStandListDto[];
+			activities: ActivityListDto[];
+		};
+	} = $props();
+	let cadaster = $derived(data.cadaster);
+	let forestStands = $derived(data.forestStands ?? []);
+	let activities = $derived(data.activities ?? []);
+	let isLoading = $derived(!cadaster);
 
 	let companyId = $derived($page.params.CompanyId ?? '');
-	let cadasterId = $derived($page.params.CadasterId ?? '');
-	let currentUsername = $derived(($user?.username ?? '').trim().toLowerCase());
 
 	function formatDate(value: string | null): string {
 		if (!value) return '—';
@@ -42,79 +40,10 @@
 		const quantity = Number.isFinite(activity.quantity) ? String(activity.quantity) : '—';
 		return activity.unit ? `${quantity} ${activity.unit}` : quantity;
 	}
-
-	async function loadData() {
-		if (!companyId || !cadasterId) {
-			errorMessage = 'Marsruudi parameetrid puuduvad.';
-			isLoading = false;
-			return;
-		}
-
-		try {
-			errorMessage = '';
-			isUnauthorized = false;
-			isLoading = true;
-
-			const token = await authService.ensureValidToken();
-
-			const [cadasterResponse, forestStandResponse, activityResponse] = await Promise.all([
-				fetch(`${apiBaseUrl}/api/cadasters/${cadasterId}`, {
-					headers: { Authorization: `Bearer ${token}` }
-				}),
-				fetch(`${apiBaseUrl}/api/foreststands/by-cadaster/${cadasterId}`, {
-					headers: { Authorization: `Bearer ${token}` }
-				}),
-				fetch(`${apiBaseUrl}/api/activities/by-cadaster/${cadasterId}`, {
-					headers: { Authorization: `Bearer ${token}` }
-				})
-			]);
-
-			if (!cadasterResponse.ok) {
-				if (cadasterResponse.status === 401) {
-					isUnauthorized = true;
-					errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
-					return;
-				}
-
-				errorMessage =
-					cadasterResponse.status === 404
-						? 'Katasterit ei leitud.'
-						: 'Katastri laadimine ebaõnnestus.';
-				return;
-			}
-
-			cadaster = (await cadasterResponse.json()) as CadasterDto;
-
-			forestStands = forestStandResponse.ok
-				? (((await forestStandResponse.json()) as ForestStandListDto[]) ?? [])
-						.filter((item) => Boolean(item?.id))
-						.sort((a, b) => a.number - b.number)
-				: [];
-
-			activities = activityResponse.ok
-				? (((await activityResponse.json()) as ActivityListDto[]) ?? [])
-						.filter((item) => (item.userName ?? '').trim().toLowerCase() === currentUsername)
-						.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-				: [];
-		} catch {
-			errorMessage = 'Katastri laadimine ebaõnnestus.';
-		} finally {
-			isLoading = false;
-		}
-	}
-
-	onMount(loadData);
 </script>
 
 {#if isLoading}
 	<div class="employee-state-block is-loading">Laetakse katastrit…</div>
-{:else if errorMessage && !cadaster}
-	<div class="employee-state-block is-error">
-		{errorMessage}
-		{#if isUnauthorized}
-			<span class="inline-note">Teie sessioon võib olla aegunud.</span>
-		{/if}
-	</div>
 {:else if cadaster}
 	<p class="back-link">
 		<a
@@ -227,10 +156,6 @@
 		<h2>Katastriüksus kaardil</h2>
 		<CadastralMap tunnus={cadaster.cadastralNumber} />
 	</section>
-
-	{#if errorMessage}
-		<div class="employee-state-block is-error">{errorMessage}</div>
-	{/if}
 {/if}
 
 <style>
@@ -297,12 +222,6 @@
 		margin: 0;
 		font-size: 1.05rem;
 		color: #1f2937;
-	}
-
-	.inline-note {
-		display: block;
-		margin-top: 0.35rem;
-		font-size: 0.88rem;
 	}
 
 	.log-activity-link {

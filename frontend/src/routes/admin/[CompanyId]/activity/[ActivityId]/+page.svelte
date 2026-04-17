@@ -1,9 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { authService } from '$lib/services/auth';
-	import { onMount } from 'svelte';
+	import { activityService } from '$lib/services/activity';
 	import type {
 		ActivityStatus,
 		ActivityDto,
@@ -11,15 +9,22 @@
 		ActivityUpdateDto
 	} from '$lib/dtos/activity/activity.dto';
 
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
+	let {
+		data
+	}: {
+		data: {
+			activity: ActivityDto | null;
+			activityTypes: ActivityTypeListDto[];
+		};
+	} = $props();
 
-	let isLoading = $state(true);
+	let activity = $derived(data.activity);
+	let activityTypes = $derived(data.activityTypes ?? []);
+	let isLoading = $derived(!activity);
 	let isSaving = $state(false);
 	let isEditMode = $state(false);
 	let errorMessage = $state('');
 	let successMessage = $state('');
-	let activity = $state<ActivityDto | null>(null);
-	let activityTypes = $state<ActivityTypeListDto[]>([]);
 	const companyId = $derived($page.params.CompanyId ?? '');
 
 	let form = $state({
@@ -50,65 +55,11 @@
 		};
 	}
 
-	async function loadActivityTypes() {
-		try {
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/activitytypes`, {
-				headers: {
-					Authorization: `Bearer ${token}`
-				}
-			});
-
-			if (!response.ok) {
-				activityTypes = [];
-				return;
-			}
-
-			const data = (await response.json()) as ActivityTypeListDto[];
-			activityTypes = Array.isArray(data) ? data : [];
-		} catch {
-			activityTypes = [];
+	$effect(() => {
+		if (activity) {
+			fillForm(activity);
 		}
-	}
-
-	async function loadActivity() {
-		try {
-			errorMessage = '';
-			successMessage = '';
-			isLoading = true;
-
-			const activityId = $page.params.ActivityId;
-			if (!activityId) {
-				errorMessage = 'Puudub tegevuse ID.';
-				return;
-			}
-
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/activities/${activityId}`, {
-				headers: {
-					Authorization: `Bearer ${token}`
-				}
-			});
-
-			if (!response.ok) {
-				errorMessage =
-					response.status === 404
-						? 'Tegevust ei leitud.'
-						: response.status === 401
-							? 'Ligipääs puudub. Logige uuesti sisse.'
-							: 'Tegevuse laadimine ebaõnnestus.';
-				return;
-			}
-
-			const detail = (await response.json()) as ActivityDto;
-			activity = detail;
-			fillForm(detail);
-		} catch {
-			errorMessage = 'Tegevuse laadimine ebaõnnestus.';
-		} finally {
-			isLoading = false;
-		}
-	}
+	});
 
 	async function saveActivity(event: SubmitEvent) {
 		event.preventDefault();
@@ -149,27 +100,7 @@
 		successMessage = '';
 
 		try {
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/activities/${activity.id}`, {
-				method: 'PUT',
-				headers: {
-					Authorization: `Bearer ${token}`,
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(payload)
-			});
-
-			if (!response.ok) {
-				errorMessage =
-					response.status === 400
-						? 'Valideerimine ebaõnnestus. Kontrollige sisestatud väärtusi.'
-						: response.status === 404
-							? 'Tegevust ei leitud.'
-							: 'Muudatuste salvestamine ebaõnnestus.';
-				return;
-			}
-
-			const updated = (await response.json()) as ActivityDto;
+			const updated = await activityService.update(activity.id, payload);
 			activity = updated;
 			fillForm(updated);
 			isEditMode = false;
@@ -180,16 +111,10 @@
 			isSaving = false;
 		}
 	}
-
-	onMount(async () => {
-		await Promise.all([loadActivityTypes(), loadActivity()]);
-	});
 </script>
 
 {#if isLoading}
 	<p>Laetakse tegevuse detaile...</p>
-{:else if errorMessage && !activity}
-	<p class="message error">{errorMessage}</p>
 {:else if activity}
 	<div class="detail-page">
 		<p class="breadcrumb">

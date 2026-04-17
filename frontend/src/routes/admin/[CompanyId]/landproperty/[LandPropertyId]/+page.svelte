@@ -1,9 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { authService } from '$lib/services/auth';
-	import { onMount } from 'svelte';
+	import { landPropertyService } from '$lib/services/land-property';
 	import type {
 		PropertyStatus,
 		LandPropertyDto,
@@ -12,19 +10,26 @@
 		ActivityDto
 	} from '$lib/dtos/land-property/land-property.dto';
 
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
+	let {
+		data
+	}: {
+		data: {
+			property: LandPropertyDto | null;
+			cadasters: CadasterLinkDto[];
+			activities: ActivityDto[];
+		};
+	} = $props();
 
-	let isLoading = $state(true);
-	let isSaving = $state(false);
+	let property = $derived(data.property);
+	let cadasters = $derived(data.cadasters ?? []);
+	let activities = $derived(data.activities ?? []);
 	let isEditMode = $state(false);
+	let isSaving = $state(false);
 	let errorMessage = $state('');
 	let successMessage = $state('');
-	let activityErrorMessage = $state('');
 	let cadasterErrorMessage = $state('');
-	let property = $state<LandPropertyDto | null>(null);
-	let activities = $state<ActivityDto[]>([]);
-	let cadasters = $state<CadasterLinkDto[]>([]);
-	const companyId = $derived($page.params.CompanyId ?? '');
+	let activityErrorMessage = $state('');
+	let companyId = $derived($page.params.CompanyId ?? '');
 
 	let form = $state({
 		name: '',
@@ -88,6 +93,12 @@
 		};
 	}
 
+	$effect(() => {
+		if (property) {
+			fillForm(property);
+		}
+	});
+
 	function formatDateTime(value: string): string {
 		const date = new Date(value);
 		if (Number.isNaN(date.getTime())) return '—';
@@ -120,88 +131,6 @@
 		return String(status);
 	}
 
-	async function loadProperty() {
-		try {
-			errorMessage = '';
-			successMessage = '';
-			activityErrorMessage = '';
-			cadasterErrorMessage = '';
-			isLoading = true;
-
-			const propertyId = $page.params.LandPropertyId;
-			if (!propertyId) {
-				errorMessage = 'Puudub kinnistu ID.';
-				return;
-			}
-
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/landproperties/${propertyId}`, {
-				headers: {
-					Authorization: `Bearer ${token}`
-				}
-			});
-
-			if (!response.ok) {
-				errorMessage =
-					response.status === 404
-						? 'Kinnistut ei leitud.'
-						: response.status === 401
-							? 'Ligipääs puudub. Logige uuesti sisse.'
-							: 'Kinnistu laadimine ebaõnnestus.';
-				return;
-			}
-
-			property = (await response.json()) as LandPropertyDto;
-			fillForm(property);
-
-			const cadastersResponse = await fetch(
-				`${apiBaseUrl}/api/cadasters/by-land-property/${propertyId}`,
-				{
-					headers: {
-						Authorization: `Bearer ${token}`
-					}
-				}
-			);
-
-			if (cadastersResponse.ok) {
-				cadasters = (((await cadastersResponse.json()) as CadasterLinkDto[]) ?? []).filter((item) =>
-					Boolean(item?.id)
-				);
-			} else {
-				cadasters = [];
-				cadasterErrorMessage =
-					cadastersResponse.status === 401 || cadastersResponse.status === 403
-						? 'Katastrite laadimiseks puudub ligipääs.'
-						: 'Katastrite laadimine ebaõnnestus.';
-			}
-
-			const activitiesResponse = await fetch(
-				`${apiBaseUrl}/api/activities/by-property/${propertyId}`,
-				{
-					headers: {
-						Authorization: `Bearer ${token}`
-					}
-				}
-			);
-
-			if (activitiesResponse.ok) {
-				activities = (((await activitiesResponse.json()) as ActivityDto[]) ?? [])
-					.filter((item) => Boolean(item?.id))
-					.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-			} else {
-				activities = [];
-				activityErrorMessage =
-					activitiesResponse.status === 401 || activitiesResponse.status === 403
-						? 'Kinnistu tegevuste laadimiseks puudub ligipääs.'
-						: 'Kinnistu tegevuste laadimine ebaõnnestus.';
-			}
-		} catch {
-			errorMessage = 'Kinnistu laadimine ebaõnnestus.';
-		} finally {
-			isLoading = false;
-		}
-	}
-
 	async function saveProperty(event: SubmitEvent) {
 		event.preventDefault();
 		if (!property || !isEditMode) return;
@@ -230,46 +159,29 @@
 		successMessage = '';
 
 		try {
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/landproperties/${property.id}`, {
-				method: 'PUT',
-				headers: {
-					Authorization: `Bearer ${token}`,
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(payload)
-			});
-
-			if (!response.ok) {
-				errorMessage =
-					response.status === 400
-						? 'Valideerimine ebaõnnestus. Kontrollige sisestatud väärtusi.'
-						: response.status === 404
-							? 'Kinnistut ei leitud.'
-							: 'Muudatuste salvestamine ebaõnnestus.';
-				return;
-			}
-
-			const updated = (await response.json()) as LandPropertyDto;
+			const updated = await landPropertyService.update(property.id, payload);
 			property = updated;
 			fillForm(updated);
 			isEditMode = false;
 			successMessage = 'Kinnistu uuendati edukalt.';
-		} catch {
-			errorMessage = 'Muudatuste salvestamine ebaõnnestus.';
+		} catch (e) {
+			const err = e as Error;
+			if (err.message?.includes('404')) {
+				errorMessage = 'Kinnistut ei leitud.';
+			} else if (err.message?.includes('400')) {
+				errorMessage = 'Valideerimine ebaõnnestus. Kontrollige sisestatud väärtusi.';
+			} else {
+				errorMessage = 'Muudatuste salvestamine ebaõnnestus.';
+			}
 		} finally {
 			isSaving = false;
 		}
 	}
-
-	onMount(loadProperty);
 </script>
 
-{#if isLoading}
+{#if !property}
 	<p>Laetakse kinnistut...</p>
-{:else if errorMessage && !property}
-	<p class="message error">{errorMessage}</p>
-{:else if property}
+{:else}
 	<div class="detail-page">
 		<p class="breadcrumb">
 			<a href={resolve('/admin/[CompanyId]/landproperty', { CompanyId: companyId })}

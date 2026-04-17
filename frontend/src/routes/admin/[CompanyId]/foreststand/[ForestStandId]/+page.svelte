@@ -1,27 +1,38 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { authService } from '$lib/services/auth';
-	import { onMount } from 'svelte';
+	import { forestStandService } from '$lib/services/forest-stand';
 	import type {
-		RecentActivityDto,
+		ActivityListDto,
 		ForestStandDto,
 		ForestStandUpdateDto,
 		CadasterSummaryDto
 	} from '$lib/dtos/forest-stand/forest-stand.dto';
 
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
+	let {
+		data
+	}: {
+		data: {
+			forestStand: ForestStandDto | null;
+			cadaster: CadasterSummaryDto;
+			activities: ActivityListDto[];
+		};
+	} = $props();
 
-	let isLoading = $state(true);
+	let forestStand = $derived(data.forestStand);
+	let cadaster = $derived(data.cadaster);
+	let linkedLandPropertyId = $derived(
+		cadaster?.landPropertyId ?? forestStand?.landPropertyId ?? ''
+	);
+	let linkedLandPropertyName = $derived(
+		cadaster?.landPropertyName ?? forestStand?.landPropertyName ?? ''
+	);
+	let activities = $derived(data.activities ?? []);
+	let isLoading = $derived(!forestStand);
 	let isSaving = $state(false);
 	let isEditMode = $state(false);
 	let errorMessage = $state('');
 	let successMessage = $state('');
-	let forestStand = $state<ForestStandDto | null>(null);
-	let recentActivities = $state<RecentActivityDto[]>([]);
-	let linkedLandPropertyId = $state('');
-	let linkedLandPropertyName = $state('');
 	const companyId = $derived($page.params.CompanyId ?? '');
 
 	let form = $state({
@@ -75,66 +86,11 @@
 		};
 	}
 
-	async function loadCadasterPropertyFallback(cadasterId: string, token: string): Promise<void> {
-		const response = await fetch(`${apiBaseUrl}/api/cadasters/${cadasterId}`, {
-			headers: {
-				Authorization: `Bearer ${token}`
-			}
-		});
-
-		if (!response.ok) return;
-
-		const cadaster = (await response.json()) as CadasterSummaryDto;
-		linkedLandPropertyId = cadaster.landPropertyId ?? linkedLandPropertyId;
-		linkedLandPropertyName = cadaster.landPropertyName ?? linkedLandPropertyName;
-	}
-
-	async function loadForestStand() {
-		try {
-			errorMessage = '';
-			successMessage = '';
-			isLoading = true;
-
-			const forestStandId = $page.params.ForestStandId;
-			if (!forestStandId) {
-				errorMessage = 'Puudub eraldise ID.';
-				return;
-			}
-
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/foreststands/${forestStandId}`, {
-				headers: {
-					Authorization: `Bearer ${token}`
-				}
-			});
-
-			if (!response.ok) {
-				errorMessage =
-					response.status === 404
-						? 'Eraldist ei leitud.'
-						: response.status === 401
-							? 'Ligipääs puudub. Logige uuesti sisse.'
-							: 'Eraldise laadimine ebaõnnestus.';
-				return;
-			}
-
-			const detail = (await response.json()) as ForestStandDto;
-			forestStand = detail;
-			recentActivities = Array.isArray(detail.recentActivities) ? detail.recentActivities : [];
-			linkedLandPropertyId = detail.landPropertyId ?? '';
-			linkedLandPropertyName = detail.landPropertyName ?? '';
-
-			if ((!linkedLandPropertyId || !linkedLandPropertyName) && detail.cadasterId) {
-				await loadCadasterPropertyFallback(detail.cadasterId, token);
-			}
-
-			fillForm(detail);
-		} catch {
-			errorMessage = 'Eraldise laadimine ebaõnnestus.';
-		} finally {
-			isLoading = false;
+	$effect(() => {
+		if (forestStand) {
+			fillForm(forestStand);
 		}
-	}
+	});
 
 	async function saveForestStand(event: SubmitEvent) {
 		event.preventDefault();
@@ -156,31 +112,8 @@
 		successMessage = '';
 
 		try {
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/foreststands/${forestStand.id}`, {
-				method: 'PUT',
-				headers: {
-					Authorization: `Bearer ${token}`,
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(payload)
-			});
-
-			if (!response.ok) {
-				errorMessage =
-					response.status === 400
-						? 'Valideerimine ebaõnnestus. Kontrollige sisestatud väärtusi.'
-						: response.status === 404
-							? 'Eraldist ei leitud.'
-							: 'Muudatuste salvestamine ebaõnnestus.';
-				return;
-			}
-
-			const updated = (await response.json()) as ForestStandDto;
+			const updated = await forestStandService.update(forestStand.id, payload);
 			forestStand = updated;
-			recentActivities = Array.isArray(updated.recentActivities) ? updated.recentActivities : [];
-			linkedLandPropertyId = updated.landPropertyId ?? linkedLandPropertyId;
-			linkedLandPropertyName = updated.landPropertyName ?? linkedLandPropertyName;
 			fillForm(updated);
 			isEditMode = false;
 			successMessage = 'Eraldis uuendati edukalt.';
@@ -190,14 +123,10 @@
 			isSaving = false;
 		}
 	}
-
-	onMount(loadForestStand);
 </script>
 
 {#if isLoading}
-	<p>Laetakse eraldist...</p>
-{:else if errorMessage && !forestStand}
-	<p class="message error">{errorMessage}</p>
+	<p>Laetakse eraldise detaile...</p>
 {:else if forestStand}
 	<div class="detail-page">
 		<p class="breadcrumb">
@@ -323,7 +252,7 @@
 
 		<section class="form-section">
 			<h2>Hiljutised tegevused</h2>
-			{#if recentActivities.length === 0}
+			{#if activities.length === 0}
 				<p>Ei leitud.</p>
 			{:else}
 				<div class="table-wrapper">
@@ -339,7 +268,7 @@
 							</tr>
 						</thead>
 						<tbody>
-							{#each recentActivities as activity (activity.id)}
+							{#each activities as activity (activity.id)}
 								<tr>
 									<td>{formatDate(activity.date)}</td>
 									<td>{activity.activityTypeName}</td>
@@ -485,9 +414,7 @@
 		flex-direction: column;
 		gap: 0.35rem;
 	}
-	.checkbox-label {
-		justify-content: flex-end;
-	}
+
 	.form-actions {
 		display: flex;
 		justify-content: flex-end;

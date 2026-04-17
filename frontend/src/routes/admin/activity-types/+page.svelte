@@ -10,9 +10,11 @@
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 	const endpoint = `${apiBaseUrl}/api/activitytypes`;
 
-	let activityTypes = $state<ActivityTypeListDto[]>([]);
+	let { data }: { data: { activityTypes: ActivityTypeListDto[] } } = $props();
+
+	let activityTypes = $derived(data.activityTypes);
 	let activityTypeDetailsById = $state<Record<string, ActivityTypeDto>>({});
-	let isLoading = $state(true);
+	let isLoading = $derived(data.activityTypes.length === 0);
 	let isSubmitting = $state(false);
 	let errorMessage = $state('');
 	let successMessage = $state('');
@@ -227,8 +229,6 @@
 			isSubmitting = false;
 		}
 	}
-
-	onMount(loadActivityTypes);
 </script>
 
 <h1 class="mb-4 text-2xl font-semibold text-slate-900">Tegevuse tüübid</h1>

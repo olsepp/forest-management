@@ -1,20 +1,14 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { authService } from '$lib/services/auth';
-	import { onMount } from 'svelte';
 	import type {
 		LandPropertyListDto,
 		PropertyCadasterLinkDto
 	} from '$lib/dtos/land-property/land-property-list.dto';
 
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
-
-	let properties = $state<LandPropertyListDto[]>([]);
-	let isLoading = $state(true);
-	let errorMessage = $state('');
-	let isUnauthorized = $state(false);
+	let { data }: { data: { properties: LandPropertyListDto[] } } = $props();
+	let properties = $derived(data.properties ?? []);
+	let isLoading = $derived(properties.length === 0);
 	let searchQuery = $state('');
 
 	let companyId = $derived($page.params.CompanyId ?? '');
@@ -57,10 +51,6 @@
 		return statusLabel(status).toLowerCase();
 	}
 
-	function isActiveStatus(status: LandPropertyListDto['status']): boolean {
-		return statusLabel(status) === 'Active';
-	}
-
 	function statusText(status: LandPropertyListDto['status']): string {
 		const normalized = statusLabel(status);
 		if (normalized === 'Active') return 'Aktiivne';
@@ -83,64 +73,6 @@
 		const fromLookup = cadastersForProperty(property).map((item) => item.cadastralNumber);
 		return [...new Set([...fromDto, ...fromLookup].filter(Boolean))];
 	}
-
-	async function loadData() {
-		if (!companyId) {
-			errorMessage = 'Puudub ettevõtte ID.';
-			isLoading = false;
-			return;
-		}
-
-		try {
-			errorMessage = '';
-			isUnauthorized = false;
-			isLoading = true;
-
-			const token = await authService.ensureValidToken();
-			const response = await fetch(
-				`${apiBaseUrl}/api/landproperties/search?companyId=${encodeURIComponent(companyId)}&status=0`,
-				{
-					headers: {
-						Authorization: `Bearer ${token}`
-					}
-				}
-			);
-
-			if (!response.ok) {
-				if (response.status === 401) {
-					isUnauthorized = true;
-					errorMessage = 'Lubatud pääs puudub. Logige uuesti sisse.';
-					return;
-				}
-
-				errorMessage = 'Ettevõtteid ei õnnestunud laadida.';
-				return;
-			}
-
-			const data = (await response.json()) as LandPropertyListDto[];
-			const receivedProperties = Array.isArray(data)
-				? data.map((item) => ({
-						...item,
-						cadasters: Array.isArray(item.cadasters)
-							? item.cadasters.filter(
-									(cadaster) => Boolean(cadaster?.id) && Boolean(cadaster?.cadastralNumber)
-								)
-							: [],
-						cadastralNumbers: Array.isArray(item.cadastralNumbers) ? item.cadastralNumbers : []
-					}))
-				: [];
-
-			// Safety filter: some backends may ignore `activeOnly=true`.
-			// Enforce employee visibility for active properties only on client side too.
-			properties = receivedProperties.filter((item) => isActiveStatus(item.status));
-		} catch {
-			errorMessage = 'Ettevõtteid ei õnnestunud laadida.';
-		} finally {
-			isLoading = false;
-		}
-	}
-
-	onMount(loadData);
 </script>
 
 <section class="employee-card intro">
@@ -150,13 +82,6 @@
 
 {#if isLoading}
 	<div class="employee-state-block is-loading">Laetakse kinnistu…</div>
-{:else if errorMessage}
-	<div class="employee-state-block is-error">
-		{errorMessage}
-		{#if isUnauthorized}
-			<span class="inline-note">Sessioon võib olla lõppenud.</span>
-		{/if}
-	</div>
 {:else}
 	<section class="filters employee-card" aria-label="Kinnistute filtrid">
 		<label for="property-search" class="filter-label">Otsi</label>

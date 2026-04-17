@@ -1,17 +1,12 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { authService } from '$lib/services/auth';
 	import type { UserListDto, UserDetailsDto } from '$lib/dtos/user/user.dto';
 
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
+	let {
+		data
+	}: { data: { users: UserListDto[]; userDetailsById: Record<string, UserDetailsDto> } } = $props();
 
-	let users = $state<UserListDto[]>([]);
-	let userDetailsById = $state<Record<string, UserDetailsDto>>({});
 	let expandedUserIds = $state<string[]>([]);
-	let isLoading = $state(true);
-	let errorMessage = $state('');
 
 	function getFirstName(user: UserListDto | UserDetailsDto): string {
 		if (typeof user.firstName === 'string' && user.firstName.trim()) return user.firstName;
@@ -67,59 +62,6 @@
 		if (key === 'role' && typeof value === 'string') return roleLabels[value] ?? value;
 		return typeof value === 'string' ? value : JSON.stringify(value);
 	}
-
-	onMount(async () => {
-		try {
-			errorMessage = '';
-			isLoading = true;
-
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/users`, {
-				headers: {
-					Authorization: `Bearer ${token}`
-				}
-			});
-
-			if (!response.ok) {
-				errorMessage =
-					response.status === 401
-						? 'Ligipääs puudub. Logige uuesti sisse.'
-						: response.status === 403
-							? 'Keelatud. Vajalik on admini roll.'
-							: 'Kasutajate laadimine ebaõnnestus.';
-				return;
-			}
-
-			users = await response.json();
-
-			const detailsEntries = await Promise.all(
-				users.map(async (user) => {
-					try {
-						const detailsResponse = await fetch(`${apiBaseUrl}/api/users/${user.id}`, {
-							headers: {
-								Authorization: `Bearer ${token}`
-							}
-						});
-
-						if (!detailsResponse.ok) {
-							return [user.id, user] as const;
-						}
-
-						const details = (await detailsResponse.json()) as UserDetailsDto;
-						return [user.id, { ...user, ...details }] as const;
-					} catch {
-						return [user.id, user] as const;
-					}
-				})
-			);
-
-			userDetailsById = Object.fromEntries(detailsEntries);
-		} catch {
-			errorMessage = 'Kasutajate laadimine ebaõnnestus.';
-		} finally {
-			isLoading = false;
-		}
-	});
 </script>
 
 <div class="mb-4 flex items-center justify-between gap-3">
@@ -133,13 +75,7 @@
 	</a>
 </div>
 
-{#if isLoading}
-	<p>Laetakse kasutajaid...</p>
-{:else if errorMessage}
-	<p class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-		{errorMessage}
-	</p>
-{:else if users.length === 0}
+{#if data.users.length === 0}
 	<p>Kasutajaid ei leitud.</p>
 {:else}
 	<div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -153,12 +89,13 @@
 				</tr>
 			</thead>
 			<tbody class="divide-y divide-slate-100">
-				{#each users as user (user.id)}
+				{#each data.users as user (user.id)}
 					<tr class="hover:bg-slate-50">
 						<td class="px-4 py-3 text-slate-900"
-							>{getFirstName(userDetailsById[user.id] ?? user)}</td
+							>{getFirstName(data.userDetailsById[user.id] ?? user)}</td
 						>
-						<td class="px-4 py-3 text-slate-900">{getLastName(userDetailsById[user.id] ?? user)}</td
+						<td class="px-4 py-3 text-slate-900"
+							>{getLastName(data.userDetailsById[user.id] ?? user)}</td
 						>
 						<td class="px-4 py-3 text-slate-700">{user.email}</td>
 						<td class="px-4 py-3">
@@ -194,7 +131,7 @@
 										Kasutaja andmed
 									</p>
 									<dl class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-										{#each detailEntries(userDetailsById[user.id] ?? user) as [key, value] (key)}
+										{#each detailEntries(data.userDetailsById[user.id] ?? user) as [key, value] (key)}
 											<div class="rounded border border-slate-200 bg-slate-50 p-2">
 												<dt class="text-base font-semibold text-slate-600">{getFieldLabel(key)}</dt>
 												<dd class="mt-0.5 font-mono text-base break-all text-slate-800">

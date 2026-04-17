@@ -1,17 +1,11 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { authService } from '$lib/services/auth';
-	import { onMount } from 'svelte';
 	import type { ActivityDto } from '$lib/dtos/activity/activity.dto';
 
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
-
-	let isLoading = $state(true);
-	let errorMessage = $state('');
-	let isUnauthorized = $state(false);
-	let activities = $state<ActivityDto[]>([]);
+	let { data }: { data: { activities: ActivityDto[] } } = $props();
+	let activities = $derived(data.activities ?? []);
+	let isLoading = $derived(activities.length === 0);
 
 	let companyId = $derived($page.params.CompanyId ?? '');
 
@@ -37,50 +31,6 @@
 			return String(standNumber);
 		return '—';
 	}
-
-	async function loadData() {
-		if (!companyId) {
-			errorMessage = 'Puudub ettevõtte ID.';
-			isLoading = false;
-			return;
-		}
-
-		try {
-			errorMessage = '';
-			isUnauthorized = false;
-			isLoading = true;
-
-			const token = await authService.ensureValidToken();
-
-			const activitiesResponse = await fetch(
-				`${apiBaseUrl}/api/activities/by-company/${companyId}/my`,
-				{
-					headers: { Authorization: `Bearer ${token}` }
-				}
-			);
-
-			if (!activitiesResponse.ok) {
-				if (activitiesResponse.status === 401 || activitiesResponse.status === 403) {
-					isUnauthorized = true;
-					errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
-					return;
-				}
-
-				errorMessage = 'Tegevuste laadimine ebaõnnestus.';
-				return;
-			}
-
-			activities = (((await activitiesResponse.json()) as ActivityDto[]) ?? [])
-				.filter((item) => Boolean(item?.id))
-				.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-		} catch {
-			errorMessage = 'Tegevuste laadimine ebaõnnestus.';
-		} finally {
-			isLoading = false;
-		}
-	}
-
-	onMount(loadData);
 </script>
 
 <section class="employee-card summary">
@@ -90,15 +40,8 @@
 
 {#if isLoading}
 	<div class="employee-state-block is-loading">Laetakse tegevusi…</div>
-{:else if errorMessage}
-	<div class="employee-state-block is-error">
-		{errorMessage}
-		{#if isUnauthorized}
-			<span class="inline-note">Teie sessioon võib olla aegunud.</span>
-		{/if}
-	</div>
 {:else if activities.length === 0}
-	<div class="employee-state-block is-empty">Selles ettevõttes ei leitud sinu konto tegevusi.</div>
+	<div class="employee-state-block is-empty">Selles ettevõttes ei leitud sinu tegevusi.</div>
 {:else}
 	<section class="employee-card">
 		<div class="employee-stack-cards activities-mobile">
@@ -182,12 +125,6 @@
 	p {
 		margin: 0.4rem 0 0;
 		color: #334155;
-	}
-
-	.inline-note {
-		display: block;
-		margin-top: 0.35rem;
-		font-size: 0.88rem;
 	}
 
 	.activities-table {

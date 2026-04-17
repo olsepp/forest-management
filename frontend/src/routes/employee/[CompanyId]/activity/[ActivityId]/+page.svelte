@@ -1,27 +1,24 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { authService } from '$lib/services/auth';
 	import { user } from '$lib/stores/auth.store';
-	import { onMount } from 'svelte';
+	import { activityService } from '$lib/services/activity';
 	import type {
 		ActivityDto,
 		ActivityTypeListDto,
 		ActivityUpdateDto
 	} from '$lib/dtos/activity/activity.dto';
 
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
-
-	let isLoading = $state(true);
+	let { data }: { data: { activity: ActivityDto | null; activityTypes: ActivityTypeListDto[] } } =
+		$props();
+	let activity = $derived(data.activity);
+	let activityTypes = $derived(data.activityTypes ?? []);
+	let isLoading = $derived(!activity);
 	let isSaving = $state(false);
 	let isEditMode = $state(false);
 	let errorMessage = $state('');
 	let successMessage = $state('');
-	let isUnauthorized = $state(false);
-
-	let activity = $state<ActivityDto | null>(null);
-	let activityTypes = $state<ActivityTypeListDto[]>([]);
+	let isUnauthorized = $derived(activity && !isOwnActivity(activity));
 
 	let companyId = $derived($page.params.CompanyId ?? '');
 	let activityId = $derived($page.params.ActivityId ?? '');
@@ -66,79 +63,17 @@
 		};
 	}
 
+	$effect(() => {
+		if (activity) {
+			fillForm(activity);
+		}
+	});
+
 	function isOwnActivity(detail: ActivityDto): boolean {
 		if (currentUserId && detail.userId) {
 			return detail.userId === currentUserId;
 		}
-
 		return (detail.userName ?? '').trim().toLowerCase() === currentUsername;
-	}
-
-	async function loadActivityTypes() {
-		try {
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/activitytypes`, {
-				headers: { Authorization: `Bearer ${token}` }
-			});
-
-			if (!response.ok) {
-				activityTypes = [];
-				return;
-			}
-
-			const data = (await response.json()) as ActivityTypeListDto[];
-			activityTypes = Array.isArray(data) ? data.filter((type) => Boolean(type?.id)) : [];
-		} catch {
-			activityTypes = [];
-		}
-	}
-
-	async function loadActivity() {
-		if (!activityId) {
-			errorMessage = 'Puudub tegevuse ID.';
-			isLoading = false;
-			return;
-		}
-
-		try {
-			errorMessage = '';
-			successMessage = '';
-			isUnauthorized = false;
-			isLoading = true;
-
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/activities/${activityId}`, {
-				headers: { Authorization: `Bearer ${token}` }
-			});
-
-			if (!response.ok) {
-				if (response.status === 401) {
-					isUnauthorized = true;
-					errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
-					return;
-				}
-
-				errorMessage =
-					response.status === 404 ? 'Tegevust ei leitud.' : 'Tegevuse laadimine ebaõnnestus.';
-				return;
-			}
-
-			const detail = (await response.json()) as ActivityDto;
-
-			if (!isOwnActivity(detail)) {
-				isUnauthorized = true;
-				errorMessage = 'Sul puudub sellele tegevusele ligipääs.';
-				activity = null;
-				return;
-			}
-
-			activity = detail;
-			fillForm(detail);
-		} catch {
-			errorMessage = 'Tegevuse laadimine ebaõnnestus.';
-		} finally {
-			isLoading = false;
-		}
 	}
 
 	async function saveActivity(event: SubmitEvent) {
@@ -186,29 +121,7 @@
 
 		isSaving = true;
 		try {
-			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/activities/${activity.id}`, {
-				method: 'PUT',
-				headers: {
-					Authorization: `Bearer ${token}`,
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(payload)
-			});
-
-			if (!response.ok) {
-				errorMessage =
-					response.status === 400
-						? 'Valideerimine ebaõnnestus. Kontrollige sisestatud väärtusi.'
-						: response.status === 404
-							? 'Tegevust ei leitud.'
-							: response.status === 403
-								? 'Sul ei ole õigust seda tegevust muuta.'
-								: 'Muudatuste salvestamine ebaõnnestus.';
-				return;
-			}
-
-			const updated = (await response.json()) as ActivityDto;
+			const updated = await activityService.update(activity.id, payload);
 			activity = updated;
 			fillForm(updated);
 			isEditMode = false;
@@ -219,10 +132,6 @@
 			isSaving = false;
 		}
 	}
-
-	onMount(async () => {
-		await Promise.all([loadActivityTypes(), loadActivity()]);
-	});
 </script>
 
 {#if isLoading}
