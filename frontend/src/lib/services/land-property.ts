@@ -5,7 +5,7 @@ import type {
 	LandPropertyUpdateDto
 } from '$lib/dtos/land-property/land-property.dto';
 
-const API_BASE_URL = PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE_URL = PUBLIC_API_URL;
 
 type FetchFn = typeof window.fetch;
 

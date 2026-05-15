@@ -80,18 +80,12 @@
 		min-height: 3rem;
 		padding: 0.65rem 0.95rem;
 		border-radius: 0.85rem;
-		border: 1px solid #97b6a6;
-		background: #eaf5ef;
-		color: #123d2e;
+		background: #316347;
+		color: white;
 		font-size: 0.95rem;
 		font-weight: 700;
 		text-decoration: none;
 		box-shadow: 0 2px 8px rgba(15, 37, 28, 0.08);
-	}
-
-	.profile-shortcut:hover {
-		background: #ddede4;
-		border-color: #7ca48f;
 	}
 
 	.profile-shortcut:active {

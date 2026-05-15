@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
 	import type {

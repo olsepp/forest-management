@@ -632,6 +632,7 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.45rem;
+		margin-bottom: .7rem;
 		min-height: 3rem;
 		padding: 0.65rem 0.95rem;
 		border-radius: 0.85rem;

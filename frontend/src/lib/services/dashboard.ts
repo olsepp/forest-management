@@ -1,7 +1,7 @@
 import { PUBLIC_API_URL } from '$env/static/public';
 import { authService } from './auth';
 
-const API_BASE_URL = PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE_URL = PUBLIC_API_URL;
 
 type FetchFn = typeof window.fetch;
 

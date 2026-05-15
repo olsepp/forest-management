@@ -82,11 +82,6 @@
 			return;
 		}
 
-		if (!selectedCadasterId) {
-			errorMessage = 'Kataster on kohustuslik.';
-			return;
-		}
-
 		const quantityRaw = String(quantity ?? '').trim();
 		const quantityNumber = quantityRaw === '' ? 0 : Number(quantityRaw);
 		if (!Number.isFinite(quantityNumber)) {

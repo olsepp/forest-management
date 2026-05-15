@@ -5,7 +5,7 @@ import type {
 	ActivityTypeDto
 } from '$lib/dtos/activity-type/activity-type.dto';
 
-const API_BASE_URL = PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE_URL = PUBLIC_API_URL;
 
 type FetchFn = typeof window.fetch;
 

@@ -2,7 +2,7 @@ import { PUBLIC_API_URL } from '$env/static/public';
 import { getAccessToken, getRefreshToken, setAuth, updateTokens, clearAuth, isAuthenticated, needsTokenRefresh } from '$lib/stores/auth.store';
 import type { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, RefreshTokenResponse } from '$lib/types/auth';
 
-const API_BASE_URL = PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE_URL = PUBLIC_API_URL;
 
 /**
  * Resolve the default post-auth route for a user role.
@@ -58,9 +58,9 @@ class AuthService {
 			});
 
 			if (!response.ok) {
-				const error = await response.json().catch(() => ({ message: 'Login failed' }));
+				const error = await response.json().catch(() => ({ message: 'Sisse logimine ebaõnnestus' }));
 				throw new AuthServiceError(
-					error.message || 'Login failed',
+					error.message || 'Sisse logimine ebaõnnestus',
 					error.code,
 					response.status
 				);
@@ -77,7 +77,7 @@ class AuthService {
 				throw error;
 			}
 			throw new AuthServiceError(
-				'Network error. Please check your connection.',
+				'Ebaõnnestus. Kontrollige oma internetiühendust.',
 				'NETWORK_ERROR'
 			);
 		}
@@ -97,9 +97,9 @@ class AuthService {
 			});
 
 			if (!response.ok) {
-				const error = await response.json().catch(() => ({ message: 'Registration failed' }));
+				const error = await response.json().catch(() => ({ message: 'Registreerimine ebaõnnestus.' }));
 				throw new AuthServiceError(
-					error.message || 'Registration failed',
+					error.message || 'Registreerimine ebaõnnestus.',
 					error.code,
 					response.status
 				);
@@ -116,7 +116,7 @@ class AuthService {
 				throw error;
 			}
 			throw new AuthServiceError(
-				'Network error. Please check your connection.',
+				'Ebaõnnestus. Kontrollige oma internetiühendust.',
 				'NETWORK_ERROR'
 			);
 		}
@@ -150,7 +150,7 @@ class AuthService {
 
 		if (!token) {
 			throw new AuthServiceError(
-				'No refresh token available',
+				'Sessioon aegus. Logige uuesti sisse.',
 				'NO_REFRESH_TOKEN',
 				401
 			);
@@ -169,7 +169,7 @@ class AuthService {
 				// Clear auth if refresh fails
 				clearAuth();
 				throw new AuthServiceError(
-					'Token refresh failed. Please login again.',
+					'Logige uuesti sisse.',
 					'REFRESH_FAILED',
 					response.status
 				);
@@ -192,7 +192,7 @@ class AuthService {
 			}
 			clearAuth();
 			throw new AuthServiceError(
-				'Network error during token refresh.',
+				'Võrgu viga tokeni värskendamisel.',
 				'NETWORK_ERROR'
 			);
 		}
@@ -239,7 +239,7 @@ class AuthService {
 		unsubRefresh();
 
 		if (!currentIsAuthenticated) {
-			throw new AuthServiceError('Not authenticated', 'NOT_AUTHENTICATED', 401);
+			throw new AuthServiceError('Õigused puuduvad', 'NOT_AUTHENTICATED', 401);
 		}
 
 		// Check if token needs refresh
