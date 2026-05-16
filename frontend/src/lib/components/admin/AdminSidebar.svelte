@@ -23,7 +23,8 @@
 		return [
 			{ label: 'Tegevused', href: `/admin/${companyId}/activity` },
 			{ label: 'Töölaud', href: `/admin/${companyId}/dashboard` },
-			{ label: 'Kinnistud', href: `/admin/${companyId}/landproperty` }
+			{ label: 'Kinnistud', href: `/admin/${companyId}/landproperty` },
+			{ label: 'Müüdud kinnistud', href: `/admin/${companyId}/landproperty-sold` }
 		];
 	}
 

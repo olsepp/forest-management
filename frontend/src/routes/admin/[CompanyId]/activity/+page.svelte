@@ -132,7 +132,7 @@
 	<button class="filter-btn" onclick={handleSubmit}>Filtreeri</button>
 	<button class="reset-btn" onclick={handleReset}>Lähtesta</button>
 	<button class="export-btn" disabled={!canExport || isExporting} onclick={handleExport}>
-		{isExporting ? 'Laadimisel...' : 'Lae alla'}
+		{isExporting ? 'Laen...' : 'Lae alla'}
 	</button>
 </div>
 
