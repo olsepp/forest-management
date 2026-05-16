@@ -120,6 +120,23 @@ class ActivityService {
 		return response.json();
 	}
 
+	async getByCompanyDateRange(companyId: string, startDate: string, endDate: string, fetchFn?: FetchFn): Promise<ActivityDto[]> {
+		const token = await authService.ensureValidToken();
+		const response = await (fetchFn ?? fetch)(
+			`${API_BASE_URL}/api/activities/by-company/${companyId}/date-range?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`,
+			{
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`
+				}
+			}
+		);
+		if (!response.ok) {
+			throw new Error(`Failed to fetch activities by date range: ${response.statusText}`);
+		}
+		return response.json();
+	}
+
 	async getRecentByUser(
 		userId: string,
 		count: number = 5,
@@ -175,6 +192,25 @@ class ActivityService {
 			throw new Error(`Failed to update activity: ${response.statusText}`);
 		}
 		return response.json();
+	}
+
+	async exportToExcel(companyId: string, startDate: string, endDate: string): Promise<Blob> {
+		const token = await authService.ensureValidToken();
+		const params = new URLSearchParams();
+		params.append('startDate', startDate);
+		params.append('endDate', endDate);
+		const response = await fetch(
+			`${API_BASE_URL}/api/activities/by-company/${companyId}/export?${params.toString()}`,
+			{
+				headers: {
+					Authorization: `Bearer ${token}`
+				}
+			}
+		);
+		if (!response.ok) {
+			throw new Error(`Failed to export activities: ${response.statusText}`);
+		}
+		return response.blob();
 	}
 
 	async delete(id: string): Promise<void> {

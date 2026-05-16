@@ -1,12 +1,26 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
-	import type { ActivityDto } from '$lib/dtos/land-property/land-property.dto';
+	import { goto } from '$app/navigation';
+	import type { ActivityDto } from '$lib/dtos/activity/activity.dto';
+	import DatePicker from '$lib/components/DatePicker.svelte';
+	import { activityService } from '$lib/services/activity';
 
 	let { data }: { data: { activities: ActivityDto[] } } = $props();
 
 	const companyId = $derived($page.params.CompanyId ?? '');
 	let expandedActivityIds = $state<string[]>([]);
+	let formStartDate = $state('');
+	let formEndDate = $state('');
+	let isExporting = $state(false);
+
+	// Initialize form values from URL params
+	if ($page.url.searchParams.get('startDate')) {
+		formStartDate = $page.url.searchParams.get('startDate')?.split('T')[0] ?? '';
+	}
+	if ($page.url.searchParams.get('endDate')) {
+		formEndDate = $page.url.searchParams.get('endDate')?.split('T')[0] ?? '';
+	}
 
 	function isExpanded(activityId: string): boolean {
 		return expandedActivityIds.includes(activityId);
@@ -49,16 +63,78 @@
 		return '—';
 	}
 
-	function applicationStatusLabel(status: number | null): string {
-		if (status === null || typeof status !== 'number') return '—';
-		if (status === 0) return 'Ootel';
-		if (status === 1) return 'Kinnitatud';
-		if (status === 2) return 'Tagasi lükatud';
+	function applicationStatusLabel(status: string | null): string {
+		if (status === null) return '—';
+		if (status === 'Pending') return 'Ootel';
+		if (status === 'Approved') return 'Kinnitatud';
+		if (status === 'Rejected') return 'Tagasi lükatud';
 		return String(status);
+	}
+
+	function handleSubmit() {
+		const url = new URL($page.url);
+		if (formStartDate) {
+			url.searchParams.set('startDate', formStartDate);
+		} else {
+			url.searchParams.delete('startDate');
+		}
+		if (formEndDate) {
+			url.searchParams.set('endDate', `${formEndDate}T23:59:59.999`);
+		} else {
+			url.searchParams.delete('endDate');
+		}
+		goto(url.toString(), { replaceState: true });
+	}
+
+	function handleReset() {
+		formStartDate = '';
+		formEndDate = '';
+		goto($page.url.pathname, { replaceState: true });
+	}
+
+	const canExport = $derived(formStartDate !== '' && formEndDate !== '');
+
+	async function handleExport() {
+		if (!canExport || !companyId) return;
+
+		isExporting = true;
+		try {
+			const blob = await activityService.exportToExcel(companyId, formStartDate, formEndDate);
+			const url = window.URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `tegevused_${formStartDate}_${formEndDate}.xlsx`;
+			document.body.appendChild(a);
+			a.click();
+			a.remove();
+			window.URL.revokeObjectURL(url);
+		} catch (error) {
+			console.error('Failed to export activities:', error);
+		} finally {
+			isExporting = false;
+		}
 	}
 </script>
 
 <h1>Tegevused</h1>
+
+<div class="date-range-filter">
+	<DatePicker
+		label="Alates"
+		bind:value={formStartDate}
+		placeholder="Vali alguskuupäev"
+	/>
+	<DatePicker
+		label="Kuni"
+		bind:value={formEndDate}
+		placeholder="Vali lõppkuupäev"
+	/>
+	<button class="filter-btn" onclick={handleSubmit}>Filtreeri</button>
+	<button class="reset-btn" onclick={handleReset}>Lähtesta</button>
+	<button class="export-btn" disabled={!canExport || isExporting} onclick={handleExport}>
+		{isExporting ? 'Laadimisel...' : 'Lae alla'}
+	</button>
+</div>
 
 {#if data.activities.length === 0}
 	<p>Tegevusi ei leitud.</p>
@@ -120,8 +196,10 @@
 											href={resolve('/admin/[CompanyId]/activity/[ActivityId]', {
 												CompanyId: companyId,
 												ActivityId: item.id
-											})}>Ava tegevus</a
+											})}
 										>
+											Ava tegevus
+										</a>
 									</div>
 									<div class="details-grid">
 										<div class="detail-item">
@@ -288,5 +366,44 @@
 	.error {
 		margin-top: 0.75rem;
 		color: #b91c1c;
+	}
+
+	/* Date range filter styles */
+	.date-range-filter {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		align-items: flex-end;
+		margin-bottom: 1.5rem;
+		padding: 0.75rem;
+		background: #f8fafc;
+		border-radius: 0.5rem;
+		border: 1px solid #e2e8f0;
+	}
+
+	.date-range-filter :global(.date-picker-container) {
+		min-width: 200px;
+	}
+
+	.date-range-filter button {
+		margin-top: 1.5rem;
+		padding: 0.75rem 1.5rem;
+		border: none !important;
+		border-radius: 0.6rem;
+		font-size: 1rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: background 0.2s ease;
+		background: #1f5a42 !important;
+		color: white !important;
+	}
+
+	.date-range-filter button:hover:not(:disabled) {
+		background: #174834 !important;
+	}
+
+	.date-range-filter button:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
 	}
 </style>
