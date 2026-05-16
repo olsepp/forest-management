@@ -104,6 +104,7 @@ builder.Services.AddScoped<IActivityTypeService, ActivityTypeService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IActivityExportService, ActivityExportService>();
 
 // -----------------------------------------------------------------------
 // API Controllers Only

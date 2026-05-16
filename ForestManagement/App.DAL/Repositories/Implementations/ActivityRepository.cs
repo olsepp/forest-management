@@ -91,6 +91,17 @@ public class ActivityRepository : Repository<Activity>, IActivityRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<Activity>> GetByCompanyIdAndDateRangeAsync(Guid companyId, DateTime startDate, DateTime endDate)
+    {
+        return await QueryWithDetails()
+            .Where(a =>
+                (a.Cadaster != null && a.Cadaster.LandProperty.CompanyId == companyId) ||
+                (a.ForestStand != null && a.ForestStand.Cadaster.LandProperty.CompanyId == companyId))
+            .Where(a => a.Date >= startDate && a.Date <= endDate)
+            .OrderByDescending(a => a.Date)
+            .ToListAsync();
+    }
+
     public async Task<IEnumerable<Activity>> GetByLandPropertyIdAsync(Guid landPropertyId)
     {
         return await QueryWithDetails()

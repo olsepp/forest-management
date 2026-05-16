@@ -9,8 +9,13 @@ namespace WebApp.Controllers.Api;
 public class ActivitiesController : ApiControllerBase
 {
     private readonly IActivityService _service;
+    private readonly IActivityExportService _exportService;
 
-    public ActivitiesController(IActivityService service) => _service = service;
+    public ActivitiesController(IActivityService service, IActivityExportService exportService)
+    {
+        _service = service;
+        _exportService = exportService;
+    }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ActivityListDto>>> GetAll()
@@ -57,6 +62,32 @@ public class ActivitiesController : ApiControllerBase
 
         var items = await _service.GetByCompanyIdAndUserIdAsync(companyId, userId);
         return Ok(items);
+    }
+
+    [HttpGet("by-company/{companyId:guid}/date-range")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<IEnumerable<ActivityDto>>> GetByCompanyAndDateRange(
+        Guid companyId, 
+        [FromQuery] DateTime startDate, 
+        [FromQuery] DateTime endDate)
+    {
+        if (!TryGetCurrentUserId(out var userId))
+            return Unauthorized();
+
+        var items = await _service.GetByCompanyIdAndDateRangeAsync(companyId, startDate, endDate);
+        return Ok(items);
+    }
+
+    [HttpGet("by-company/{companyId:guid}/export")]
+    [Authorize(Roles = "Admin")]
+    public async Task<FileContentResult> ExportByCompanyAndDateRange(
+        Guid companyId,
+        [FromQuery] DateTime startDate,
+        [FromQuery] DateTime endDate)
+    {
+        var excelBytes = await _exportService.ExportActivitiesToExcelAsync(companyId, startDate, endDate);
+        var fileName = $"activities_{companyId}_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}.xlsx";
+        return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
     [HttpGet("by-property/{landPropertyId:guid}")]

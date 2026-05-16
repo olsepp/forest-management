@@ -48,6 +48,12 @@ public class ActivityService : IActivityService
         return activities.Select(MapToDto);
     }
 
+    public async Task<IEnumerable<ActivityDto>> GetByCompanyIdAndDateRangeAsync(Guid companyId, DateTime startDate, DateTime endDate)
+    {
+        var activities = await _uow.Activities.GetByCompanyIdAndDateRangeAsync(companyId, startDate, endDate);
+        return activities.Select(MapToDto);
+    }
+
     public async Task<IEnumerable<ActivityDto>> GetByLandPropertyIdAsync(Guid landPropertyId)
     {
         var activities = await _uow.Activities.GetByLandPropertyIdAsync(landPropertyId);

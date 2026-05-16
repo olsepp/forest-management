@@ -45,6 +45,11 @@ public interface IActivityRepository : IRepository<Activity>
     Task<IEnumerable<Activity>> GetByCompanyIdAndUserIdAsync(Guid companyId, Guid userId);
 
     /// <summary>
+    /// Get activities by company ID and date range
+    /// </summary>
+    Task<IEnumerable<Activity>> GetByCompanyIdAndDateRangeAsync(Guid companyId, DateTime startDate, DateTime endDate);
+
+    /// <summary>
     /// Get activities by land property ID
     /// </summary>
     Task<IEnumerable<Activity>> GetByLandPropertyIdAsync(Guid landPropertyId);
