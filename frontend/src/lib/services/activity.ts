@@ -120,19 +120,32 @@ class ActivityService {
 		return response.json();
 	}
 
-	async getByCompanyDateRange(companyId: string, startDate: string, endDate: string, fetchFn?: FetchFn): Promise<ActivityDto[]> {
+	async getByCompanyFiltered(
+		companyId: string,
+		startDate?: string,
+		endDate?: string,
+		activityTypeId?: string,
+		userId?: string,
+		fetchFn?: FetchFn
+	): Promise<ActivityDto[]> {
 		const token = await authService.ensureValidToken();
-		const response = await (fetchFn ?? fetch)(
-			`${API_BASE_URL}/api/activities/by-company/${companyId}/date-range?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`,
-			{
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`
-				}
+		const params = new URLSearchParams();
+		if (startDate) params.append('startDate', startDate);
+		if (endDate) params.append('endDate', endDate);
+		if (activityTypeId) params.append('activityTypeId', activityTypeId);
+		if (userId) params.append('userId', userId);
+		const queryString = params.toString();
+		const url = queryString
+			? `${API_BASE_URL}/api/activities/by-company/${companyId}/filtered?${queryString}`
+			: `${API_BASE_URL}/api/activities/by-company/${companyId}/filtered`;
+		const response = await (fetchFn ?? fetch)(url, {
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token}`
 			}
-		);
+		});
 		if (!response.ok) {
-			throw new Error(`Failed to fetch activities by date range: ${response.statusText}`);
+			throw new Error(`Failed to fetch filtered activities: ${response.statusText}`);
 		}
 		return response.json();
 	}
@@ -194,19 +207,28 @@ class ActivityService {
 		return response.json();
 	}
 
-	async exportToExcel(companyId: string, startDate: string, endDate: string): Promise<Blob> {
+	async exportToExcel(
+		companyId: string,
+		startDate?: string,
+		endDate?: string,
+		activityTypeId?: string,
+		userId?: string
+	): Promise<Blob> {
 		const token = await authService.ensureValidToken();
 		const params = new URLSearchParams();
-		params.append('startDate', startDate);
-		params.append('endDate', endDate);
-		const response = await fetch(
-			`${API_BASE_URL}/api/activities/by-company/${companyId}/export?${params.toString()}`,
-			{
-				headers: {
-					Authorization: `Bearer ${token}`
-				}
+		if (startDate) params.append('startDate', startDate);
+		if (endDate) params.append('endDate', endDate);
+		if (activityTypeId) params.append('activityTypeId', activityTypeId);
+		if (userId) params.append('userId', userId);
+		const queryString = params.toString();
+		const url = queryString
+			? `${API_BASE_URL}/api/activities/by-company/${companyId}/export?${queryString}`
+			: `${API_BASE_URL}/api/activities/by-company/${companyId}/export`;
+		const response = await fetch(url, {
+			headers: {
+				Authorization: `Bearer ${token}`
 			}
-		);
+		});
 		if (!response.ok) {
 			throw new Error(`Failed to export activities: ${response.statusText}`);
 		}

@@ -6,12 +6,14 @@
 	import DatePicker from '$lib/components/DatePicker.svelte';
 	import { activityService } from '$lib/services/activity';
 
-	let { data }: { data: { activities: ActivityDto[] } } = $props();
+	let { data }: { data: { activities: ActivityDto[]; activityTypes: { id: string; activityTypeName: string }[]; users: { id: string; firstName?: string; lastName?: string }[] } } = $props();
 
 	const companyId = $derived($page.params.CompanyId ?? '');
 	let expandedActivityIds = $state<string[]>([]);
 	let formStartDate = $state('');
 	let formEndDate = $state('');
+	let formActivityTypeId = $state('');
+	let formUserId = $state('');
 	let isExporting = $state(false);
 
 	// Initialize form values from URL params
@@ -20,6 +22,12 @@
 	}
 	if ($page.url.searchParams.get('endDate')) {
 		formEndDate = $page.url.searchParams.get('endDate')?.split('T')[0] ?? '';
+	}
+	if ($page.url.searchParams.get('activityTypeId')) {
+		formActivityTypeId = $page.url.searchParams.get('activityTypeId') ?? '';
+	}
+	if ($page.url.searchParams.get('userId')) {
+		formUserId = $page.url.searchParams.get('userId') ?? '';
 	}
 
 	function isExpanded(activityId: string): boolean {
@@ -83,27 +91,45 @@
 		} else {
 			url.searchParams.delete('endDate');
 		}
+		if (formActivityTypeId) {
+			url.searchParams.set('activityTypeId', formActivityTypeId);
+		} else {
+			url.searchParams.delete('activityTypeId');
+		}
+		if (formUserId) {
+			url.searchParams.set('userId', formUserId);
+		} else {
+			url.searchParams.delete('userId');
+		}
 		goto(url.toString(), { replaceState: true });
 	}
 
 	function handleReset() {
 		formStartDate = '';
 		formEndDate = '';
+		formActivityTypeId = '';
+		formUserId = '';
 		goto($page.url.pathname, { replaceState: true });
 	}
 
-	const canExport = $derived(formStartDate !== '' && formEndDate !== '');
-
 	async function handleExport() {
-		if (!canExport || !companyId) return;
+		if (!companyId) return;
 
 		isExporting = true;
 		try {
-			const blob = await activityService.exportToExcel(companyId, formStartDate, formEndDate);
+			const blob = await activityService.exportToExcel(
+				companyId,
+				formStartDate || undefined,
+				formEndDate ? `${formEndDate}T23:59:59.999` : undefined,
+				formActivityTypeId || undefined,
+				formUserId || undefined
+			);
 			const url = window.URL.createObjectURL(blob);
 			const a = document.createElement('a');
 			a.href = url;
-			a.download = `tegevused_${formStartDate}_${formEndDate}.xlsx`;
+			const now = new Date();
+			const dateStr = now.toISOString().split('T')[0];
+			a.download = `tegevused_${dateStr}.xlsx`;
 			document.body.appendChild(a);
 			a.click();
 			a.remove();
@@ -129,9 +155,21 @@
 		bind:value={formEndDate}
 		placeholder="Vali lõppkuupäev"
 	/>
+	<select bind:value={formActivityTypeId} class="filter-select">
+		<option value="">Kõik tegevuse tüübid</option>
+		{#each data.activityTypes as type}
+			<option value={type.id}>{type.activityTypeName}</option>
+		{/each}
+	</select>
+	<select bind:value={formUserId} class="filter-select">
+		<option value="">Kõik kasutajad</option>
+		{#each data.users as user}
+			<option value={user.id}>{user.firstName} {user.lastName}</option>
+		{/each}
+	</select>
 	<button class="filter-btn" onclick={handleSubmit}>Filtreeri</button>
 	<button class="reset-btn" onclick={handleReset}>Lähtesta</button>
-	<button class="export-btn" disabled={!canExport || isExporting} onclick={handleExport}>
+	<button class="export-btn" disabled={isExporting} onclick={handleExport}>
 		{isExporting ? 'Laen...' : 'Lae alla'}
 	</button>
 </div>
@@ -382,6 +420,15 @@
 	}
 
 	.date-range-filter :global(.date-picker-container) {
+		min-width: 200px;
+	}
+
+	.filter-select {
+		padding: 0.75rem;
+		border: 1px solid #e2e8f0;
+		border-radius: 0.5rem;
+		font-size: 1rem;
+		background: #fff;
 		min-width: 200px;
 	}
 
