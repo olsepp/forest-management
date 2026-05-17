@@ -91,13 +91,31 @@ public class ActivityRepository : Repository<Activity>, IActivityRepository
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Activity>> GetByCompanyIdAndDateRangeAsync(Guid companyId, DateTime startDate, DateTime endDate)
+    public async Task<IEnumerable<Activity>> GetByCompanyFilteredAsync(
+        Guid companyId,
+        DateTime? startDate = null,
+        DateTime? endDate = null,
+        Guid? activityTypeId = null,
+        Guid? userId = null)
     {
-        return await QueryWithDetails()
+        var query = QueryWithDetails()
             .Where(a =>
                 (a.Cadaster != null && a.Cadaster.LandProperty.CompanyId == companyId) ||
-                (a.ForestStand != null && a.ForestStand.Cadaster.LandProperty.CompanyId == companyId))
-            .Where(a => a.Date >= startDate && a.Date <= endDate)
+                (a.ForestStand != null && a.ForestStand.Cadaster.LandProperty.CompanyId == companyId));
+
+        if (startDate.HasValue)
+            query = query.Where(a => a.Date >= startDate.Value);
+
+        if (endDate.HasValue)
+            query = query.Where(a => a.Date <= endDate.Value);
+
+        if (activityTypeId.HasValue)
+            query = query.Where(a => a.ActivityTypeId == activityTypeId.Value);
+
+        if (userId.HasValue)
+            query = query.Where(a => a.UserId == userId.Value);
+
+        return await query
             .OrderByDescending(a => a.Date)
             .ToListAsync();
     }

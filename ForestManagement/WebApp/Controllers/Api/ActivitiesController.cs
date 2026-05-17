@@ -64,28 +64,32 @@ public class ActivitiesController : ApiControllerBase
         return Ok(items);
     }
 
-    [HttpGet("by-company/{companyId:guid}/date-range")]
+    [HttpGet("by-company/{companyId:guid}/filtered")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<IEnumerable<ActivityDto>>> GetByCompanyAndDateRange(
+    public async Task<ActionResult<IEnumerable<ActivityDto>>> GetByCompanyFiltered(
         Guid companyId, 
-        [FromQuery] DateTime startDate, 
-        [FromQuery] DateTime endDate)
+        [FromQuery] DateTime? startDate = null, 
+        [FromQuery] DateTime? endDate = null,
+        [FromQuery] Guid? activityTypeId = null,
+        [FromQuery] Guid? userId = null)
     {
-        if (!TryGetCurrentUserId(out var userId))
+        if (!TryGetCurrentUserId(out var currentUserId))
             return Unauthorized();
 
-        var items = await _service.GetByCompanyIdAndDateRangeAsync(companyId, startDate, endDate);
+        var items = await _service.GetByCompanyFilteredAsync(companyId, startDate, endDate, activityTypeId, userId);
         return Ok(items);
     }
 
     [HttpGet("by-company/{companyId:guid}/export")]
     [Authorize(Roles = "Admin")]
-    public async Task<FileContentResult> ExportByCompanyAndDateRange(
+    public async Task<FileContentResult> ExportByCompanyFiltered(
         Guid companyId,
-        [FromQuery] DateTime startDate,
-        [FromQuery] DateTime endDate)
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null,
+        [FromQuery] Guid? activityTypeId = null,
+        [FromQuery] Guid? userId = null)
     {
-        var excelBytes = await _exportService.ExportActivitiesToExcelAsync(companyId, startDate, endDate);
+        var excelBytes = await _exportService.ExportActivitiesToExcelAsync(companyId, startDate, endDate, activityTypeId, userId);
         var fileName = $"activities_{companyId}_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}.xlsx";
         return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }

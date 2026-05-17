@@ -45,9 +45,14 @@ public interface IActivityRepository : IRepository<Activity>
     Task<IEnumerable<Activity>> GetByCompanyIdAndUserIdAsync(Guid companyId, Guid userId);
 
     /// <summary>
-    /// Get activities by company ID and date range
+    /// Get activities by company ID with optional filters for date range, activity type, and user
     /// </summary>
-    Task<IEnumerable<Activity>> GetByCompanyIdAndDateRangeAsync(Guid companyId, DateTime startDate, DateTime endDate);
+    Task<IEnumerable<Activity>> GetByCompanyFilteredAsync(
+        Guid companyId,
+        DateTime? startDate = null,
+        DateTime? endDate = null,
+        Guid? activityTypeId = null,
+        Guid? userId = null);
 
     /// <summary>
     /// Get activities by land property ID

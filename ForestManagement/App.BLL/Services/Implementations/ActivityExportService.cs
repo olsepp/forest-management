@@ -13,10 +13,15 @@ public class ActivityExportService : IActivityExportService
         _uow = uow;
     }
 
-    public async Task<byte[]> ExportActivitiesToExcelAsync(Guid companyId, DateTime startDate, DateTime endDate)
+    public async Task<byte[]> ExportActivitiesToExcelAsync(
+        Guid companyId,
+        DateTime? startDate = null,
+        DateTime? endDate = null,
+        Guid? activityTypeId = null,
+        Guid? userId = null)
     {
-        // Reuse the same repository method that the date range endpoint uses
-        var activities = await _uow.Activities.GetByCompanyIdAndDateRangeAsync(companyId, startDate, endDate);
+        // Reuse the same repository method that the filtered endpoint uses
+        var activities = await _uow.Activities.GetByCompanyFilteredAsync(companyId, startDate, endDate, activityTypeId, userId);
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Activities");
@@ -31,7 +36,7 @@ public class ActivityExportService : IActivityExportService
             "Ühik",
             "Kasutaja",
             "Eraldis",
-            "Cadaster",
+            "Kataster",
             "Taotluse staatus"
         };
 
@@ -52,7 +57,7 @@ public class ActivityExportService : IActivityExportService
             worksheet.Cell(row, 3).Value = activity.Description ?? string.Empty;
             worksheet.Cell(row, 4).Value = (double)activity.Quantity;
             worksheet.Cell(row, 5).Value = activity.Unit ?? string.Empty;
-            worksheet.Cell(row, 6).Value = activity.User?.UserName ?? string.Empty;
+            worksheet.Cell(row, 6).Value = activity.User?.FirstName + " " + activity.User?.LastName ?? string.Empty;
             worksheet.Cell(row, 7).Value = activity.ForestStand != null ? activity.ForestStand.Number.ToString() : string.Empty;
             worksheet.Cell(row, 8).Value = activity.Cadaster?.CadastralNumber 
                 ?? activity.ForestStand?.Cadaster?.CadastralNumber 

@@ -10,7 +10,12 @@ public interface IActivityService
     Task<IEnumerable<ActivityListDto>> GetByCadasterIdAsync(Guid cadasterId);
     Task<IEnumerable<ActivityDto>> GetByCompanyIdAsync(Guid companyId);
     Task<IEnumerable<ActivityDto>> GetByCompanyIdAndUserIdAsync(Guid companyId, Guid userId);
-    Task<IEnumerable<ActivityDto>> GetByCompanyIdAndDateRangeAsync(Guid companyId, DateTime startDate, DateTime endDate);
+    Task<IEnumerable<ActivityDto>> GetByCompanyFilteredAsync(
+        Guid companyId,
+        DateTime? startDate = null,
+        DateTime? endDate = null,
+        Guid? activityTypeId = null,
+        Guid? userId = null);
     Task<IEnumerable<ActivityDto>> GetByLandPropertyIdAsync(Guid landPropertyId);
     Task<IEnumerable<ActivityDto>> GetByLandPropertyIdAndUserIdAsync(Guid landPropertyId, Guid userId);
     Task<IEnumerable<RecentActivityDto>> GetRecentAsync(int count);
