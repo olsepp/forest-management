@@ -21,6 +21,7 @@ public class CadasterDto
     public decimal? VolumeGrowth { get; set; }
     public Guid LandPropertyId { get; set; }
     public string LandPropertyName { get; set; } = string.Empty;
+    public bool LandPropertyIsFsc { get; set; }
     
     // Related forest stands
     public ICollection<ForestStandListDto> ForestStands { get; set; } = new List<ForestStandListDto>();

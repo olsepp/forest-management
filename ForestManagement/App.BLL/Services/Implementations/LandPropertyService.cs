@@ -52,6 +52,7 @@ public class LandPropertyService : ILandPropertyService
             Village = dto.Village,
             BoughtDate = dto.BoughtDate,
             SoldDate = dto.SoldDate,
+            IsFsc = dto.IsFsc,
             Status = status,
             CompanyId = dto.CompanyId
         };
@@ -85,6 +86,7 @@ public class LandPropertyService : ILandPropertyService
         entity.Village = dto.Village;
         entity.BoughtDate = dto.BoughtDate;
         entity.SoldDate = dto.SoldDate;
+        entity.IsFsc = dto.IsFsc;
         entity.Status = status;
         entity.CompanyId = dto.CompanyId;
 
@@ -116,6 +118,7 @@ public class LandPropertyService : ILandPropertyService
         Village = p.Village,
         BoughtDate = p.BoughtDate,
         SoldDate = p.SoldDate,
+        IsFsc = p.IsFsc,
         Status = p.Status,
         CompanyId = p.CompanyId,
         CompanyName = p.Company?.Name ?? string.Empty,
@@ -138,6 +141,7 @@ public class LandPropertyService : ILandPropertyService
         Village = p.Village,
         BoughtDate = p.BoughtDate,
         SoldDate = p.SoldDate,
+        IsFsc = p.IsFsc,
         Status = p.Status,
         CompanyId = p.CompanyId,
         CompanyName = p.Company?.Name ?? string.Empty,

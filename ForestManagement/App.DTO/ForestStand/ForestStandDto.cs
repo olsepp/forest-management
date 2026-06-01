@@ -18,6 +18,7 @@ public class ForestStandDto
     public string CadasterCadastralNumber { get; set; } = string.Empty;
     public Guid LandPropertyId { get; set; }
     public string LandPropertyName { get; set; } = string.Empty;
+    public bool LandPropertyIsFsc { get; set; }
     
     // Recent activities (5 most recent)
     public ICollection<RecentActivityDto> RecentActivities { get; set; } = new List<RecentActivityDto>();

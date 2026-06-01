@@ -96,6 +96,7 @@ public class ForestStandService : IForestStandService
         CadasterCadastralNumber = fs.Cadaster?.CadastralNumber ?? string.Empty,
         LandPropertyId = fs.Cadaster?.LandPropertyId ?? Guid.Empty,
         LandPropertyName = fs.Cadaster?.LandProperty?.Name ?? string.Empty,
+        LandPropertyIsFsc = fs.Cadaster?.LandProperty?.IsFsc ?? false,
         RecentActivities = fs.Activities?.Take(5).Select(a => new RecentActivityDto
         {
             Id = a.Id,

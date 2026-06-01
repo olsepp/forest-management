@@ -15,6 +15,7 @@ public class ForestStandRepository : Repository<ForestStand>, IForestStandReposi
     {
         return await _dbSet
             .Include(f => f.Cadaster)
+                .ThenInclude(c => c.LandProperty)
             .FirstOrDefaultAsync(f => f.Id == id);
     }
 

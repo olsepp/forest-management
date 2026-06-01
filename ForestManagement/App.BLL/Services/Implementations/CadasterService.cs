@@ -106,6 +106,7 @@ public class CadasterService : ICadasterService
         VolumeGrowth = c.VolumeGrowth,
         LandPropertyId = c.LandPropertyId,
         LandPropertyName = c.LandProperty?.Name ?? string.Empty,
+        LandPropertyIsFsc = c.LandProperty?.IsFsc ?? false,
         ForestStands = c.ForestStands?.Select(fs => new App.DTO.ForestStand.ForestStandListDto
         {
             Id = fs.Id,

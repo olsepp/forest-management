@@ -31,6 +31,8 @@ public class LandPropertyCreateDto
 
     public DateTime? SoldDate { get; set; }
 
+    public bool IsFsc { get; set; }
+
     [Required]
     public EPropertyStatus Status { get; set; }
 

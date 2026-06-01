@@ -58,6 +58,11 @@ public class LandPropertyRepository : Repository<LandProperty>, ILandPropertyRep
             query = query.Where(l => l.Status == searchParams.Status);
         }
 
+        if (searchParams.IsFsc.HasValue)
+        {
+            query = query.Where(l => l.IsFsc == searchParams.IsFsc);
+        }
+
         return await query
             .Include(l => l.Company)
             .Include(l => l.Cadasters)

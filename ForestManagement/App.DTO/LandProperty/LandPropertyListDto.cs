@@ -15,6 +15,7 @@ public class LandPropertyListDto
     public string Village { get; set; } = string.Empty;
     public DateTime? BoughtDate { get; set; }
     public DateTime? SoldDate { get; set; }
+    public bool IsFsc { get; set; }
     public EPropertyStatus Status { get; set; }
     public Guid CompanyId { get; set; }
     public string CompanyName { get; set; } = string.Empty;

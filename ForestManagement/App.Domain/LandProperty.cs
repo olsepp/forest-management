@@ -20,6 +20,8 @@ public class LandProperty :  BaseEntity
     public DateTime? BoughtDate { get; set; }
     
     public DateTime? SoldDate { get; set; }
+
+    public bool IsFsc { get; set; }
     
     // Foreign keys
     public EPropertyStatus Status { get; set; }

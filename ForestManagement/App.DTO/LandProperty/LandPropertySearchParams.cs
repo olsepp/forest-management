@@ -31,4 +31,9 @@ public class LandPropertySearchParams
     /// If true, only return ACTIVE properties (used for employee view)
     /// </summary>
     public bool ActiveOnly { get; set; }
+
+    /// <summary>
+    /// Filter by FSC certification status
+    /// </summary>
+    public bool? IsFsc { get; set; }
 }
