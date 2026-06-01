@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
+	import FscBadge from '$lib/components/shared/FscBadge.svelte';
 	import type {
 		LandPropertyListDto,
 		PropertyCadasterLinkDto
@@ -12,6 +13,7 @@
 	let searchQuery = $state('');
 	let selectedCounty = $state('');
 	let countyDropdownOpen = $state(false);
+	let showFscOnly = $state(false);
 	const companyId = $derived($page.params.CompanyId ?? '');
 	let properties = $derived(data.properties);
 	let normalizedSearchQuery = $derived(searchQuery.trim().toLowerCase());
@@ -27,8 +29,9 @@
 			const matchesSearch =
 				!normalizedSearchQuery || propertyMatchesSearch(property, normalizedSearchQuery);
 			const matchesCounty = !selectedCounty || property.county === selectedCounty;
+			const matchesFsc = !showFscOnly || property.isFsc === true;
 
-			return matchesSearch && matchesCounty;
+			return matchesSearch && matchesCounty && matchesFsc;
 		});
 	});
 
@@ -189,6 +192,18 @@
 				>Tühjenda maakond</button
 			>
 		{/if}
+		<button
+			type="button"
+			class="fsc-filter"
+			class:active={showFscOnly}
+			aria-pressed={showFscOnly}
+			onclick={() => (showFscOnly = !showFscOnly)}
+		>
+			<span class="switch-track">
+				<span class="switch-knob"></span>
+			</span>
+			<span>Ainult FSC kinnistud</span>
+		</button>
 	</div>
 
 	{#if filteredProperties.length === 0}
@@ -202,6 +217,7 @@
 						<th>Registrinumber</th>
 						<th>Maakond</th>
 						<th>Olek</th>
+						<th>FSC</th>
 						<th>Katastrinumbrid</th>
 						<th class="actions"></th>
 					</tr>
@@ -224,6 +240,7 @@
 									>{statusLabel(property.status)}</span
 								>
 							</td>
+							<td><FscBadge isFsc={property.isFsc} /></td>
 							<td>
 								{#if tableCadasters(property).length === 0}
 									—
@@ -270,7 +287,7 @@
 
 						{#if isExpanded(property.id)}
 							<tr class="details-row">
-								<td colspan="6">
+								<td colspan="7">
 									<div class="details-actions">
 										<a
 											href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
@@ -286,6 +303,7 @@
 										<p><strong>Ostukuupäev:</strong> {formatDate(property.boughtDate ?? null)}</p>
 										<p><strong>Müügikuupäev:</strong> {formatDate(property.soldDate ?? null)}</p>
 										<p><strong>Ettevõte:</strong> {property.companyName || '—'}</p>
+										<p><strong>FSC:</strong> <FscBadge isFsc={property.isFsc} /></p>
 									</div>
 
 									<h4>Katastrid</h4>
@@ -585,5 +603,46 @@
 	ul {
 		margin: 0.25rem 0 0;
 		padding-left: 1.2rem;
+	}
+
+	.fsc-filter {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		white-space: nowrap;
+		cursor: pointer;
+	}
+
+	.switch-track {
+		position: relative;
+		display: inline-block;
+		width: 2.4rem;
+		height: 1.35rem;
+		border-radius: 9999px;
+		background: #cad6cf;
+		border: 1px solid #96b1a4;
+		transition: background 0.2s ease, border-color 0.2s ease;
+		flex-shrink: 0;
+	}
+
+	.fsc-filter.active .switch-track {
+		background: #1f5a42;
+		border-color: #174834;
+	}
+
+	.switch-knob {
+		position: absolute;
+		top: 0.125rem;
+		left: 0.125rem;
+		width: 1rem;
+		height: 1rem;
+		border-radius: 50%;
+		background: #ffffff;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+		transition: transform 0.2s ease;
+	}
+
+	.fsc-filter.active .switch-knob {
+		transform: translateX(1.05rem);
 	}
 </style>

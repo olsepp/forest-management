@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
+	import FscBadge from '$lib/components/shared/FscBadge.svelte';
 	import type {
 		LandPropertyListDto,
 		PropertyCadasterLinkDto
@@ -202,6 +203,7 @@
 						<th>Registrinumber</th>
 						<th>Maakond</th>
 						<th>Olek</th>
+						<th>FSC</th>
 						<th>Katastrinumbrid</th>
 						<th class="actions"></th>
 					</tr>
@@ -224,6 +226,7 @@
 									>{statusLabel(property.status)}</span
 								>
 							</td>
+							<td><FscBadge isFsc={property.isFsc} /></td>
 							<td>
 								{#if tableCadasters(property).length === 0}
 									—
@@ -270,7 +273,7 @@
 
 						{#if isExpanded(property.id)}
 							<tr class="details-row">
-								<td colspan="6">
+								<td colspan="7">
 									<div class="details-actions">
 										<a
 											href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
@@ -286,6 +289,7 @@
 										<p><strong>Ostukuupäev:</strong> {formatDate(property.boughtDate ?? null)}</p>
 										<p><strong>Müügikuupäev:</strong> {formatDate(property.soldDate ?? null)}</p>
 										<p><strong>Ettevõte:</strong> {property.companyName || '—'}</p>
+										<p><strong>FSC:</strong> <FscBadge isFsc={property.isFsc} /></p>
 									</div>
 
 									<h4>Katastrid</h4>

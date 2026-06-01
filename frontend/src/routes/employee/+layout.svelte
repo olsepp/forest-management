@@ -143,7 +143,14 @@
 			<h1 class="employee-title">{employeeDisplayName}</h1>
 		</div>
 
-		<button type="button" onclick={handleSignOut} class="employee-signout">Logi välja</button>
+		<button type="button" onclick={handleSignOut} class="employee-signout">
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+				<polyline points="16 17 21 12 16 7"/>
+				<line x1="21" y1="12" x2="9" y2="12"/>
+			</svg>
+			<span>Logi välja</span>
+		</button>
 	</header>
 
 	{#if navItems.length > 0}
@@ -344,16 +351,18 @@
 	}
 
 	.employee-signout {
-		border: 1px solid #d8e6de;
-		background: #f4f8f6;
-		color: #1b3a2d;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45rem;
+		border: 1px solid rgba(255, 255, 255, 0.25);
+		background: rgba(255, 255, 255, 0.12);
+		color: #f2faf6;
 		border-radius: var(--employee-radius-md);
-		min-height: 2.9rem;
-		padding: 0.68rem 0.92rem;
-		font-size: 0.86rem;
+		min-height: 2.6rem;
+		padding: 0.5rem 0.85rem;
+		font-size: 0.84rem;
 		font-weight: 600;
 		line-height: 1;
-		text-align: center;
 		cursor: pointer;
 		transition:
 			background-color 0.18s ease,
@@ -362,9 +371,15 @@
 			box-shadow 0.18s ease;
 	}
 
+	.employee-signout svg {
+		width: 1rem;
+		height: 1rem;
+		stroke-width: 2;
+	}
+
 	.employee-signout:hover {
-		background: #eaf2ee;
-		border-color: #b8d0c3;
+		background: rgba(255, 255, 255, 0.22);
+		border-color: rgba(255, 255, 255, 0.4);
 	}
 
 	.employee-signout:active {

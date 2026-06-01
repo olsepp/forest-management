@@ -49,6 +49,7 @@ class LandPropertyService {
 			searchName?: string;
 			county?: string;
 			city?: string;
+			isFsc?: boolean;
 		},
 		fetchFn?: FetchFn
 	): Promise<LandPropertyDto[]> {
@@ -59,6 +60,7 @@ class LandPropertyService {
 		if (params.searchName) queryParams.append('SearchName', params.searchName);
 		if (params.county) queryParams.append('County', params.county);
 		if (params.city) queryParams.append('City', params.city);
+		if (params.isFsc !== undefined) queryParams.append('isFsc', String(params.isFsc));
 		const response = await (fetchFn ?? fetch)(
 			`${API_BASE_URL}/api/landproperties/search?${queryParams.toString()}`,
 			{

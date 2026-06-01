@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
 	import CadastralMap from '$lib/components/shared/CadastralMap.svelte';
+	import FscBadge from '$lib/components/shared/FscBadge.svelte';
 	import type {
 		CadasterDto,
 		ForestStandListDto,
@@ -75,7 +76,7 @@
 		</div>
 
 		<div class="meta-grid">
-			<p><strong>Kinnistu:</strong> {cadaster.landPropertyName || '—'}</p>
+			<p><strong>Kinnistu:</strong> {cadaster.landPropertyName || '—'} <FscBadge isFsc={cadaster.landPropertyIsFsc} /></p>
 			<p><strong>Metsamaa pindala:</strong> {formatNumber(cadaster.forestArea)}</p>
 			<p><strong>Haritav maa:</strong> {formatNumber(cadaster.arableArea)}</p>
 			<p><strong>Rohumaa:</strong> {formatNumber(cadaster.grasslandArea)}</p>

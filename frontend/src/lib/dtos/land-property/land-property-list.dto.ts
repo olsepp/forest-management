@@ -12,6 +12,7 @@ export type LandPropertyListDto = {
 	companyName?: string;
 	cadastralNumbers?: string[];
 	cadasters?: PropertyCadasterLinkDto[];
+	isFsc?: boolean;
 };
 
 export type PropertyCadasterLinkDto = {

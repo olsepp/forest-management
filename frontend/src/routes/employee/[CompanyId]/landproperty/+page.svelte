@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
+	import FscBadge from '$lib/components/shared/FscBadge.svelte';
 	import type {
 		LandPropertyListDto,
 		PropertyCadasterLinkDto
@@ -111,9 +112,12 @@
 						<h2>
 							{property.name}
 						</h2>
-						<span class={`status ${statusClass(property.status)}`}
-							>{statusText(property.status)}</span
-						>
+						<div class="badges">
+							<FscBadge isFsc={property.isFsc} />
+							<span class={`status ${statusClass(property.status)}`}
+								>{statusText(property.status)}</span
+							>
+						</div>
 					</div>
 					<div class="property-meta" aria-label="Kinnistu detailid">
 						<p class="meta-item">
@@ -273,6 +277,12 @@
 		justify-content: space-between;
 		align-items: center;
 		gap: 0.5rem;
+	}
+
+	.card-top .badges {
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
 	}
 
 	.property-meta {

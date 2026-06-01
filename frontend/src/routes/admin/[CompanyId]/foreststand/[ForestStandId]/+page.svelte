@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
 	import { forestStandService } from '$lib/services/forest-stand';
+	import FscBadge from '$lib/components/shared/FscBadge.svelte';
 	import type {
 		ActivityListDto,
 		ForestStandDto,
@@ -180,23 +181,24 @@
 					</a>
 				</p>
 			</article>
-			<article class="meta-card">
-				<p class="meta-label">Kinnistu</p>
-				<p class="meta-value">
-					{#if linkedLandPropertyId && linkedLandPropertyName}
-						<a
-							href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
-								CompanyId: companyId,
-								LandPropertyId: linkedLandPropertyId
-							})}
-						>
-							{linkedLandPropertyName}
-						</a>
-					{:else}
-						—
-					{/if}
-				</p>
-			</article>
+		<article class="meta-card">
+			<p class="meta-label">Kinnistu</p>
+			<p class="meta-value">
+				{#if linkedLandPropertyId && linkedLandPropertyName}
+					<a
+						href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
+							CompanyId: companyId,
+							LandPropertyId: linkedLandPropertyId
+						})}
+					>
+						{linkedLandPropertyName}
+					</a>
+					<FscBadge isFsc={forestStand.landPropertyIsFsc} />
+				{:else}
+					—
+				{/if}
+			</p>
+		</article>
 		</section>
 
 		<form id="foreststand-form" onsubmit={saveForestStand} class="detail-form">

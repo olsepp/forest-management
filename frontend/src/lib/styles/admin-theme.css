@@ -74,19 +74,30 @@
 }
 
 .admin-signout {
-	border: 1px solid var(--admin-border) !important;
-	color: var(--admin-text) !important;
-	background: var(--admin-surface-muted) !important;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+	border: 1px solid var(--admin-border);
+	color: var(--admin-text);
+	background: var(--admin-surface-muted);
 	border-radius: 0.6rem;
 	padding: 0.5rem 0.85rem;
 	font-size: 0.875rem;
 	font-weight: 600;
-	transition: background 0.18s ease;
+	transition: all 0.18s ease;
 	cursor: pointer;
+	box-shadow: 0 2px 6px rgba(20, 41, 31, 0.06);
+}
+
+.admin-signout svg {
+	width: 1rem;
+	height: 1rem;
 }
 
 .admin-signout:hover {
-	background: #edf3ef !important;
+	background: #edf3ef;
+	border-color: #bfcfc6;
+	box-shadow: 0 4px 12px rgba(20, 41, 31, 0.1);
 }
 
 .admin-sidebar {

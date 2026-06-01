@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
 	import { landPropertyService } from '$lib/services/land-property';
+	import FscBadge from '$lib/components/shared/FscBadge.svelte';
 	import type {
 		PropertyStatus,
 		LandPropertyDto,
@@ -39,7 +40,8 @@
 		village: '',
 		boughtDate: '',
 		soldDate: '',
-		status: 'Inactive' as PropertyStatus
+		status: 'Inactive' as PropertyStatus,
+		isFsc: false
 	});
 
 	function normalizeStatus(status: LandPropertyDto['status']): PropertyStatus {
@@ -89,7 +91,8 @@
 			village: detail.village ?? '',
 			boughtDate: toDateInputValue(detail.boughtDate),
 			soldDate: toDateInputValue(detail.soldDate),
-			status: normalizeStatus(detail.status)
+			status: normalizeStatus(detail.status),
+			isFsc: !!detail.isFsc
 		};
 	}
 
@@ -151,7 +154,8 @@
 			boughtDate: toApiDateTime(form.boughtDate),
 			soldDate: toApiDateTime(form.soldDate),
 			status: toApiStatus(form.status),
-			companyId: property.companyId
+			companyId: property.companyId,
+			isFsc: form.isFsc
 		};
 
 		isSaving = true;
@@ -233,6 +237,10 @@
 				<p class="meta-label">Küla</p>
 				<p class="meta-value">{property.village}</p>
 			</article>
+			<article class="meta-card">
+				<p class="meta-label">FSC 100%</p>
+				<p class="meta-value">{property.isFsc ? 'Jah' : 'Ei'}</p>
+			</article>
 		</section>
 
 		<form id="property-form" onsubmit={saveProperty} class="detail-form">
@@ -249,6 +257,16 @@
 							</select>
 							<div class="select-arrow"></div>
 						</div>
+					</label>
+					<label class="switch-field">
+						<span>FSC sertifikaat</span>
+						<label class="switch-label">
+							<input type="checkbox" bind:checked={form.isFsc} disabled={!isEditMode} />
+							<span class="switch-track">
+								<span class="switch-thumb"></span>
+							</span>
+							<span class="switch-text">{form.isFsc ? 'Aktiivne' : 'Puudub'}</span>
+						</label>
 					</label>
 					<label>
 						<span>Ostukuupäev</span>
@@ -575,5 +593,77 @@
 
 	.success {
 		background: #e6f7ea;
+	}
+
+	.switch-field {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+	}
+
+	.switch-field .switch-label {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		cursor: pointer;
+	}
+
+	.switch-field input[type='checkbox'] {
+		position: absolute;
+		opacity: 0;
+		width: 0;
+		height: 0;
+	}
+
+	.switch-track {
+		position: relative;
+		display: inline-block;
+		width: 2.8rem;
+		height: 1.5rem;
+		border-radius: 1rem;
+		background: #c5d0ca;
+		transition: background 0.2s ease;
+		flex-shrink: 0;
+	}
+
+	.switch-thumb {
+		position: absolute;
+		top: 0.15rem;
+		left: 0.15rem;
+		width: 1.2rem;
+		height: 1.2rem;
+		border-radius: 50%;
+		background: #ffffff;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+		transition: transform 0.2s ease;
+	}
+
+	.switch-field input:checked + .switch-track {
+		background: #1f5a42;
+	}
+
+	.switch-field input:checked + .switch-track .switch-thumb {
+		transform: translateX(1.3rem);
+	}
+
+	.switch-field input:disabled + .switch-track {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.switch-field input:focus-visible + .switch-track {
+		box-shadow: 0 0 0 3px rgba(31, 90, 66, 0.2);
+	}
+
+	.switch-text {
+		font-size: 0.9rem;
+		font-weight: 600;
+		color: #56645d;
+		transition: color 0.2s ease;
+	}
+
+	.switch-field input:checked ~ .switch-text,
+	.switch-label:has(input:checked) .switch-text {
+		color: #1f5a42;
 	}
 </style>

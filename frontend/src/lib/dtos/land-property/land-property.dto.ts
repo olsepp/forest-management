@@ -19,6 +19,7 @@ export type LandPropertyDto = {
 	cadasters?: PropertyCadasterLinkDto[];
 	companyId: string;
 	companyName: string;
+	isFsc?: boolean;
 };
 
 export type LandPropertyUpdateDto = {
@@ -32,6 +33,7 @@ export type LandPropertyUpdateDto = {
 	soldDate: string | null;
 	status: PropertyStatus | number;
 	companyId: string;
+	isFsc?: boolean;
 };
 
 export type CadasterLinkDto = {

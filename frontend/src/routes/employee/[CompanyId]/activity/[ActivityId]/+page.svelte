@@ -21,7 +21,6 @@
 	let isUnauthorized = $derived(activity && !isOwnActivity(activity));
 
 	let companyId = $derived($page.params.CompanyId ?? '');
-	let activityId = $derived($page.params.ActivityId ?? '');
 	let currentUserId = $derived($user?.userId ?? '');
 	let currentUsername = $derived(($user?.username ?? '').trim().toLowerCase());
 

@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { cadasterService } from '$lib/services/cadaster';
 	import CadastralMap from '$lib/components/shared/CadastralMap.svelte';
+	import FscBadge from '$lib/components/shared/FscBadge.svelte';
 import type {
 		ForestStandListDto,
 		CadasterDto,
@@ -183,17 +184,18 @@ import type {
 				<p class="meta-label">Katastri ID</p>
 				<p class="meta-value mono">{cadaster.id}</p>
 			</article>
-			<article class="meta-card">
-				<p class="meta-label">Kinnistu</p>
-				<p class="meta-value">
-					<a
-						href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
-							CompanyId: companyId,
-							LandPropertyId: cadaster.landPropertyId
-						})}>{cadaster.landPropertyName}</a
-					>
-				</p>
-			</article>
+		<article class="meta-card">
+			<p class="meta-label">Kinnistu</p>
+			<p class="meta-value">
+				<a
+					href={resolve('/admin/[CompanyId]/landproperty/[LandPropertyId]', {
+						CompanyId: companyId,
+						LandPropertyId: cadaster.landPropertyId
+					})}>{cadaster.landPropertyName}</a
+				>
+				<FscBadge isFsc={cadaster.landPropertyIsFsc} />
+			</p>
+		</article>
 
 			<article class="meta-card">
 				<p class="meta-label">Katastrinumber</p>

@@ -170,7 +170,7 @@
 	<button class="filter-btn" onclick={handleSubmit}>Filtreeri</button>
 	<button class="reset-btn" onclick={handleReset}>Lähtesta</button>
 	<button class="export-btn" disabled={isExporting} onclick={handleExport}>
-		{isExporting ? 'Laen...' : 'Lae alla'}
+		{isExporting ? 'Oota...' : 'Lae alla'}
 	</button>
 </div>
 

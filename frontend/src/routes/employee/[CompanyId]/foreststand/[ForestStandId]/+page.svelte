@@ -4,6 +4,7 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
 	import { user } from '$lib/stores/auth.store';
+	import FscBadge from '$lib/components/shared/FscBadge.svelte';
 	import { onMount } from 'svelte';
 	import type {
 		ForestStandDto,
@@ -23,6 +24,7 @@
 	let activities = $state<ActivityListDto[]>([]);
 	let linkedLandPropertyId = $state('');
 	let linkedLandPropertyName = $state('');
+	let linkedLandPropertyIsFsc = $state(false);
 
 	let companyId = $derived($page.params.CompanyId ?? '');
 	let forestStandId = $derived($page.params.ForestStandId ?? '');
@@ -55,6 +57,7 @@
 		const cadaster = (await response.json()) as CadasterSummaryDto;
 		linkedLandPropertyId = cadaster.landPropertyId ?? linkedLandPropertyId;
 		linkedLandPropertyName = cadaster.landPropertyName ?? linkedLandPropertyName;
+		linkedLandPropertyIsFsc = !!cadaster.landPropertyIsFsc;
 	}
 
 	async function loadData() {
@@ -97,6 +100,7 @@
 			forestStand = (await forestStandResponse.json()) as ForestStandDto;
 			linkedLandPropertyId = forestStand.landPropertyId ?? '';
 			linkedLandPropertyName = forestStand.landPropertyName ?? '';
+			linkedLandPropertyIsFsc = !!forestStand.landPropertyIsFsc;
 
 			if ((!linkedLandPropertyId || !linkedLandPropertyName) && forestStand.cadasterId) {
 				await loadCadasterPropertyFallback(forestStand.cadasterId, token);
@@ -183,6 +187,7 @@
 							LandPropertyId: linkedLandPropertyId
 						})}>{linkedLandPropertyName}</a
 					>
+					<FscBadge isFsc={linkedLandPropertyIsFsc} />
 				{:else}
 					—
 				{/if}

@@ -47,6 +47,7 @@ export type CadasterDto = {
 	volumeGrowth: number;
 	landPropertyId: string;
 	landPropertyName: string;
+	landPropertyIsFsc: boolean;
 	forestStands: ForestStandListDto[];
 	recentActivities: RecentActivityDto[];
 };

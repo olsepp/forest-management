@@ -36,6 +36,7 @@ export type ForestStandDto = {
 	cadasterCadastralNumber: string;
 	landPropertyId: string;
 	landPropertyName: string;
+	landPropertyIsFsc: boolean;
 	recentActivities: RecentActivityDto[];
 };
 
@@ -64,4 +65,5 @@ export type CadasterSummaryDto = {
 	cadastralNumber: string;
 	landPropertyId: string;
 	landPropertyName: string;
+	landPropertyIsFsc: boolean;
 };

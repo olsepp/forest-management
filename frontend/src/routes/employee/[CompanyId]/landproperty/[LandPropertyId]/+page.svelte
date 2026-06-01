@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
+	import FscBadge from '$lib/components/shared/FscBadge.svelte';
 	import type {
 		LandPropertyDto,
 		CadasterLinkDto,
@@ -50,7 +51,10 @@
 	</p>
 
 	<section class="employee-card summary">
-		<h1 class="employee-page-title">{property.name}</h1>
+		<div class="summary-header">
+			<h1 class="employee-page-title">{property.name}</h1>
+			<FscBadge isFsc={property.isFsc} />
+		</div>
 		<div class="meta-grid">
 			<p><strong>Registrinumber:</strong> {property.registrationNumber}</p>
 			<p><strong>Maakond:</strong> {property.county || '—'}</p>
@@ -121,6 +125,13 @@
 <style>
 	.summary {
 		margin-bottom: 0.75rem;
+	}
+
+	.summary-header {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		margin-bottom: 1rem;
 	}
 
 	.employee-page-title {
