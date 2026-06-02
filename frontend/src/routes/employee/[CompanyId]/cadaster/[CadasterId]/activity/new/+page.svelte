@@ -1,8 +1,9 @@
-<script lang="ts">
-	import { page } from '$app/stores';
-	import { resolve } from '$app/paths';
-	import ActivityForm from '$lib/components/employee/ActivityForm.svelte';
-	import type { CadasterSummaryDto } from '$lib/dtos/forest-stand/forest-stand.dto';
+	<script lang="ts">
+		import { page } from '$app/stores';
+		import { resolve } from '$app/paths';
+		import ActivityForm from '$lib/components/employee/ActivityForm.svelte';
+		import FscBadge from '$lib/components/shared/FscBadge.svelte';
+		import type { CadasterSummaryDto } from '$lib/dtos/forest-stand/forest-stand.dto';
 
 	let { data }: { data: { cadaster: CadasterSummaryDto } } = $props();
 	let cadaster = $derived(data.cadaster);
@@ -38,6 +39,7 @@
 					LandPropertyId: cadaster.landPropertyId
 				})}>{cadaster.landPropertyName}</a
 			>
+			<FscBadge isFsc={cadaster.landPropertyIsFsc} />
 		</p>
 	</section>
 

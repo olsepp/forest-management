@@ -8,7 +8,8 @@ export const load: PageLoad = async ({ params, fetch: fetchFn }) => {
 			id: cadaster.id,
 			cadastralNumber: cadaster.cadastralNumber,
 			landPropertyId: cadaster.landPropertyId,
-			landPropertyName: cadaster.landPropertyName
+			landPropertyName: cadaster.landPropertyName,
+			landPropertyIsFsc: cadaster.landPropertyIsFsc
 		}
 	};
 };

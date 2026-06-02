@@ -1,8 +1,9 @@
-<script lang="ts">
-	import { page } from '$app/stores';
-	import { resolve } from '$app/paths';
-	import ActivityForm from '$lib/components/admin/ActivityForm.svelte';
-	import type { ForestStandSummaryDto } from '$lib/dtos/forest-stand/forest-stand.dto';
+	<script lang="ts">
+		import { page } from '$app/stores';
+		import { resolve } from '$app/paths';
+		import ActivityForm from '$lib/components/admin/ActivityForm.svelte';
+		import FscBadge from '$lib/components/shared/FscBadge.svelte';
+		import type { ForestStandSummaryDto } from '$lib/dtos/forest-stand/forest-stand.dto';
 
 	let { data }: { data: { forestStand: ForestStandSummaryDto } } = $props();
 	let forestStand = $derived(data.forestStand);
@@ -53,6 +54,7 @@
 						LandPropertyId: forestStand.landPropertyId!
 					})}>{forestStand.landPropertyName}</a
 				>
+				<FscBadge isFsc={forestStand.landPropertyIsFsc} />
 			</p>
 		</article>
 	</section>

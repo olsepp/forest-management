@@ -11,6 +11,7 @@ export const load: PageLoad = async ({ params, fetch: fetchFn }) => {
 
 	const landPropertyId = cadaster?.landPropertyId ?? forestStand.landPropertyId;
 	const landPropertyName = cadaster?.landPropertyName ?? forestStand.landPropertyName;
+	const landPropertyIsFsc = cadaster?.landPropertyIsFsc ?? forestStand.landPropertyIsFsc;
 
 	return {
 		forestStand: {
@@ -19,7 +20,8 @@ export const load: PageLoad = async ({ params, fetch: fetchFn }) => {
 			cadasterId: forestStand.cadasterId,
 			cadasterCadastralNumber: forestStand.cadasterCadastralNumber,
 			landPropertyId: landPropertyId,
-			landPropertyName: landPropertyName
+			landPropertyName: landPropertyName,
+			landPropertyIsFsc: landPropertyIsFsc
 		} as ForestStandSummaryDto
 	};
 };

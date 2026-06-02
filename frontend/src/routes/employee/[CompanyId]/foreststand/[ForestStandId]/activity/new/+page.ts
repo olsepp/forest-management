@@ -10,7 +10,8 @@ export const load: PageLoad = async ({ params, fetch: fetchFn }) => {
 			cadasterId: forestStand.cadasterId,
 			cadasterCadastralNumber: forestStand.cadasterCadastralNumber,
 			landPropertyId: forestStand.landPropertyId,
-			landPropertyName: forestStand.landPropertyName
+			landPropertyName: forestStand.landPropertyName,
+			landPropertyIsFsc: forestStand.landPropertyIsFsc
 		}
 	};
 };

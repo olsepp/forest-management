@@ -80,6 +80,7 @@
 
     const res = await fetch(`/api/forest-stands?katastri_nr=${encodeURIComponent(katastriNr)}`);
     if (!res.ok) throw new Error(`Forest stands request failed: ${res.status}`);
+    if (!map) return;
 
     const geojson: GeoJSON.FeatureCollection = await res.json();
     console.info('[CadastralMap] forest stands loaded', {
@@ -129,6 +130,7 @@
 
     const res = await fetch(`/api/cadastral-unit?tunnus=${encodeURIComponent(tun)}`);
     if (!res.ok) throw new Error(`WFS request failed: ${res.status}`);
+    if (!map) return;
 
     const geojson: GeoJSON.FeatureCollection = await res.json();
     console.info('[CadastralMap] cadastral unit loaded', {
@@ -148,6 +150,7 @@
     map!.fitBounds(cadastralLayer.getBounds(), { padding: [40, 40] });
 
     await loadForestStands(L, tun);
+    if (!map) return;
   }
 
   function scheduleRetry(
