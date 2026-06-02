@@ -82,7 +82,7 @@
 </section>
 
 {#if isLoading}
-	<div class="employee-state-block is-loading">Laetakse kinnistu…</div>
+	<div class="employee-state-block is-loading">Laetakse kinnistuid… Halva ühenduse korral võib see veidi aega võtta.</div>
 {:else}
 	<section class="filters employee-card" aria-label="Kinnistute filtrid">
 		<label for="property-search" class="filter-label">Otsi</label>
@@ -107,6 +107,7 @@
 							LandPropertyId: property.id
 						})}
 						aria-label={`Ava kinnistu ${property.name}`}
+						data-sveltekit-preload-data="tap"
 					></a>
 					<div class="card-top">
 						<h2>
@@ -139,11 +140,11 @@
 									{#if cadaster.id}
 										<a
 											class="cadaster-chip"
-											onclick={(event) => event.stopPropagation()}
 											href={resolve('/employee/[CompanyId]/cadaster/[CadasterId]', {
 												CompanyId: companyId,
 												CadasterId: cadaster.id
 											})}
+											data-sveltekit-preload-data="tap"
 										>
 											{cadaster.cadastralNumber}
 										</a>

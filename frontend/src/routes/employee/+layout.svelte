@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page, navigating } from '$app/stores';
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
@@ -11,6 +11,7 @@
 	import { getDefaultRouteForRole } from '$lib/services/auth';
 	import ToastMessage from '$lib/components/shared/ToastMessage.svelte';
 	import { toastStore } from '$lib/stores/toast.store';
+	import TreeSpinner from '$lib/components/shared/TreeSpinner.svelte';
 	import type { UserProfileDto } from '$lib/dtos/user/user.dto';
 
 	type AppRoleRoute = '/' | '/admin' | '/employee' | '/sign-in';
@@ -167,6 +168,7 @@
 						)}
 						class="employee-nav-link"
 						class:is-active={item.isActive}
+						data-sveltekit-preload-data="tap"
 					>
 						<span class="employee-nav-icon" aria-hidden="true">
 							{#if item.icon === 'overview'}
@@ -197,7 +199,7 @@
 						<span>{item.label}</span>
 					</a>
 				{:else}
-					<a href={resolve('/employee')} class="employee-nav-link" class:is-active={item.isActive}>
+					<a href={resolve('/employee')} class="employee-nav-link" class:is-active={item.isActive} data-sveltekit-preload-data="tap">
 						<span class="employee-nav-icon" aria-hidden="true">
 							<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
 								<path
@@ -226,6 +228,12 @@
 		</div>
 	</main>
 
+	{#if $navigating}
+		<div class="employee-nav-overlay" aria-hidden="true">
+			<TreeSpinner size={56} />
+		</div>
+	{/if}
+
 	{#if navItems.length > 0}
 		<nav class="employee-bottom-nav" aria-label="Employee mobile navigation">
 			{#each navItems as item (item.key)}
@@ -240,6 +248,7 @@
 						)}
 						class="employee-tab-link"
 						class:is-active={item.isActive}
+						data-sveltekit-preload-data="tap"
 					>
 						<span class="employee-tab-icon" aria-hidden="true">
 							{#if item.icon === 'overview'}
@@ -270,7 +279,7 @@
 						<span>{item.label}</span>
 					</a>
 				{:else}
-					<a href={resolve('/employee')} class="employee-tab-link" class:is-active={item.isActive}>
+					<a href={resolve('/employee')} class="employee-tab-link" class:is-active={item.isActive} data-sveltekit-preload-data="tap">
 						<span class="employee-tab-icon" aria-hidden="true">
 							<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
 								<path
@@ -464,6 +473,27 @@
 		box-shadow: none;
 	}
 
+	.employee-nav-overlay {
+		position: fixed;
+		inset: 0;
+		z-index: 10000;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(237, 242, 239, 0.95);
+		backdrop-filter: blur(4px);
+		animation: overlay-fade-in 0.15s ease-out;
+	}
+
+	@keyframes overlay-fade-in {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+
 	.employee-bottom-nav {
 		position: fixed;
 		left: 0.55rem;
@@ -626,6 +656,26 @@
 		border-color: #bfd3c8;
 		background: #f1f7f4;
 		color: #24543e;
+		display: flex;
+		align-items: center;
+		gap: 0.65rem;
+	}
+
+	:global(.employee-state-block.is-loading::before) {
+		content: '';
+		flex-shrink: 0;
+		width: 1.25rem;
+		height: 1.25rem;
+		border: 2.5px solid #bfd3c8;
+		border-top-color: #1f5a42;
+		border-radius: 50%;
+		animation: employee-spin 0.7s linear infinite;
+	}
+
+	@keyframes employee-spin {
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	:global(.employee-content :is(button, a, input, select, textarea)) {

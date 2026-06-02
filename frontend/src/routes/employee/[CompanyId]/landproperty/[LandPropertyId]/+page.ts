@@ -1,19 +1,26 @@
 import type { PageLoad } from './$types';
-import { landPropertyService } from '$lib/services/land-property';
-import { cadasterService } from '$lib/services/cadaster';
-import { activityService } from '$lib/services/activity';
+import { ssrSafeApiFetch } from '$lib/utils/api-fetch';
+import type { LandPropertyDto, CadasterLinkDto, ActivityDto } from '$lib/dtos/land-property/land-property.dto';
 
 export const load: PageLoad = async ({ params, fetch: fetchFn }) => {
-	const property = await landPropertyService.getById(params.LandPropertyId, fetchFn);
-	const cadasters = await cadasterService.getByLandProperty(params.LandPropertyId, fetchFn);
-	const activities = await activityService.getByProperty(params.LandPropertyId, fetchFn);
-	const myActivities = (activities ?? [])
-		.filter((a) => Boolean(a?.id))
-		.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+	const property = await ssrSafeApiFetch<LandPropertyDto>(
+		`/api/landproperties/${params.LandPropertyId}`,
+		fetchFn
+	);
+	const cadasters = await ssrSafeApiFetch<CadasterLinkDto[]>(
+		`/api/cadasters/by-land-property/${params.LandPropertyId}`,
+		fetchFn
+	);
+	const rawActivities = await ssrSafeApiFetch<ActivityDto[]>(
+		`/api/activities/by-property/${params.LandPropertyId}`,
+		fetchFn
+	);
 
 	return {
 		property,
-		cadasters,
-		activities: myActivities
+		cadasters: cadasters ?? [],
+		activities: (rawActivities ?? [])
+			.filter((a) => Boolean(a?.id))
+			.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 	};
 };

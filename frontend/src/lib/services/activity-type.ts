@@ -1,43 +1,21 @@
-import { PUBLIC_API_URL } from '$env/static/public';
-import { authService } from './auth';
+import { apiFetch } from '$lib/utils/api-fetch';
 import type {
 	ActivityTypeListDto,
 	ActivityTypeDto
 } from '$lib/dtos/activity-type/activity-type.dto';
 
-const API_BASE_URL = PUBLIC_API_URL;
-
 type FetchFn = typeof window.fetch;
 
 class ActivityTypeService {
 	async getAll(fetchFn?: FetchFn): Promise<ActivityTypeListDto[]> {
-		const token = await authService.ensureValidToken();
-		const response = await (fetchFn ?? fetch)(`${API_BASE_URL}/api/activitytypes`, {
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`
-			}
-		});
-		if (!response.ok) {
-			throw new Error(`Failed to fetch activity types: ${response.statusText}`);
-		}
-		return response.json();
+		return apiFetch('/api/activitytypes', fetchFn);
 	}
 
 	async create(type: unknown): Promise<ActivityTypeDto> {
-		const token = await authService.ensureValidToken();
-		const response = await fetch(`${API_BASE_URL}/api/activitytypes`, {
+		return apiFetch('/api/activitytypes', undefined, {
 			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`
-			},
 			body: JSON.stringify(type)
 		});
-		if (!response.ok) {
-			throw new Error(`Failed to create activity type: ${response.statusText}`);
-		}
-		return response.json();
 	}
 }
 

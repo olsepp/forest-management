@@ -48,7 +48,7 @@
 </section>
 
 {#if isLoading}
-	<div class="employee-state-block is-loading">Laetakse profiili…</div>
+	<div class="employee-state-block is-loading">Laetakse profiili… Halva ühenduse korral võib see veidi aega võtta.</div>
 {:else if !profile}
 	<div class="employee-state-block is-error">Profiil pole saadaval.</div>
 {:else}

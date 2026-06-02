@@ -38,7 +38,7 @@
 </script>
 
 {#if isLoading}
-	<div class="employee-state-block is-loading">Laetakse kinnistut…</div>
+	<div class="employee-state-block is-loading">Laetakse kinnistu andmeid… Halva ühenduse korral võib see veidi aega võtta.</div>
 {:else if property}
 	<p class="employee-back-link">
 		<a
@@ -76,6 +76,7 @@
 							CompanyId: companyId,
 							CadasterId: cadaster.id
 						})}
+						data-sveltekit-preload-data="tap"
 					>
 						{cadaster.cadastralNumber || cadaster.id}
 					</a>
@@ -112,6 +113,7 @@
 								CompanyId: companyId,
 								ActivityId: activity.id
 							})}
+							data-sveltekit-preload-data="tap"
 						>
 							Ava tegevus
 						</a>

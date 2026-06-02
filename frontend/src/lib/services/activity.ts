@@ -1,123 +1,35 @@
-import { PUBLIC_API_URL } from '$env/static/public';
-import { authService } from './auth';
+import { apiFetch } from '$lib/utils/api-fetch';
 import type { ActivityDto, ActivityUpdateDto } from '$lib/dtos/activity/activity.dto';
-
-const API_BASE_URL = PUBLIC_API_URL;
 
 type FetchFn = typeof window.fetch;
 
 class ActivityService {
 	async getAll(fetchFn?: FetchFn): Promise<ActivityDto[]> {
-		const token = await authService.ensureValidToken();
-		const response = await (fetchFn ?? fetch)(`${API_BASE_URL}/api/activities`, {
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`
-			}
-		});
-		if (!response.ok) {
-			throw new Error(`Failed to fetch activities: ${response.statusText}`);
-		}
-		return response.json();
+		return apiFetch('/api/activities', fetchFn);
 	}
 
 	async getById(id: string, fetchFn?: FetchFn): Promise<ActivityDto> {
-		const token = await authService.ensureValidToken();
-		const response = await (fetchFn ?? fetch)(`${API_BASE_URL}/api/activities/${id}`, {
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`
-			}
-		});
-		if (!response.ok) {
-			throw new Error(`Failed to fetch activity: ${response.statusText}`);
-		}
-		return response.json();
+		return apiFetch(`/api/activities/${id}`, fetchFn);
 	}
 
 	async getByCompany(companyId: string, fetchFn?: FetchFn): Promise<ActivityDto[]> {
-		const token = await authService.ensureValidToken();
-		const response = await (fetchFn ?? fetch)(
-			`${API_BASE_URL}/api/activities/by-company/${companyId}`,
-			{
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`
-				}
-			}
-		);
-		if (!response.ok) {
-			throw new Error(`Failed to fetch activities: ${response.statusText}`);
-		}
-		return response.json();
+		return apiFetch(`/api/activities/by-company/${companyId}`, fetchFn);
 	}
 
 	async getMyByCompany(companyId: string, fetchFn?: FetchFn): Promise<ActivityDto[]> {
-		const token = await authService.ensureValidToken();
-		const response = await (fetchFn ?? fetch)(
-			`${API_BASE_URL}/api/activities/by-company/${companyId}/my`,
-			{
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`
-				}
-			}
-		);
-		if (!response.ok) {
-			throw new Error(`Failed to fetch my activities: ${response.statusText}`);
-		}
-		return response.json();
+		return apiFetch(`/api/activities/by-company/${companyId}/my`, fetchFn);
 	}
 
 	async getByCadaster(cadasterId: string, fetchFn?: FetchFn): Promise<ActivityDto[]> {
-		const token = await authService.ensureValidToken();
-		const response = await (fetchFn ?? fetch)(
-			`${API_BASE_URL}/api/activities/by-cadaster/${cadasterId}`,
-			{
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`
-				}
-			}
-		);
-		if (!response.ok) {
-			throw new Error(`Failed to fetch activities: ${response.statusText}`);
-		}
-		return response.json();
+		return apiFetch(`/api/activities/by-cadaster/${cadasterId}`, fetchFn);
 	}
 
 	async getByForestStand(forestStandId: string, fetchFn?: FetchFn): Promise<ActivityDto[]> {
-		const token = await authService.ensureValidToken();
-		const response = await (fetchFn ?? fetch)(
-			`${API_BASE_URL}/api/activities/by-foreststand/${forestStandId}`,
-			{
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`
-				}
-			}
-		);
-		if (!response.ok) {
-			throw new Error(`Failed to fetch activities: ${response.statusText}`);
-		}
-		return response.json();
+		return apiFetch(`/api/activities/by-foreststand/${forestStandId}`, fetchFn);
 	}
 
 	async getByProperty(propertyId: string, fetchFn?: FetchFn): Promise<ActivityDto[]> {
-		const token = await authService.ensureValidToken();
-		const response = await (fetchFn ?? fetch)(
-			`${API_BASE_URL}/api/activities/by-property/${propertyId}`,
-			{
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`
-				}
-			}
-		);
-		if (!response.ok) {
-			throw new Error(`Failed to fetch activities: ${response.statusText}`);
-		}
-		return response.json();
+		return apiFetch(`/api/activities/by-property/${propertyId}`, fetchFn);
 	}
 
 	async getByCompanyFiltered(
@@ -128,26 +40,13 @@ class ActivityService {
 		userId?: string,
 		fetchFn?: FetchFn
 	): Promise<ActivityDto[]> {
-		const token = await authService.ensureValidToken();
 		const params = new URLSearchParams();
 		if (startDate) params.append('startDate', startDate);
 		if (endDate) params.append('endDate', endDate);
 		if (activityTypeId) params.append('activityTypeId', activityTypeId);
 		if (userId) params.append('userId', userId);
-		const queryString = params.toString();
-		const url = queryString
-			? `${API_BASE_URL}/api/activities/by-company/${companyId}/filtered?${queryString}`
-			: `${API_BASE_URL}/api/activities/by-company/${companyId}/filtered`;
-		const response = await (fetchFn ?? fetch)(url, {
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`
-			}
-		});
-		if (!response.ok) {
-			throw new Error(`Failed to fetch filtered activities: ${response.statusText}`);
-		}
-		return response.json();
+		const qs = params.toString();
+		return apiFetch(`/api/activities/by-company/${companyId}/filtered${qs ? `?${qs}` : ''}`, fetchFn);
 	}
 
 	async getRecentByUser(
@@ -156,55 +55,24 @@ class ActivityService {
 		companyId?: string,
 		fetchFn?: FetchFn
 	): Promise<ActivityDto[]> {
-		const token = await authService.ensureValidToken();
-		const queryParams = new URLSearchParams();
-		queryParams.append('count', count.toString());
-		if (companyId) queryParams.append('companyId', companyId);
-		const response = await (fetchFn ?? fetch)(
-			`${API_BASE_URL}/api/activities/by-user/${userId}/recent?${queryParams.toString()}`,
-			{
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`
-				}
-			}
-		);
-		if (!response.ok) {
-			throw new Error(`Failed to fetch recent activities: ${response.statusText}`);
-		}
-		return response.json();
+		const params = new URLSearchParams();
+		params.append('count', String(count));
+		if (companyId) params.append('companyId', companyId);
+		return apiFetch(`/api/activities/by-user/${userId}/recent?${params.toString()}`, fetchFn);
 	}
 
 	async create(activity: unknown): Promise<ActivityDto> {
-		const token = await authService.ensureValidToken();
-		const response = await fetch(`${API_BASE_URL}/api/activities`, {
+		return apiFetch('/api/activities', undefined, {
 			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`
-			},
 			body: JSON.stringify(activity)
 		});
-		if (!response.ok) {
-			throw new Error(`Failed to create activity: ${response.statusText}`);
-		}
-		return response.json();
 	}
 
 	async update(id: string, activity: ActivityUpdateDto): Promise<ActivityDto> {
-		const token = await authService.ensureValidToken();
-		const response = await fetch(`${API_BASE_URL}/api/activities/${id}`, {
+		return apiFetch(`/api/activities/${id}`, undefined, {
 			method: 'PUT',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`
-			},
 			body: JSON.stringify(activity)
 		});
-		if (!response.ok) {
-			throw new Error(`Failed to update activity: ${response.statusText}`);
-		}
-		return response.json();
 	}
 
 	async exportToExcel(
@@ -214,20 +82,19 @@ class ActivityService {
 		activityTypeId?: string,
 		userId?: string
 	): Promise<Blob> {
-		const token = await authService.ensureValidToken();
 		const params = new URLSearchParams();
 		if (startDate) params.append('startDate', startDate);
 		if (endDate) params.append('endDate', endDate);
 		if (activityTypeId) params.append('activityTypeId', activityTypeId);
 		if (userId) params.append('userId', userId);
-		const queryString = params.toString();
-		const url = queryString
-			? `${API_BASE_URL}/api/activities/by-company/${companyId}/export?${queryString}`
-			: `${API_BASE_URL}/api/activities/by-company/${companyId}/export`;
+		const qs = params.toString();
+		const url = qs
+			? `${import.meta.env.PUBLIC_API_URL}/api/activities/by-company/${companyId}/export?${qs}`
+			: `${import.meta.env.PUBLIC_API_URL}/api/activities/by-company/${companyId}/export`;
+		const { authService } = await import('./auth');
+		const token = await authService.ensureValidToken();
 		const response = await fetch(url, {
-			headers: {
-				Authorization: `Bearer ${token}`
-			}
+			headers: { Authorization: `Bearer ${token}` }
 		});
 		if (!response.ok) {
 			throw new Error(`Failed to export activities: ${response.statusText}`);
@@ -236,17 +103,7 @@ class ActivityService {
 	}
 
 	async delete(id: string): Promise<void> {
-		const token = await authService.ensureValidToken();
-		const response = await fetch(`${API_BASE_URL}/api/activities/${id}`, {
-			method: 'DELETE',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`
-			}
-		});
-		if (!response.ok) {
-			throw new Error(`Failed to delete activity: ${response.statusText}`);
-		}
+		await apiFetch(`/api/activities/${id}`, undefined, { method: 'DELETE' });
 	}
 }
 

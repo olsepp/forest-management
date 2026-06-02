@@ -39,7 +39,7 @@
 </section>
 
 {#if isLoading}
-	<div class="employee-state-block is-loading">Laetakse tegevusi…</div>
+	<div class="employee-state-block is-loading">Laetakse tegevusi… Halva ühenduse korral võib see veidi aega võtta.</div>
 {:else if activities.length === 0}
 	<div class="employee-state-block is-empty">Selles ettevõttes ei leitud sinu tegevusi.</div>
 {:else}
@@ -61,6 +61,7 @@
 							CompanyId: companyId,
 							ActivityId: activity.id
 						})}
+						data-sveltekit-preload-data="tap"
 					>
 						Ava tegevus
 					</a>
@@ -96,6 +97,7 @@
 										CompanyId: companyId,
 										ActivityId: activity.id
 									})}
+									data-sveltekit-preload-data="tap"
 								>
 									Ava
 								</a>

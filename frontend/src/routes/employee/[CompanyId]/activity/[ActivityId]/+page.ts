@@ -1,15 +1,19 @@
 import type { PageLoad } from './$types';
-import { activityService } from '$lib/services/activity';
-import { activityTypeService } from '$lib/services/activity-type';
+import { ssrSafeApiFetch } from '$lib/utils/api-fetch';
+import type { ActivityDto, ActivityTypeListDto } from '$lib/dtos/activity/activity.dto';
 
 export const load: PageLoad = async ({ params, fetch: fetchFn }) => {
-	const [activity, activityTypes] = await Promise.all([
-		activityService.getById(params.ActivityId, fetchFn),
-		activityTypeService.getAll(fetchFn)
-	]);
+	const activity = await ssrSafeApiFetch<ActivityDto>(
+		`/api/activities/${params.ActivityId}`,
+		fetchFn
+	);
+	const activityTypes = await ssrSafeApiFetch<ActivityTypeListDto[]>(
+		'/api/activitytypes',
+		fetchFn
+	);
 
 	return {
 		activity,
-		activityTypes
+		activityTypes: activityTypes ?? []
 	};
 };

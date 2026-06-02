@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import CadastralMap from '$lib/components/shared/CadastralMap.svelte';
 	import FscBadge from '$lib/components/shared/FscBadge.svelte';
+	import type { GeoJSON } from 'leaflet';
 	import type {
 		CadasterDto,
 		ForestStandListDto,
@@ -24,6 +25,65 @@
 	let isLoading = $derived(!cadaster);
 
 	let companyId = $derived($page.params.CompanyId ?? '');
+	let showMap = $state(false);
+	let wazeUrl = $state<string | null>(null);
+	let wazeLoading = $state(true);
+
+	$effect(() => {
+		if (!cadaster?.cadastralNumber) {
+			wazeUrl = null;
+			wazeLoading = false;
+			return;
+		}
+
+		wazeLoading = true;
+		let cancelled = false;
+
+		const fetchCoordinates = async () => {
+			try {
+				const res = await fetch(`/api/cadastral-unit?tunnus=${encodeURIComponent(cadaster.cadastralNumber)}`);
+				if (!res.ok) return;
+
+				const geojson = await res.json();
+				if (cancelled) return;
+
+				if (geojson.features?.length) {
+					const feature = geojson.features[0];
+					const geom = feature.geometry;
+					if (geom) {
+						let lat: number | null = null;
+						let lng: number | null = null;
+
+						if (geom.type === 'Polygon') {
+							const coords = (geom as GeoJSON.Polygon).coordinates;
+							if (coords[0]?.[0]) {
+								[lng, lat] = coords[0][0];
+							}
+						} else if (geom.type === 'MultiPolygon') {
+							const coords = (geom as GeoJSON.MultiPolygon).coordinates;
+							if (coords[0]?.[0]?.[0]) {
+								[lng, lat] = coords[0][0][0];
+							}
+						}
+
+						if (lat !== null && lng !== null) {
+							wazeUrl = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
+						}
+					}
+				}
+			} catch {
+				// Silently fail - button stays disabled
+			} finally {
+				if (!cancelled) {
+					wazeLoading = false;
+				}
+			}
+		};
+
+		fetchCoordinates();
+
+		return () => { cancelled = true; };
+	});
 
 	function formatDate(value: string | null): string {
 		if (!value) return '—';
@@ -44,9 +104,9 @@
 </script>
 
 {#if isLoading}
-	<div class="employee-state-block is-loading">Laetakse katastrit…</div>
+	<div class="employee-state-block is-loading">Laetakse katastri andmeid… Halva ühenduse korral võib see veidi aega võtta.</div>
 {:else if cadaster}
-	<p class="back-link">
+	<div class="page-header">
 		<a
 			class="back-link-button"
 			href={resolve('/employee/[CompanyId]/landproperty/[LandPropertyId]', {
@@ -57,7 +117,29 @@
 			<span aria-hidden="true">←</span>
 			<span>Tagasi kinnistu juurde</span>
 		</a>
-	</p>
+		<a
+			class="waze-link"
+			class:disabled={wazeLoading || !wazeUrl}
+			href={wazeUrl || '#'}
+			tabindex={wazeLoading || !wazeUrl ? -1 : 0}
+			aria-disabled={wazeLoading || !wazeUrl}
+			aria-label="Ava katastri asukoht Waze'is"
+			target="_blank"
+			rel="noopener noreferrer"
+		>
+			{#if wazeLoading}
+				<span class="waze-loading-text">Laetakse...</span>
+			{:else}
+				<svg class="waze-icon" viewBox="0 0 108 100" fill="white" xmlns="http://www.w3.org/2000/svg">
+					<path fill="none" d="M58.9 83.8H49c-1.1-5.5-6-9.7-11.8-9.7-4.3 0-8 2.2-10.2 5.5v.1c-3.6-1.8-6.9-4.3-9.7-7.2-3.4-3.4-5.3-6.5-6.1-8.5 2.2-.5 4.2-1.7 5.8-3.4 2.1-2.2 3.2-5.2 3.2-8.2v-7.2c0-8.5 2.8-16.9 8.1-23.6 7.5-9.6 18.6-15 30.6-15 10.3 0 20 4 27.3 11.3 7.3 7.3 11.3 17 11.3 27.3s-4 20-11.3 27.3a38.84 38.84 0 0 1-27.3 11.3z"></path>
+					<path d="M102.3 45.1c0-11.6-4.5-22.5-12.7-30.7A43.88 43.88 0 0 0 58.9 1.7c-13.3 0-25.7 6-34.2 16.7-6.1 7.7-9.3 17.2-9.3 27v7c0 3.6-2.5 7-7.5 7.3-1.2.1-2.2.9-2.2 2.1-.2 3.3 3.3 9.3 8.1 14.1 3.3 3.4 7.2 6.1 11.4 8.2a12.08 12.08 0 0 0 11.9 14.2c5.9 0 10.7-4.1 11.8-9.6H59c1.3 6.8 8.4 11.5 16 8.9 6.6-2.2 9.5-9.7 7.1-15.8 2.6-1.7 5.1-3.7 7.4-5.9a43.2 43.2 0 0 0 12.8-30.8zM58.9 83.8H49c-1.1-5.5-6-9.7-11.8-9.7-4.3 0-8 2.2-10.2 5.5v.1c-3.6-1.8-6.9-4.3-9.7-7.2-3.4-3.4-5.3-6.5-6.1-8.5 2.2-.5 4.2-1.7 5.8-3.4 2.1-2.2 3.2-5.2 3.2-8.2v-7.2c0-8.5 2.8-16.9 8.1-23.6 7.5-9.6 18.6-15 30.6-15 10.3 0 20 4 27.3 11.3 7.3 7.3 11.3 17 11.3 27.3s-4 20-11.3 27.3a38.84 38.84 0 0 1-27.3 11.3z"></path>
+					<circle cx="78.2" cy="35.5" r="4.8"></circle>
+					<circle cx="49.2" cy="35.5" r="4.8"></circle>
+					<path d="M50.7 51.3c-.4-.8-1.3-1.4-2.2-1.4a2.4 2.4 0 0 0-2.2 3.4c3.1 6.5 9.7 11.1 17.5 11.1s14.4-4.5 17.5-11.1c.7-1.6-.4-3.4-2.2-3.4H79c-.9 0-1.7.5-2.1 1.4-2.3 4.9-7.3 8.3-13.1 8.3S53 56.2 50.7 51.3z"></path>
+				</svg>
+			{/if}
+		</a>
+	</div>
 
 	<section class="employee-card summary">
 		<div class="summary-head">
@@ -104,6 +186,7 @@
 							ForestStandId: stand.id
 						})}
 						aria-label={`Ava eraldis ${stand.number}`}
+						data-sveltekit-preload-data="tap"
 					>
 						#{stand.number}
 					</a>
@@ -135,6 +218,7 @@
 								CompanyId: companyId,
 								ActivityId: activity.id
 							})}
+							data-sveltekit-preload-data="tap"
 						>
 							Ava tegevus
 						</a>
@@ -154,13 +238,24 @@
 	</section>
 
 	<section class="employee-card">
-		<h2>Katastriüksus kaardil</h2>
-		<CadastralMap tunnus={cadaster.cadastralNumber} />
+		<div class="section-head">
+			<h2>Katastriüksus kaardil</h2>
+			<button type="button" class="map-toggle-btn" onclick={() => (showMap = !showMap)}>
+				{showMap ? 'Peida kaart' : 'Näita kaarti'}
+			</button>
+		</div>
+		{#if showMap}
+			<CadastralMap tunnus={cadaster.cadastralNumber} />
+		{/if}
 	</section>
 {/if}
 
 <style>
-	.back-link {
+	.page-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.7rem;
 		margin: 0 0 0.9rem;
 	}
 
@@ -185,6 +280,55 @@
 		border-color: #afc6bb;
 	}
 
+	.waze-link {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 3rem;
+		min-width: 3rem;
+		padding: 0.6rem 0.85rem;
+		border: 1px solid #1f5a42;
+		border-radius: 0.85rem;
+		background: linear-gradient(180deg, #2a6b4f 0%, #1f5a42 100%);
+		box-shadow: 0 6px 16px rgba(15, 42, 31, 0.22);
+		cursor: pointer;
+	}
+
+	.waze-link:hover {
+		background: linear-gradient(180deg, #2f7657 0%, #245f46 100%);
+		border-color: #184736;
+	}
+
+	.waze-link:active {
+		transform: translateY(1px);
+		box-shadow: 0 3px 10px rgba(15, 42, 31, 0.2);
+	}
+
+	.waze-icon {
+		width: 1.5rem;
+		height: 1.5rem;
+	}
+
+	.waze-loading-text {
+		font-size: 0.85rem;
+		font-weight: 700;
+		color: #f3fbf7;
+	}
+
+	.waze-link.disabled {
+		background: linear-gradient(180deg, #9ca3af 0%, #6b7280 100%);
+		border-color: #9ca3af;
+		box-shadow: none;
+		cursor: not-allowed;
+		pointer-events: none;
+	}
+
+	.waze-link.disabled:hover {
+		background: linear-gradient(180deg, #9ca3af 0%, #6b7280 100%);
+		border-color: #9ca3af;
+		transform: none;
+	}
+
 	.summary {
 		margin-bottom: 0.75rem;
 	}
@@ -195,6 +339,29 @@
 		justify-content: space-between;
 		gap: 0.7rem;
 		margin-bottom: 0.65rem;
+	}
+
+	.map-toggle-btn {
+		min-height: 2.6rem;
+		padding: 0.45rem 0.85rem;
+		border: 1px solid #1f5a42;
+		border-radius: 0.82rem;
+		background: linear-gradient(180deg, #2a6b4f 0%, #1f5a42 100%);
+		box-shadow: 0 6px 16px rgba(15, 42, 31, 0.22);
+		color: #f3fbf7;
+		font-size: 0.88rem;
+		font-weight: 700;
+		cursor: pointer;
+	}
+
+	.map-toggle-btn:hover {
+		background: linear-gradient(180deg, #2f7657 0%, #245f46 100%);
+		border-color: #184736;
+	}
+
+	.map-toggle-btn:active {
+		transform: translateY(1px);
+		box-shadow: 0 3px 10px rgba(15, 42, 31, 0.2);
 	}
 
 	.summary-head {
@@ -342,6 +509,11 @@
 	}
 
 	@media (max-width: 420px) {
+		.page-header {
+			flex-direction: column;
+			align-items: stretch;
+		}
+
 		.section-head {
 			flex-direction: column;
 			align-items: stretch;

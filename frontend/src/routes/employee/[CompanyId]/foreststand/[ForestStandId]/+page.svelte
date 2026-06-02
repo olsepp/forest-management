@@ -1,34 +1,37 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { authService } from '$lib/services/auth';
 	import { user } from '$lib/stores/auth.store';
 	import FscBadge from '$lib/components/shared/FscBadge.svelte';
-	import { onMount } from 'svelte';
 	import type {
 		ForestStandDto,
 		ActivityListDto
 	} from '$lib/dtos/forest-stand/forest-stand.dto';
-	import type { CadasterSummaryDto } from '$lib/dtos/forest-stand/forest-stand.dto';
 
+	let {
+		data
+	}: {
+		data: {
+			forestStand: ForestStandDto | null;
+			activities: ActivityListDto[];
+		};
+	} = $props();
 
+	let forestStand = $derived(data.forestStand);
+	/**
+	 * Activities are filtered client-side to only show the current
+	 * employee's entries, then sorted most-recent-first.
+	 */
+	let currentUsername = $derived(($user?.username ?? '').trim().toLowerCase());
+	let activities = $derived(
+		(data.activities ?? [])
+			.filter((item) => (item.userName ?? '').trim().toLowerCase() === currentUsername)
+			.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+	);
 
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
-
-	let isLoading = $state(true);
-	let errorMessage = $state('');
-	let isUnauthorized = $state(false);
-
-	let forestStand = $state<ForestStandDto | null>(null);
-	let activities = $state<ActivityListDto[]>([]);
-	let linkedLandPropertyId = $state('');
-	let linkedLandPropertyName = $state('');
-	let linkedLandPropertyIsFsc = $state(false);
+	let isLoading = $derived(!forestStand);
 
 	let companyId = $derived($page.params.CompanyId ?? '');
-	let forestStandId = $derived($page.params.ForestStandId ?? '');
-	let currentUsername = $derived(($user?.username ?? '').trim().toLowerCase());
 
 	function formatDate(value: string | null): string {
 		if (!value) return '—';
@@ -46,97 +49,10 @@
 		const quantity = Number.isFinite(activity.quantity) ? String(activity.quantity) : '—';
 		return activity.unit ? `${quantity} ${activity.unit}` : quantity;
 	}
-
-	async function loadCadasterPropertyFallback(cadasterId: string, token: string): Promise<void> {
-		const response = await fetch(`${apiBaseUrl}/api/cadasters/${cadasterId}`, {
-			headers: { Authorization: `Bearer ${token}` }
-		});
-
-		if (!response.ok) return;
-
-		const cadaster = (await response.json()) as CadasterSummaryDto;
-		linkedLandPropertyId = cadaster.landPropertyId ?? linkedLandPropertyId;
-		linkedLandPropertyName = cadaster.landPropertyName ?? linkedLandPropertyName;
-		linkedLandPropertyIsFsc = !!cadaster.landPropertyIsFsc;
-	}
-
-	async function loadData() {
-		if (!companyId || !forestStandId) {
-			errorMessage = 'Marsruudi parameetrid puuduvad.';
-			isLoading = false;
-			return;
-		}
-
-		try {
-			errorMessage = '';
-			isUnauthorized = false;
-			isLoading = true;
-
-			const token = await authService.ensureValidToken();
-
-			const [forestStandResponse, activityResponse] = await Promise.all([
-				fetch(`${apiBaseUrl}/api/foreststands/${forestStandId}`, {
-					headers: { Authorization: `Bearer ${token}` }
-				}),
-				fetch(`${apiBaseUrl}/api/activities/by-foreststand/${forestStandId}`, {
-					headers: { Authorization: `Bearer ${token}` }
-				})
-			]);
-
-			if (!forestStandResponse.ok) {
-				if (forestStandResponse.status === 401) {
-					isUnauthorized = true;
-					errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
-					return;
-				}
-
-				errorMessage =
-					forestStandResponse.status === 404
-						? 'Eraldist ei leitud.'
-						: 'Eraldise laadimine ebaõnnestus.';
-				return;
-			}
-
-			forestStand = (await forestStandResponse.json()) as ForestStandDto;
-			linkedLandPropertyId = forestStand.landPropertyId ?? '';
-			linkedLandPropertyName = forestStand.landPropertyName ?? '';
-			linkedLandPropertyIsFsc = !!forestStand.landPropertyIsFsc;
-
-			if ((!linkedLandPropertyId || !linkedLandPropertyName) && forestStand.cadasterId) {
-				await loadCadasterPropertyFallback(forestStand.cadasterId, token);
-			}
-
-			if (activityResponse.status === 401) {
-				isUnauthorized = true;
-				errorMessage = 'Ligipääs puudub. Logige uuesti sisse.';
-				activities = [];
-				return;
-			}
-
-			activities = activityResponse.ok
-				? (((await activityResponse.json()) as ActivityListDto[]) ?? [])
-						.filter((item) => (item.userName ?? '').trim().toLowerCase() === currentUsername)
-						.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-				: [];
-		} catch {
-			errorMessage = 'Eraldise laadimine ebaõnnestus.';
-		} finally {
-			isLoading = false;
-		}
-	}
-
-	onMount(loadData);
 </script>
 
 {#if isLoading}
-	<div class="employee-state-block is-loading">Laetakse eraldise detaile…</div>
-{:else if errorMessage && !forestStand}
-	<div class="employee-state-block is-error">
-		{errorMessage}
-		{#if isUnauthorized}
-			<span class="inline-note">Teie sessioon võib olla aegunud.</span>
-		{/if}
-	</div>
+	<div class="employee-state-block is-loading">Laetakse eraldise andmeid… Halva ühenduse korral võib see veidi aega võtta.</div>
 {:else if forestStand}
 	<p class="back-link">
 		<a
@@ -154,7 +70,6 @@
 	<section class="employee-card summary">
 		<div class="summary-head">
 			<div>
-				
 				<h1>Eraldis #{forestStand.number}</h1>
 			</div>
 			<a
@@ -180,14 +95,14 @@
 			</p>
 			<p>
 				<strong>Kinnistu:</strong>
-				{#if linkedLandPropertyId && linkedLandPropertyName}
+				{#if forestStand.landPropertyId && forestStand.landPropertyName}
 					<a
 						href={resolve('/employee/[CompanyId]/landproperty/[LandPropertyId]', {
 							CompanyId: companyId,
-							LandPropertyId: linkedLandPropertyId
-						})}>{linkedLandPropertyName}</a
+							LandPropertyId: forestStand.landPropertyId
+						})}>{forestStand.landPropertyName}</a
 					>
-					<FscBadge isFsc={linkedLandPropertyIsFsc} />
+					<FscBadge isFsc={forestStand.landPropertyIsFsc} />
 				{:else}
 					—
 				{/if}
@@ -232,6 +147,7 @@
 								CompanyId: companyId,
 								ActivityId: activity.id
 							})}
+							data-sveltekit-preload-data="tap"
 						>
 							Ava tegevus
 						</a>
@@ -263,6 +179,7 @@
 											CompanyId: companyId,
 											ActivityId: activity.id
 										})}
+										data-sveltekit-preload-data="tap"
 									>
 										Ava
 									</a>
@@ -274,10 +191,6 @@
 			</div>
 		{/if}
 	</section>
-
-	{#if errorMessage}
-		<div class="employee-state-block is-error">{errorMessage}</div>
-	{/if}
 {/if}
 
 <style>
@@ -344,12 +257,6 @@
 		margin: 0;
 		font-size: 1.05rem;
 		color: #1f2937;
-	}
-
-	.inline-note {
-		display: block;
-		margin-top: 0.35rem;
-		font-size: 0.88rem;
 	}
 
 	.log-activity-link {

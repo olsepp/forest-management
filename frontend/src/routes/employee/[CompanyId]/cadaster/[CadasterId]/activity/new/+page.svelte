@@ -4,8 +4,9 @@
 		import ActivityForm from '$lib/components/employee/ActivityForm.svelte';
 		import FscBadge from '$lib/components/shared/FscBadge.svelte';
 		import type { CadasterSummaryDto } from '$lib/dtos/forest-stand/forest-stand.dto';
+		import type { ActivityTypeListDto } from '$lib/dtos/activity-type/activity-type.dto';
 
-	let { data }: { data: { cadaster: CadasterSummaryDto } } = $props();
+	let { data }: { data: { cadaster: CadasterSummaryDto; activityTypes: ActivityTypeListDto[] } } = $props();
 	let cadaster = $derived(data.cadaster);
 	let isLoading = $derived(!cadaster);
 
@@ -27,7 +28,7 @@
 </p>
 
 {#if isLoading}
-	<div class="employee-state-block is-loading">Laetakse katastrit…</div>
+	<div class="employee-state-block is-loading">Laetakse katastri andmeid… Halva ühenduse korral võib see veidi aega võtta.</div>
 {:else if cadaster}
 	<section class="employee-card summary">
 		<p><strong>Katastritunnus:</strong> {cadaster.cadastralNumber}</p>
@@ -51,6 +52,7 @@
 		cancelHref={`/employee/${companyId}/cadaster/${cadaster.id}`}
 		redirectHref={`/employee/${companyId}/cadaster/${cadaster.id}`}
 		submitLabel="Logi tegevus"
+		preloadedActivityTypes={data.activityTypes}
 	/>
 {/if}
 

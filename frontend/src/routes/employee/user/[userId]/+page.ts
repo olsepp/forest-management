@@ -1,8 +1,8 @@
 import type { PageLoad } from './$types';
-import { userService } from '$lib/services/user';
+import { ssrSafeApiFetch } from '$lib/utils/api-fetch';
+import type { UserProfileDto } from '$lib/dtos/user/user.dto';
 
 export const load: PageLoad = async ({ fetch: fetchFn }) => {
-	return {
-		profile: await userService.getProfile(fetchFn)
-	};
+	const profile = await ssrSafeApiFetch<UserProfileDto>('/api/users/profile', fetchFn);
+	return { profile };
 };

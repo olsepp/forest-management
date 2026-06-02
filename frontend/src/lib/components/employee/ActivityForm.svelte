@@ -22,6 +22,7 @@
 		cancelHref?: string;
 		redirectHref?: string;
 		submitLabel?: string;
+		preloadedActivityTypes?: ActivityTypeListDto[];
 	};
 
 	let {
@@ -33,14 +34,15 @@
 		cadasterOptions = [],
 		cancelHref = '',
 		redirectHref = '',
-		submitLabel = 'Logi tegevus'
+		submitLabel = 'Logi tegevus',
+		preloadedActivityTypes
 	}: Props = $props();
 
 	let isSubmitting = $state(false);
-	let isLoadingActivityTypes = $state(true);
+	let isLoadingActivityTypes = $state(!preloadedActivityTypes);
 	let errorMessage = $state('');
 
-	let activityTypes = $state<ActivityTypeListDto[]>([]);
+	let activityTypes = $state<ActivityTypeListDto[]>(preloadedActivityTypes ?? []);
 
 	let description = $state('');
 	let quantity = $state('');
@@ -132,6 +134,13 @@
 	onMount(() => {
 		if (cadasterId) {
 			selectedCadasterId = cadasterId;
+		}
+
+		// Skip client-side fetch if types were preloaded by the page load function.
+		if (preloadedActivityTypes) {
+			isLoadingActivityTypes = false;
+			activityTypeId = preloadedActivityTypes[0]?.id ?? '';
+			return;
 		}
 
 		loadActivityTypes();

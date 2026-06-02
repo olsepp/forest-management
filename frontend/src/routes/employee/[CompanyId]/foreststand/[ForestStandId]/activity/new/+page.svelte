@@ -4,8 +4,9 @@
 		import ActivityForm from '$lib/components/employee/ActivityForm.svelte';
 		import FscBadge from '$lib/components/shared/FscBadge.svelte';
 		import type { ForestStandSummaryDto } from '$lib/dtos/forest-stand/forest-stand.dto';
+		import type { ActivityTypeListDto } from '$lib/dtos/activity-type/activity-type.dto';
 
-	let { data }: { data: { forestStand: ForestStandSummaryDto } } = $props();
+	let { data }: { data: { forestStand: ForestStandSummaryDto; activityTypes: ActivityTypeListDto[] } } = $props();
 	let forestStand = $derived(data.forestStand);
 	let isLoading = $derived(!forestStand);
 
@@ -27,7 +28,7 @@
 </p>
 
 {#if isLoading}
-	<div class="employee-state-block is-loading">Laetakse eraldist…</div>
+	<div class="employee-state-block is-loading">Laetakse eraldise andmeid… Halva ühenduse korral võib see veidi aega võtta.</div>
 {:else if forestStand}
 	<section class="employee-card summary">
 		<p><strong>Eraldis:</strong> Eraldis {forestStand.number}</p>
@@ -63,6 +64,7 @@
 		cancelHref={`/employee/${companyId}/foreststand/${forestStand.id}`}
 		redirectHref={`/employee/${companyId}/foreststand/${forestStand.id}`}
 		submitLabel="Logi tegevus"
+		preloadedActivityTypes={data.activityTypes}
 	/>
 {/if}
 

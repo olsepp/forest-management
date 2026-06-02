@@ -1,41 +1,18 @@
-import { PUBLIC_API_URL } from '$env/static/public';
-import { authService } from './auth';
+import { apiFetch } from '$lib/utils/api-fetch';
 import type {
 	LandPropertyDto,
 	LandPropertyUpdateDto
 } from '$lib/dtos/land-property/land-property.dto';
 
-const API_BASE_URL = PUBLIC_API_URL;
-
 type FetchFn = typeof window.fetch;
 
 class LandPropertyService {
 	async getAll(fetchFn?: FetchFn): Promise<LandPropertyDto[]> {
-		const token = await authService.ensureValidToken();
-		const response = await (fetchFn ?? fetch)(`${API_BASE_URL}/api/landproperties`, {
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`
-			}
-		});
-		if (!response.ok) {
-			throw new Error(`Failed to fetch land properties: ${response.statusText}`);
-		}
-		return response.json();
+		return apiFetch('/api/landproperties', fetchFn);
 	}
 
 	async getById(id: string, fetchFn?: FetchFn): Promise<LandPropertyDto> {
-		const token = await authService.ensureValidToken();
-		const response = await (fetchFn ?? fetch)(`${API_BASE_URL}/api/landproperties/${id}`, {
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`
-			}
-		});
-		if (!response.ok) {
-			throw new Error(`Failed to fetch land property: ${response.statusText}`);
-		}
-		return response.json();
+		return apiFetch(`/api/landproperties/${id}`, fetchFn);
 	}
 
 	async getByCompany(companyId: string, fetchFn?: FetchFn): Promise<LandPropertyDto[]> {
@@ -53,7 +30,6 @@ class LandPropertyService {
 		},
 		fetchFn?: FetchFn
 	): Promise<LandPropertyDto[]> {
-		const token = await authService.ensureValidToken();
 		const queryParams = new URLSearchParams();
 		if (params.companyId) queryParams.append('companyId', params.companyId);
 		if (params.status) queryParams.append('Status', params.status);
@@ -61,51 +37,21 @@ class LandPropertyService {
 		if (params.county) queryParams.append('County', params.county);
 		if (params.city) queryParams.append('City', params.city);
 		if (params.isFsc !== undefined) queryParams.append('isFsc', String(params.isFsc));
-		const response = await (fetchFn ?? fetch)(
-			`${API_BASE_URL}/api/landproperties/search?${queryParams.toString()}`,
-			{
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`
-				}
-			}
-		);
-		if (!response.ok) {
-			throw new Error(`Failed to fetch land properties: ${response.statusText}`);
-		}
-		return response.json();
+		return apiFetch(`/api/landproperties/search?${queryParams.toString()}`, fetchFn);
 	}
 
 	async create(property: unknown): Promise<LandPropertyDto> {
-		const token = await authService.ensureValidToken();
-		const response = await fetch(`${API_BASE_URL}/api/landproperties`, {
+		return apiFetch('/api/landproperties', undefined, {
 			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`
-			},
 			body: JSON.stringify(property)
 		});
-		if (!response.ok) {
-			throw new Error(`Failed to create land property: ${response.statusText}`);
-		}
-		return response.json();
 	}
 
 	async update(id: string, property: LandPropertyUpdateDto): Promise<LandPropertyDto> {
-		const token = await authService.ensureValidToken();
-		const response = await fetch(`${API_BASE_URL}/api/landproperties/${id}`, {
+		return apiFetch(`/api/landproperties/${id}`, undefined, {
 			method: 'PUT',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`
-			},
 			body: JSON.stringify(property)
 		});
-		if (!response.ok) {
-			throw new Error(`Failed to update land property: ${response.statusText}`);
-		}
-		return response.json();
 	}
 }
 

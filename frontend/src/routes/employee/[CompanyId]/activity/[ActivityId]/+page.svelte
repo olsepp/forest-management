@@ -134,7 +134,7 @@
 </script>
 
 {#if isLoading}
-	<div class="employee-state-block is-loading">Laetakse tegevuse detaile…</div>
+	<div class="employee-state-block is-loading">Laetakse tegevuse andmeid… Halva ühenduse korral võib see veidi aega võtta.</div>
 {:else if errorMessage && !activity}
 	<div class="employee-state-block is-error">
 		{errorMessage}

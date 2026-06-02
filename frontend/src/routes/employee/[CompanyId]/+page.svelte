@@ -1,10 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
-	import { get } from 'svelte/store';
-	import { onMount } from 'svelte';
-	import { user } from '$lib/stores/auth.store';
-	import { activityService } from '$lib/services/activity';
 	import type { CompanyDto } from '$lib/dtos/company/company.dto';
 	import type { ActivityDto } from '$lib/dtos/activity/activity.dto';
 
@@ -14,13 +10,10 @@
 		kind: 'properties' | 'activities';
 	};
 
-	let { data }: { data: { company: CompanyDto | null } } = $props();
+	let { data }: { data: { company: CompanyDto | null; recentActivities: ActivityDto[] } } = $props();
 	let company = $derived(data.company);
 	let isLoading = $derived(!company);
-
-	let companyId = $derived($page.params.CompanyId ?? '');
-
-	let recentActivities: ActivityDto[] = $state([]);
+	let recentActivities = $derived(data.recentActivities ?? []);
 
 	let quickActions = $derived.by(() => {
 		if (!companyId) return [] as QuickAction[];
@@ -39,16 +32,8 @@
 		];
 	});
 
-	onMount(async () => {
-		const currentUser = get(user);
-		if (currentUser && companyId) {
-			try {
-				recentActivities = await activityService.getRecentByUser(currentUser.userId, 5, companyId);
-			} catch (error) {
-				console.error('Failed to load recent activities:', error);
-			}
-		}
-	});
+	// companyId is used in the template for navigation links
+	let companyId = $derived($page.params.CompanyId ?? '');
 </script>
 
 <section class="intro employee-card">
@@ -57,7 +42,7 @@
 </section>
 
 {#if isLoading}
-	<div class="employee-state-block is-loading">Laetakse ettevõtte töölauda…</div>
+	<div class="employee-state-block is-loading">Laetakse ettevõtte töölauda… Halva ühenduse korral võib see veidi aega võtta.</div>
 {:else if quickActions.length === 0}
 	<div class="employee-state-block is-empty">Toimingud puuduvad.</div>
 {:else}
@@ -67,6 +52,7 @@
 				<a
 					class="action-card"
 					href={resolve('/employee/[CompanyId]/landproperty', { CompanyId: companyId })}
+					data-sveltekit-preload-data="tap"
 				>
 					<h2>{action.label}</h2>
 					<p>{action.description}</p>
@@ -76,6 +62,7 @@
 				<a
 					class="action-card"
 					href={resolve('/employee/[CompanyId]/activity', { CompanyId: companyId })}
+					data-sveltekit-preload-data="tap"
 				>
 					<h2>{action.label}</h2>
 					<p>{action.description}</p>
@@ -99,6 +86,7 @@
 								CompanyId: companyId,
 								ActivityId: activity.id
 							})}
+							data-sveltekit-preload-data="tap"
 						>
 							<div class="activity-header">
 								<span class="activity-type">{activity.activityTypeName}</span>
