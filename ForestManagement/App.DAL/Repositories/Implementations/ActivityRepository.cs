@@ -158,4 +158,78 @@ public class ActivityRepository : Repository<Activity>, IActivityRepository
             .Take(count)
             .ToListAsync();
     }
+
+    public async Task<(IEnumerable<Activity> Items, int Total)> GetByCompanyIdPagedAsync(Guid companyId, int skip, int take)
+    {
+        var query = QueryWithDetails()
+            .Where(a =>
+                (a.Cadaster != null && a.Cadaster.LandProperty.CompanyId == companyId) ||
+                (a.ForestStand != null && a.ForestStand.Cadaster.LandProperty.CompanyId == companyId));
+
+        var total = await query.CountAsync();
+
+        var items = await query
+            .OrderByDescending(a => a.Date)
+            .Skip(skip)
+            .Take(take)
+            .ToListAsync();
+
+        return (items, total);
+    }
+
+    public async Task<(IEnumerable<Activity> Items, int Total)> GetByCompanyIdAndUserIdPagedAsync(Guid companyId, Guid userId, int skip, int take)
+    {
+        var query = QueryWithDetails()
+            .Where(a => a.UserId == userId)
+            .Where(a =>
+                (a.Cadaster != null && a.Cadaster.LandProperty.CompanyId == companyId) ||
+                (a.ForestStand != null && a.ForestStand.Cadaster.LandProperty.CompanyId == companyId));
+
+        var total = await query.CountAsync();
+
+        var items = await query
+            .OrderByDescending(a => a.Date)
+            .Skip(skip)
+            .Take(take)
+            .ToListAsync();
+
+        return (items, total);
+    }
+
+    public async Task<(IEnumerable<Activity> Items, int Total)> GetByCompanyFilteredPagedAsync(
+        Guid companyId,
+        int skip,
+        int take,
+        DateTime? startDate = null,
+        DateTime? endDate = null,
+        Guid? activityTypeId = null,
+        Guid? userId = null)
+    {
+        var query = QueryWithDetails()
+            .Where(a =>
+                (a.Cadaster != null && a.Cadaster.LandProperty.CompanyId == companyId) ||
+                (a.ForestStand != null && a.ForestStand.Cadaster.LandProperty.CompanyId == companyId));
+
+        if (startDate.HasValue)
+            query = query.Where(a => a.Date >= startDate.Value);
+
+        if (endDate.HasValue)
+            query = query.Where(a => a.Date <= endDate.Value);
+
+        if (activityTypeId.HasValue)
+            query = query.Where(a => a.ActivityTypeId == activityTypeId.Value);
+
+        if (userId.HasValue)
+            query = query.Where(a => a.UserId == userId.Value);
+
+        var total = await query.CountAsync();
+
+        var items = await query
+            .OrderByDescending(a => a.Date)
+            .Skip(skip)
+            .Take(take)
+            .ToListAsync();
+
+        return (items, total);
+    }
 }

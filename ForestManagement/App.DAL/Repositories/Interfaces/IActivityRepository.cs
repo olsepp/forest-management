@@ -68,4 +68,26 @@ public interface IActivityRepository : IRepository<Activity>
     /// Get recent activities by user ID, optionally filtered by company ID
     /// </summary>
     Task<IEnumerable<Activity>> GetRecentByUserIdAsync(Guid userId, int count, Guid? companyId = null);
+
+    /// <summary>
+    /// Get paginated activities by company ID
+    /// </summary>
+    Task<(IEnumerable<Activity> Items, int Total)> GetByCompanyIdPagedAsync(Guid companyId, int skip, int take);
+
+    /// <summary>
+    /// Get paginated activities by company ID and user ID
+    /// </summary>
+    Task<(IEnumerable<Activity> Items, int Total)> GetByCompanyIdAndUserIdPagedAsync(Guid companyId, Guid userId, int skip, int take);
+
+    /// <summary>
+    /// Get paginated activities by company ID with optional filters
+    /// </summary>
+    Task<(IEnumerable<Activity> Items, int Total)> GetByCompanyFilteredPagedAsync(
+        Guid companyId,
+        int skip,
+        int take,
+        DateTime? startDate = null,
+        DateTime? endDate = null,
+        Guid? activityTypeId = null,
+        Guid? userId = null);
 }

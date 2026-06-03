@@ -2,6 +2,7 @@ using App.BLL.Services.Interfaces;
 using App.Contracts.Enums;
 using App.DAL.UnitOfWork;
 using App.Domain;
+using App.DTO;
 using App.DTO.Activity;
 
 namespace App.BLL.Services.Implementations;
@@ -173,6 +174,44 @@ public class ActivityService : IActivityService
     }
 
     public Task<bool> ExistsAsync(Guid id) => _uow.Activities.ExistsAsync(id);
+
+    public async Task<PagedResult<ActivityDto>> GetByCompanyPagedAsync(Guid companyId, int skip, int take)
+    {
+        var (items, total) = await _uow.Activities.GetByCompanyIdPagedAsync(companyId, skip, take);
+        return new PagedResult<ActivityDto>
+        {
+            Items = items.Select(MapToDto),
+            Total = total
+        };
+    }
+
+    public async Task<PagedResult<ActivityDto>> GetByCompanyAndUserPagedAsync(Guid companyId, Guid userId, int skip, int take)
+    {
+        var (items, total) = await _uow.Activities.GetByCompanyIdAndUserIdPagedAsync(companyId, userId, skip, take);
+        return new PagedResult<ActivityDto>
+        {
+            Items = items.Select(MapToDto),
+            Total = total
+        };
+    }
+
+    public async Task<PagedResult<ActivityDto>> GetByCompanyFilteredPagedAsync(
+        Guid companyId,
+        int skip,
+        int take,
+        DateTime? startDate = null,
+        DateTime? endDate = null,
+        Guid? activityTypeId = null,
+        Guid? userId = null)
+    {
+        var (items, total) = await _uow.Activities.GetByCompanyFilteredPagedAsync(
+            companyId, skip, take, startDate, endDate, activityTypeId, userId);
+        return new PagedResult<ActivityDto>
+        {
+            Items = items.Select(MapToDto),
+            Total = total
+        };
+    }
 
     // --- Mapping ---
 

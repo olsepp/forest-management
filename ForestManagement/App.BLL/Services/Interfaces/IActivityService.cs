@@ -1,3 +1,4 @@
+using App.DTO;
 using App.DTO.Activity;
 
 namespace App.BLL.Services.Interfaces;
@@ -24,4 +25,14 @@ public interface IActivityService
     Task<ActivityDto?> UpdateAsync(Guid id, ActivityUpdateDto dto, Guid currentUserId, bool isAdmin);
     Task<bool> DeleteAsync(Guid id, Guid currentUserId, bool isAdmin);
     Task<bool> ExistsAsync(Guid id);
+    Task<PagedResult<ActivityDto>> GetByCompanyPagedAsync(Guid companyId, int skip, int take);
+    Task<PagedResult<ActivityDto>> GetByCompanyAndUserPagedAsync(Guid companyId, Guid userId, int skip, int take);
+    Task<PagedResult<ActivityDto>> GetByCompanyFilteredPagedAsync(
+        Guid companyId,
+        int skip,
+        int take,
+        DateTime? startDate = null,
+        DateTime? endDate = null,
+        Guid? activityTypeId = null,
+        Guid? userId = null);
 }

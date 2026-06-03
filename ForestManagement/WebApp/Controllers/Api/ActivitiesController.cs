@@ -1,4 +1,5 @@
 using App.BLL.Services.Interfaces;
+using App.DTO;
 using App.DTO.Activity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -55,20 +56,25 @@ public class ActivitiesController : ApiControllerBase
     }
 
     [HttpGet("by-company/{companyId:guid}/my")]
-    public async Task<ActionResult<IEnumerable<ActivityDto>>> GetByCompanyMy(Guid companyId)
+    public async Task<ActionResult<PagedResult<ActivityDto>>> GetByCompanyMy(
+        Guid companyId,
+        [FromQuery] int skip = 0,
+        [FromQuery] int take = 20)
     {
         if (!TryGetCurrentUserId(out var userId))
             return Unauthorized();
 
-        var items = await _service.GetByCompanyIdAndUserIdAsync(companyId, userId);
-        return Ok(items);
+        var result = await _service.GetByCompanyAndUserPagedAsync(companyId, userId, skip, take);
+        return Ok(result);
     }
 
     [HttpGet("by-company/{companyId:guid}/filtered")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<IEnumerable<ActivityDto>>> GetByCompanyFiltered(
-        Guid companyId, 
-        [FromQuery] DateTime? startDate = null, 
+    public async Task<ActionResult<PagedResult<ActivityDto>>> GetByCompanyFiltered(
+        Guid companyId,
+        [FromQuery] int skip = 0,
+        [FromQuery] int take = 20,
+        [FromQuery] DateTime? startDate = null,
         [FromQuery] DateTime? endDate = null,
         [FromQuery] Guid? activityTypeId = null,
         [FromQuery] Guid? userId = null)
@@ -76,8 +82,8 @@ public class ActivitiesController : ApiControllerBase
         if (!TryGetCurrentUserId(out var currentUserId))
             return Unauthorized();
 
-        var items = await _service.GetByCompanyFilteredAsync(companyId, startDate, endDate, activityTypeId, userId);
-        return Ok(items);
+        var result = await _service.GetByCompanyFilteredPagedAsync(companyId, skip, take, startDate, endDate, activityTypeId, userId);
+        return Ok(result);
     }
 
     [HttpGet("by-company/{companyId:guid}/export")]
