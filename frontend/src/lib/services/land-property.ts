@@ -6,6 +6,11 @@ import type {
 
 type FetchFn = typeof window.fetch;
 
+export type PagedResult<T> = {
+	items: T[];
+	total: number;
+};
+
 class LandPropertyService {
 	async getAll(fetchFn?: FetchFn): Promise<LandPropertyDto[]> {
 		return apiFetch('/api/landproperties', fetchFn);
@@ -38,6 +43,33 @@ class LandPropertyService {
 		if (params.city) queryParams.append('City', params.city);
 		if (params.isFsc !== undefined) queryParams.append('isFsc', String(params.isFsc));
 		return apiFetch(`/api/landproperties/search?${queryParams.toString()}`, fetchFn);
+	}
+
+	async searchPaged(
+		params: {
+			companyId?: string;
+			status?: string;
+			searchText?: string;
+			county?: string;
+			isFsc?: boolean;
+		},
+		skip = 0,
+		take = 20,
+		fetchFn?: FetchFn
+	): Promise<PagedResult<LandPropertyDto>> {
+		const queryParams = new URLSearchParams();
+		queryParams.append('skip', String(skip));
+		queryParams.append('take', String(take));
+		if (params.companyId) queryParams.append('companyId', params.companyId);
+		if (params.status) queryParams.append('Status', params.status);
+		if (params.searchText) queryParams.append('SearchText', params.searchText);
+		if (params.county) queryParams.append('County', params.county);
+		if (params.isFsc !== undefined) queryParams.append('isFsc', String(params.isFsc));
+		return apiFetch(`/api/landproperties/search-paged?${queryParams.toString()}`, fetchFn);
+	}
+
+	async getCounties(companyId: string, fetchFn?: FetchFn): Promise<string[]> {
+		return apiFetch(`/api/landproperties/counties?companyId=${companyId}`, fetchFn);
 	}
 
 	async create(property: unknown): Promise<LandPropertyDto> {

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import FscBadge from '$lib/components/shared/FscBadge.svelte';
 	import type {
@@ -7,33 +8,54 @@
 		PropertyCadasterLinkDto
 	} from '$lib/dtos/land-property/land-property-list.dto';
 
-	let { data }: { data: { properties: LandPropertyListDto[] } } = $props();
+	let { data }: { data: { properties: LandPropertyListDto[]; total: number; skip: number; take: number; searchText: string; county: string; isFsc: boolean; counties: string[] } } = $props();
 
 	let expandedPropertyIds = $state<string[]>([]);
-	let searchQuery = $state('');
-	let selectedCounty = $state('');
+	let searchQuery = $state(data.searchText ?? '');
+	let selectedCounty = $state(data.county ?? '');
 	let countyDropdownOpen = $state(false);
-	let showFscOnly = $state(false);
+	let showFscOnly = $state(data.isFsc ?? false);
+
 	const companyId = $derived($page.params.CompanyId ?? '');
-	let properties = $derived(data.properties);
-	let normalizedSearchQuery = $derived(searchQuery.trim().toLowerCase());
-	let availableCounties = $derived.by(() => {
-		const counties = properties
-			.map((property) => property.county?.trim())
-			.filter((county): county is string => Boolean(county));
+	let properties = $derived(data.properties ?? []);
+	let total = $derived(data.total ?? 0);
+	let skip = $derived(data.skip ?? 0);
+	let take = $derived(data.take ?? 20);
+	let totalPages = $derived(Math.ceil(total / take));
+	let currentPage = $derived(totalPages > 0 ? Math.floor(skip / take) + 1 : 0);
 
-		return [...new Set(counties)].sort((a, b) => a.localeCompare(b));
-	});
-	let filteredProperties = $derived.by(() => {
-		return properties.filter((property) => {
-			const matchesSearch =
-				!normalizedSearchQuery || propertyMatchesSearch(property, normalizedSearchQuery);
-			const matchesCounty = !selectedCounty || property.county === selectedCounty;
-			const matchesFsc = !showFscOnly || property.isFsc === true;
+	let availableCounties = $derived(data.counties ?? []);
 
-			return matchesSearch && matchesCounty && matchesFsc;
-		});
-	});
+	function applyFilters() {
+		const url = new URL($page.url);
+		url.searchParams.set('skip', '0');
+		if (searchQuery.trim()) url.searchParams.set('searchText', searchQuery.trim());
+		else url.searchParams.delete('searchText');
+		if (selectedCounty) url.searchParams.set('county', selectedCounty);
+		else url.searchParams.delete('county');
+		if (showFscOnly) url.searchParams.set('isFsc', 'true');
+		else url.searchParams.delete('isFsc');
+		goto(url.toString(), { replaceState: true });
+	}
+
+	function clearAllFilters() {
+		searchQuery = '';
+		selectedCounty = '';
+		showFscOnly = false;
+		const url = new URL($page.url);
+		url.searchParams.delete('skip');
+		url.searchParams.delete('searchText');
+		url.searchParams.delete('county');
+		url.searchParams.delete('isFsc');
+		goto(url.toString(), { replaceState: true });
+	}
+
+	function goToPage(p: number) {
+		const url = new URL($page.url);
+		url.searchParams.set('skip', String((p - 1) * take));
+		url.searchParams.set('take', String(take));
+		goto(url.toString(), { replaceState: true });
+	}
 
 	function normalizeStatus(
 		status: LandPropertyListDto['status'] | number | string | null | undefined
@@ -41,13 +63,11 @@
 		if (typeof status === 'string') {
 			return status.toLowerCase();
 		}
-
 		if (typeof status === 'number') {
 			if (status === 0) return 'active';
 			if (status === 1) return 'inactive';
 			if (status === 2) return 'sold';
 		}
-
 		return 'inactive';
 	}
 
@@ -66,10 +86,8 @@
 
 	function formatDate(value: string | null): string {
 		if (!value) return '—';
-
 		const date = new Date(value);
 		if (Number.isNaN(date.getTime())) return '—';
-
 		return date.toLocaleDateString();
 	}
 
@@ -77,32 +95,9 @@
 		const fromDto = Array.isArray(property.cadasters)
 			? property.cadasters.filter((item) => Boolean(item?.cadastralNumber))
 			: [];
-		if (fromDto.length > 0) {
-			return fromDto;
-		}
-
+		if (fromDto.length > 0) return fromDto;
 		const fromNumbers = Array.isArray(property.cadastralNumbers) ? property.cadastralNumbers : [];
 		return fromNumbers.filter(Boolean).map((cadastralNumber) => ({ id: '', cadastralNumber }));
-	}
-
-	function propertySearchableCadastralNumbers(property: LandPropertyListDto): string[] {
-		const fromTableMap = tableCadasters(property).map((item) => item.cadastralNumber);
-		const fromListDto = Array.isArray(property.cadastralNumbers) ? property.cadastralNumbers : [];
-
-		return [...new Set([...fromTableMap, ...fromListDto])];
-	}
-
-	function propertyMatchesSearch(property: LandPropertyListDto, query: string): boolean {
-		if (!query) return true;
-
-		const propertyName = property.name?.toLowerCase() ?? '';
-		const registrationNumber = String(property.registrationNumber ?? '').toLowerCase();
-		const cadastralNumbers = propertySearchableCadastralNumbers(property);
-
-		if (propertyName.includes(query)) return true;
-		if (registrationNumber.includes(query)) return true;
-
-		return cadastralNumbers.some((number) => number.toLowerCase().includes(query));
 	}
 
 	function toggleExpand(propertyId: string) {
@@ -110,14 +105,13 @@
 			expandedPropertyIds = expandedPropertyIds.filter((id) => id !== propertyId);
 			return;
 		}
-
 		expandedPropertyIds = [...expandedPropertyIds, propertyId];
 	}
 </script>
 
 <h1>Kinnistud</h1>
 
-{#if data.properties.length === 0}
+{#if data.properties.length === 0 && total === 0}
 	<p>Selle ettevõtte jaoks kinnistuid ei leitud.</p>
 {:else}
 	<div class="search-row">
@@ -126,6 +120,7 @@
 			<input
 				type="search"
 				bind:value={searchQuery}
+				onkeydown={(e) => { if (e.key === 'Enter') applyFilters(); }}
 				placeholder="Otsi kinnistu nime, registrinumbri või katastrinumbri järgi"
 			/>
 		</label>
@@ -161,6 +156,7 @@
 							onclick={() => {
 								selectedCounty = '';
 								countyDropdownOpen = false;
+								applyFilters();
 							}}
 						>
 							Kõik maakonnad
@@ -173,6 +169,7 @@
 								onclick={() => {
 									selectedCounty = county;
 									countyDropdownOpen = false;
+									applyFilters();
 								}}
 							>
 								{county}
@@ -183,12 +180,12 @@
 			</div>
 		</label>
 		{#if searchQuery.trim()}
-			<button type="button" class="clear-search" onclick={() => (searchQuery = '')}
+			<button type="button" class="clear-search" onclick={() => { searchQuery = ''; applyFilters(); }}
 				>Tühjenda otsing</button
 			>
 		{/if}
 		{#if selectedCounty}
-			<button type="button" class="clear-search" onclick={() => (selectedCounty = '')}
+			<button type="button" class="clear-search" onclick={() => { selectedCounty = ''; applyFilters(); }}
 				>Tühjenda maakond</button
 			>
 		{/if}
@@ -197,16 +194,20 @@
 			class="fsc-filter"
 			class:active={showFscOnly}
 			aria-pressed={showFscOnly}
-			onclick={() => (showFscOnly = !showFscOnly)}
+			onclick={() => { showFscOnly = !showFscOnly; applyFilters(); }}
 		>
 			<span class="switch-track">
 				<span class="switch-knob"></span>
 			</span>
 			<span>Ainult FSC kinnistud</span>
 		</button>
+		<button type="button" class="search-btn" onclick={applyFilters}>Otsi</button>
+		{#if searchQuery.trim() || selectedCounty || showFscOnly}
+			<button type="button" class="clear-all-btn" onclick={clearAllFilters}>Tühjenda filtrid</button>
+		{/if}
 	</div>
 
-	{#if filteredProperties.length === 0}
+	{#if data.properties.length === 0}
 		<p>Praegusele otsingule vastavaid kinnistuid ei leitud.</p>
 	{:else}
 		<div class="table-wrapper">
@@ -223,7 +224,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					{#each filteredProperties as property (property.id)}
+					{#each properties as property (property.id)}
 						<tr>
 							<td>
 								<a
@@ -335,6 +336,28 @@
 			</table>
 		</div>
 	{/if}
+
+	{#if totalPages > 1}
+		<div class="pagination">
+			<button class="pagination-btn" disabled={currentPage === 1} onclick={() => goToPage(currentPage - 1)}>
+				Eelmine
+			</button>
+			{#each Array(totalPages) as _, i}
+				<button
+					class="pagination-btn"
+					class:active={currentPage === i + 1}
+					onclick={() => goToPage(i + 1)}
+					aria-current={currentPage === i + 1 ? 'page' : undefined}
+				>
+					{i + 1}
+				</button>
+			{/each}
+			<button class="pagination-btn" disabled={currentPage === totalPages} onclick={() => goToPage(currentPage + 1)}>
+				Järgmine
+			</button>
+			<span class="pagination-info">Lehekülg {currentPage} / {totalPages}</span>
+		</div>
+	{/if}
 {/if}
 
 <style>
@@ -347,10 +370,12 @@
 		gap: 0.5rem;
 		align-items: center;
 		margin-bottom: 0.75rem;
+		flex-wrap: wrap;
 	}
 
 	.search-input {
 		flex: 1;
+		min-width: 200px;
 	}
 
 	.custom-dropdown {
@@ -462,6 +487,28 @@
 		white-space: nowrap;
 	}
 
+	.search-btn {
+		white-space: nowrap;
+		background: #1f5a42;
+		color: #fff;
+		border-color: #1f5a42;
+	}
+
+	.search-btn:hover {
+		background: #174834;
+	}
+
+	.clear-all-btn {
+		white-space: nowrap;
+		color: #991b1b;
+		border-color: #fca5a5;
+	}
+
+	.clear-all-btn:hover {
+		background: #fee2e2;
+		border-color: #f87171;
+	}
+
 	.sr-only {
 		position: absolute;
 		width: 1px;
@@ -504,6 +551,64 @@
 
 	button:hover {
 		background: #f9fafb;
+	}
+
+	button:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.pagination {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 0.25rem;
+		margin-top: 1rem;
+		flex-wrap: wrap;
+	}
+
+	.pagination-btn {
+		min-width: 2.2rem;
+		height: 2.2rem;
+		padding: 0 0.5rem;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 0.85rem;
+		background: #fff;
+		color: #1f2a24;
+		border: 1px solid #d1d5db;
+		border-radius: 0.5rem;
+		cursor: pointer;
+		transition: background 0.15s ease, border-color 0.15s ease;
+	}
+
+	.pagination-btn:hover:not(:disabled) {
+		background: #f9fafb;
+	}
+
+	.pagination-btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.pagination-btn.active {
+		background: #1f5a42;
+		color: #fff;
+		border-color: #1f5a42;
+		font-weight: 700;
+	}
+
+	.pagination-btn.active:hover {
+		background: #174834;
+	}
+
+	.pagination-info {
+		margin-left: 0.75rem;
+		font-size: 0.85rem;
+		color: #56645d;
+		white-space: nowrap;
+		align-self: center;
 	}
 
 	.expand-toggle {
