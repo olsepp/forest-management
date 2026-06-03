@@ -1,13 +1,19 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
+	import { goto } from '$app/navigation';
 	import type { ActivityDto } from '$lib/dtos/activity/activity.dto';
 
-	let { data }: { data: { activities: ActivityDto[] } } = $props();
+	let { data }: { data: { activities: ActivityDto[]; total: number; skip: number; take: number } } = $props();
 	let activities = $derived(data.activities ?? []);
 	let isLoading = $derived(activities.length === 0);
 
 	let companyId = $derived($page.params.CompanyId ?? '');
+	let total = $derived(data.total ?? 0);
+	let skip = $derived(data.skip ?? 0);
+	let take = $derived(data.take ?? 20);
+	let totalPages = $derived(Math.ceil(total / take));
+	let currentPage = $derived(Math.floor(skip / take) + 1);
 
 	function formatDate(value: string): string {
 		const date = new Date(value);
@@ -30,6 +36,13 @@
 		if (typeof standNumber === 'number' && Number.isFinite(standNumber) && standNumber > 0)
 			return String(standNumber);
 		return '—';
+	}
+
+	function goToPage(p: number) {
+		const url = new URL($page.url);
+		url.searchParams.set('skip', String((p - 1) * take));
+		url.searchParams.set('take', String(take));
+		goto(url.toString(), { replaceState: true });
 	}
 </script>
 
@@ -107,6 +120,25 @@
 				</tbody>
 			</table>
 		</div>
+
+		{#if totalPages > 1}
+			<div class="pagination">
+				<button class="pagination-btn" disabled={currentPage === 1} onclick={() => goToPage(currentPage - 1)}>
+					Eelmine
+				</button>
+				{#each Array(totalPages) as _, i}
+					<button
+						class="pagination-btn {currentPage === i + 1 ? 'active' : ''}"
+						onclick={() => goToPage(i + 1)}
+					>
+						{i + 1}
+					</button>
+				{/each}
+				<button class="pagination-btn" disabled={currentPage === totalPages} onclick={() => goToPage(currentPage + 1)}>
+					Järgmine
+				</button>
+			</div>
+		{/if}
 	</section>
 {/if}
 
@@ -185,5 +217,43 @@
 		h1 {
 			font-size: 1.35rem;
 		}
+	}
+
+	.pagination {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 0.25rem;
+		margin-top: 1rem;
+		flex-wrap: wrap;
+	}
+
+	.pagination-btn {
+		min-width: 2.2rem;
+		height: 2.2rem;
+		padding: 0 0.5rem;
+		border: 1px solid #d8e0dc;
+		border-radius: 0.5rem;
+		background: #fff;
+		color: #334155;
+		font-size: 0.9rem;
+		cursor: pointer;
+		transition: all 0.15s ease;
+	}
+
+	.pagination-btn:hover:not(:disabled) {
+		background: #f0f4f2;
+		border-color: #1f5a42;
+	}
+
+	.pagination-btn.active {
+		background: #1f5a42;
+		border-color: #1f5a42;
+		color: #fff;
+	}
+
+	.pagination-btn:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
 	}
 </style>

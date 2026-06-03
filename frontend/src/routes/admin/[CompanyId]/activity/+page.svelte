@@ -6,7 +6,7 @@
 	import DatePicker from '$lib/components/DatePicker.svelte';
 	import { activityService } from '$lib/services/activity';
 
-	let { data }: { data: { activities: ActivityDto[]; activityTypes: { id: string; activityTypeName: string }[]; users: { id: string; firstName?: string; lastName?: string }[] } } = $props();
+	let { data }: { data: { activities: ActivityDto[]; total: number; skip: number; take: number; activityTypes: { id: string; activityTypeName: string }[]; users: { id: string; firstName?: string; lastName?: string }[] } } = $props();
 
 	const companyId = $derived($page.params.CompanyId ?? '');
 	let expandedActivityIds = $state<string[]>([]);
@@ -15,6 +15,12 @@
 	let formActivityTypeId = $state('');
 	let formUserId = $state('');
 	let isExporting = $state(false);
+
+	let total = $derived(data.total ?? 0);
+	let skip = $derived(data.skip ?? 0);
+	let take = $derived(data.take ?? 20);
+	let totalPages = $derived(Math.ceil(total / take));
+	let currentPage = $derived(Math.floor(skip / take) + 1);
 
 	// Initialize form values from URL params
 	if ($page.url.searchParams.get('startDate')) {
@@ -79,6 +85,13 @@
 		return String(status);
 	}
 
+	function goToPage(p: number) {
+		const url = new URL($page.url);
+		url.searchParams.set('skip', String((p - 1) * take));
+		url.searchParams.set('take', String(take));
+		goto(url.toString(), { replaceState: true });
+	}
+
 	function handleSubmit() {
 		const url = new URL($page.url);
 		if (formStartDate) {
@@ -101,6 +114,7 @@
 		} else {
 			url.searchParams.delete('userId');
 		}
+		url.searchParams.set('skip', '0');
 		goto(url.toString(), { replaceState: true });
 	}
 
@@ -109,7 +123,13 @@
 		formEndDate = '';
 		formActivityTypeId = '';
 		formUserId = '';
-		goto($page.url.pathname, { replaceState: true });
+		const url = new URL($page.url);
+		url.searchParams.delete('startDate');
+		url.searchParams.delete('endDate');
+		url.searchParams.delete('activityTypeId');
+		url.searchParams.delete('userId');
+		url.searchParams.set('skip', '0');
+		goto(url.pathname + url.search, { replaceState: true });
 	}
 
 	async function handleExport() {
@@ -295,6 +315,25 @@
 			</tbody>
 		</table>
 	</div>
+
+	{#if totalPages > 1}
+		<div class="pagination">
+			<button class="pagination-btn" disabled={currentPage === 1} onclick={() => goToPage(currentPage - 1)}>
+				Eelmine
+			</button>
+			{#each Array(totalPages) as _, i}
+				<button
+					class="pagination-btn {currentPage === i + 1 ? 'active' : ''}"
+					onclick={() => goToPage(i + 1)}
+				>
+					{i + 1}
+				</button>
+			{/each}
+			<button class="pagination-btn" disabled={currentPage === totalPages} onclick={() => goToPage(currentPage + 1)}>
+				Järgmine
+			</button>
+		</div>
+	{/if}
 {/if}
 
 <style>
@@ -451,6 +490,44 @@
 
 	.date-range-filter button:disabled {
 		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.pagination {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 0.25rem;
+		margin-top: 1.5rem;
+		flex-wrap: wrap;
+	}
+
+	.pagination-btn {
+		min-width: 2.2rem;
+		height: 2.2rem;
+		padding: 0 0.5rem;
+		border: 1px solid #d8e0dc;
+		border-radius: 0.5rem;
+		background: #fff;
+		color: #334155;
+		font-size: 0.9rem;
+		cursor: pointer;
+		transition: all 0.15s ease;
+	}
+
+	.pagination-btn:hover:not(:disabled) {
+		background: #f0f4f2;
+		border-color: #1f5a42;
+	}
+
+	.pagination-btn.active {
+		background: #1f5a42;
+		border-color: #1f5a42;
+		color: #fff;
+	}
+
+	.pagination-btn:disabled {
+		opacity: 0.4;
 		cursor: not-allowed;
 	}
 </style>

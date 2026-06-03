@@ -3,6 +3,11 @@ import type { ActivityDto, ActivityUpdateDto } from '$lib/dtos/activity/activity
 
 type FetchFn = typeof window.fetch;
 
+export type PagedResult<T> = {
+	items: T[];
+	total: number;
+};
+
 class ActivityService {
 	async getAll(fetchFn?: FetchFn): Promise<ActivityDto[]> {
 		return apiFetch('/api/activities', fetchFn);
@@ -16,8 +21,13 @@ class ActivityService {
 		return apiFetch(`/api/activities/by-company/${companyId}`, fetchFn);
 	}
 
-	async getMyByCompany(companyId: string, fetchFn?: FetchFn): Promise<ActivityDto[]> {
-		return apiFetch(`/api/activities/by-company/${companyId}/my`, fetchFn);
+	async getMyByCompany(
+		companyId: string,
+		skip = 0,
+		take = 20,
+		fetchFn?: FetchFn
+	): Promise<PagedResult<ActivityDto>> {
+		return apiFetch(`/api/activities/by-company/${companyId}/my?skip=${skip}&take=${take}`, fetchFn);
 	}
 
 	async getByCadaster(cadasterId: string, fetchFn?: FetchFn): Promise<ActivityDto[]> {
@@ -34,19 +44,23 @@ class ActivityService {
 
 	async getByCompanyFiltered(
 		companyId: string,
+		skip = 0,
+		take = 20,
 		startDate?: string,
 		endDate?: string,
 		activityTypeId?: string,
 		userId?: string,
 		fetchFn?: FetchFn
-	): Promise<ActivityDto[]> {
+	): Promise<PagedResult<ActivityDto>> {
 		const params = new URLSearchParams();
+		params.append('skip', String(skip));
+		params.append('take', String(take));
 		if (startDate) params.append('startDate', startDate);
 		if (endDate) params.append('endDate', endDate);
 		if (activityTypeId) params.append('activityTypeId', activityTypeId);
 		if (userId) params.append('userId', userId);
 		const qs = params.toString();
-		return apiFetch(`/api/activities/by-company/${companyId}/filtered${qs ? `?${qs}` : ''}`, fetchFn);
+		return apiFetch(`/api/activities/by-company/${companyId}/filtered?${qs}`, fetchFn);
 	}
 
 	async getRecentByUser(
