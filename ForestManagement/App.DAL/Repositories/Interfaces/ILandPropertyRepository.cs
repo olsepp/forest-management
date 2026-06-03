@@ -24,4 +24,14 @@ public interface ILandPropertyRepository : IRepository<LandProperty>
     /// Search land properties by criteria
     /// </summary>
     Task<IEnumerable<LandProperty>> SearchAsync(LandPropertySearchParams searchParams);
+
+    /// <summary>
+    /// Search land properties by criteria with pagination
+    /// </summary>
+    Task<(IEnumerable<LandProperty> Items, int Total)> SearchPagedAsync(LandPropertySearchParams searchParams, int skip, int take);
+
+    /// <summary>
+    /// Get distinct counties for a company
+    /// </summary>
+    Task<IEnumerable<string>> GetDistinctCountiesAsync(Guid companyId);
 }

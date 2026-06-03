@@ -1,4 +1,5 @@
 using App.BLL.Services.Interfaces;
+using App.DTO;
 using App.DTO.LandProperty;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -33,6 +34,23 @@ public class LandPropertiesController : ApiControllerBase
     {
         var items = await _service.SearchAsync(searchParams);
         return Ok(items);
+    }
+
+    [HttpGet("search-paged")]
+    public async Task<ActionResult<PagedResult<LandPropertyListDto>>> SearchPaged(
+        [FromQuery] LandPropertySearchParams searchParams,
+        [FromQuery] int skip = 0,
+        [FromQuery] int take = 20)
+    {
+        var result = await _service.SearchPagedAsync(searchParams, skip, take);
+        return Ok(result);
+    }
+
+    [HttpGet("counties")]
+    public async Task<ActionResult<IEnumerable<string>>> GetCounties([FromQuery] Guid companyId)
+    {
+        var counties = await _service.GetDistinctCountiesAsync(companyId);
+        return Ok(counties);
     }
 
     [HttpPost]

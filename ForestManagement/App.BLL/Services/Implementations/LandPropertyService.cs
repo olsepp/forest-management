@@ -2,6 +2,7 @@ using App.BLL.Services.Interfaces;
 using App.Contracts.Enums;
 using App.DAL.UnitOfWork;
 using App.Domain;
+using App.DTO;
 using App.DTO.LandProperty;
 
 namespace App.BLL.Services.Implementations;
@@ -28,6 +29,21 @@ public class LandPropertyService : ILandPropertyService
     {
         var props = await _uow.LandProperties.SearchAsync(searchParams);
         return props.Select(MapToListDto);
+    }
+
+    public async Task<PagedResult<LandPropertyListDto>> SearchPagedAsync(LandPropertySearchParams searchParams, int skip, int take)
+    {
+        var (items, total) = await _uow.LandProperties.SearchPagedAsync(searchParams, skip, take);
+        return new PagedResult<LandPropertyListDto>
+        {
+            Items = items.Select(MapToListDto),
+            Total = total
+        };
+    }
+
+    public Task<IEnumerable<string>> GetDistinctCountiesAsync(Guid companyId)
+    {
+        return _uow.LandProperties.GetDistinctCountiesAsync(companyId);
     }
 
     public async Task<LandPropertyDto> CreateAsync(LandPropertyCreateDto dto)
