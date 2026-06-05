@@ -14,4 +14,5 @@ public interface ILandPropertyService
     Task<LandPropertyDto?> UpdateAsync(Guid id, LandPropertyUpdateDto dto);
     Task<bool> DeleteAsync(Guid id);
     Task<bool> ExistsAsync(Guid id);
+    Task<IEnumerable<LandPropertyListDto>> GetSoldByCompanyAsync(Guid companyId);
 }

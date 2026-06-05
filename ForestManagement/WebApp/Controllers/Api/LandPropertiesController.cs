@@ -53,6 +53,14 @@ public class LandPropertiesController : ApiControllerBase
         return Ok(counties);
     }
 
+    [HttpGet("sold")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<IEnumerable<LandPropertyListDto>>> GetSold([FromQuery] Guid companyId)
+    {
+        var items = await _service.GetSoldByCompanyAsync(companyId);
+        return Ok(items);
+    }
+
     [HttpPost]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<LandPropertyDto>> Create([FromBody] LandPropertyCreateDto dto)

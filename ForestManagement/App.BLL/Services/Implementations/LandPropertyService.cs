@@ -46,6 +46,12 @@ public class LandPropertyService : ILandPropertyService
         return _uow.LandProperties.GetDistinctCountiesAsync(companyId);
     }
 
+    public async Task<IEnumerable<LandPropertyListDto>> GetSoldByCompanyAsync(Guid companyId)
+    {
+        var props = await _uow.LandProperties.GetSoldByCompanyAsync(companyId);
+        return props.Select(MapToListDto);
+    }
+
     public async Task<LandPropertyDto> CreateAsync(LandPropertyCreateDto dto)
     {
         // Validate status enum value

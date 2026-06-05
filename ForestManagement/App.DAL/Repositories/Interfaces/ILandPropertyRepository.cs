@@ -34,4 +34,9 @@ public interface ILandPropertyRepository : IRepository<LandProperty>
     /// Get distinct counties for a company
     /// </summary>
     Task<IEnumerable<string>> GetDistinctCountiesAsync(Guid companyId);
+
+    /// <summary>
+    /// Get all sold properties for a company
+    /// </summary>
+    Task<IEnumerable<LandProperty>> GetSoldByCompanyAsync(Guid companyId);
 }

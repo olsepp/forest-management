@@ -3,6 +3,7 @@ import type {
 	LandPropertyDto,
 	LandPropertyUpdateDto
 } from '$lib/dtos/land-property/land-property.dto';
+import type { LandPropertyListDto } from '$lib/dtos/land-property/land-property-list.dto';
 
 type FetchFn = typeof window.fetch;
 
@@ -70,6 +71,10 @@ class LandPropertyService {
 
 	async getCounties(companyId: string, fetchFn?: FetchFn): Promise<string[]> {
 		return apiFetch(`/api/landproperties/counties?companyId=${companyId}`, fetchFn);
+	}
+
+	async getSoldByCompany(companyId: string, fetchFn?: FetchFn): Promise<LandPropertyListDto[]> {
+		return apiFetch(`/api/landproperties/sold?companyId=${companyId}`, fetchFn);
 	}
 
 	async create(property: unknown): Promise<LandPropertyDto> {

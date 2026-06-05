@@ -73,9 +73,21 @@ public class LandPropertyRepository : Repository<LandProperty>, ILandPropertyRep
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<LandProperty>> GetSoldByCompanyAsync(Guid companyId)
+    {
+        return await _dbSet
+            .Where(l => l.CompanyId == companyId && l.Status == EPropertyStatus.Sold)
+            .Include(l => l.Company)
+            .Include(l => l.Cadasters)
+            .OrderBy(l => l.Name)
+            .ToListAsync();
+    }
+
     private IQueryable<LandProperty> BuildSearchQuery(LandPropertySearchParams searchParams)
     {
         var query = _dbSet.AsQueryable();
+
+        query = query.Where(l => l.Status != EPropertyStatus.Sold);
 
         if (!string.IsNullOrWhiteSpace(searchParams.SearchText))
         {
