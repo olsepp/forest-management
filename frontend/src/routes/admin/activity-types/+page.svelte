@@ -1,10 +1,8 @@
 <script lang="ts">
 	import { PUBLIC_API_URL } from '$env/static/public';
+	import { invalidateAll } from '$app/navigation';
 	import { authService } from '$lib/services/auth';
-	import type {
-		ActivityTypeListDto,
-		ActivityTypeDto
-	} from '$lib/dtos/activity-type/activity-type.dto';
+	import type { ActivityTypeListDto } from '$lib/dtos/activity-type/activity-type.dto';
 
 	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 	const endpoint = `${apiBaseUrl}/api/activitytypes`;
@@ -12,7 +10,6 @@
 	let { data }: { data: { activityTypes: ActivityTypeListDto[] } } = $props();
 
 	let activityTypes = $derived(data.activityTypes);
-	let activityTypeDetailsById = $state<Record<string, ActivityTypeDto>>({});
 	let isLoading = $derived(data.activityTypes.length === 0);
 	let isSubmitting = $state(false);
 	let errorMessage = $state('');
@@ -31,29 +28,6 @@
 	let editName = $state('');
 	let deletingId = $state<string | null>(null);
 
-	function normalizeList(payload: unknown): ActivityTypeListDto[] {
-		if (!Array.isArray(payload)) return [];
-
-		return payload
-			.filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
-			.map((item) => ({
-				id: String(item.id ?? ''),
-				activityTypeName: String(item.activityTypeName ?? '')
-			}))
-			.filter((item) => item.id && item.activityTypeName.trim().length > 0);
-	}
-
-	function normalizeDetails(payload: unknown): ActivityTypeDto | null {
-		if (typeof payload !== 'object' || payload === null) return null;
-		const item = payload as Record<string, unknown>;
-
-		return {
-			id: String(item.id ?? ''),
-			activityTypeName: String(item.activityTypeName ?? ''),
-			activityCount: typeof item.activityCount === 'number' ? item.activityCount : 0
-		};
-	}
-
 	async function authorizedFetch(url: string, init: RequestInit = {}) {
 		const token = await authService.ensureValidToken();
 		const headers = new Headers(init.headers);
@@ -64,57 +38,6 @@
 		}
 
 		return fetch(url, { ...init, headers });
-	}
-
-	async function loadActivityTypes() {
-		try {
-			isLoading = true;
-			errorMessage = '';
-
-			const response = await authorizedFetch(endpoint);
-			if (!response.ok) {
-				errorMessage = 'Tegevuse tüüpide laadimine ebaõnnestus.';
-				activityTypes = [];
-				activityTypeDetailsById = {};
-				return;
-			}
-
-			const list = normalizeList(await response.json());
-			activityTypes = list;
-
-			const detailsEntries = await Promise.all(
-				list.map(async (item) => {
-					try {
-						const detailsResponse = await authorizedFetch(`${endpoint}/${item.id}`);
-						if (!detailsResponse.ok) {
-							return [
-								item.id,
-								{ id: item.id, activityTypeName: item.activityTypeName, activityCount: 0 }
-							] as const;
-						}
-
-						const details = normalizeDetails(await detailsResponse.json());
-						return [
-							item.id,
-							details ?? { id: item.id, activityTypeName: item.activityTypeName, activityCount: 0 }
-						] as const;
-					} catch {
-						return [
-							item.id,
-							{ id: item.id, activityTypeName: item.activityTypeName, activityCount: 0 }
-						] as const;
-					}
-				})
-			);
-
-			activityTypeDetailsById = Object.fromEntries(detailsEntries);
-		} catch {
-			errorMessage = 'Tegevuse tüüpide laadimine ebaõnnestus.';
-			activityTypes = [];
-			activityTypeDetailsById = {};
-		} finally {
-			isLoading = false;
-		}
 	}
 
 	function startEdit(item: ActivityTypeListDto) {
@@ -163,7 +86,7 @@
 
 			createName = '';
 			successMessage = 'Tegevuse tüüp loodi.';
-			await loadActivityTypes();
+			await invalidateAll();
 		} catch {
 			errorMessage = 'Tegevuse tüübi loomine ebaõnnestus.';
 		} finally {
@@ -195,7 +118,7 @@
 
 			cancelEdit();
 			successMessage = 'Tegevuse tüüp uuendati.';
-			await loadActivityTypes();
+			await invalidateAll();
 		} catch {
 			errorMessage = 'Tegevuse tüübi uuendamine ebaõnnestus.';
 		} finally {
@@ -221,7 +144,7 @@
 			if (editingId === id) cancelEdit();
 			deletingId = null;
 			successMessage = 'Tegevuse tüüp kustutati.';
-			await loadActivityTypes();
+			await invalidateAll();
 		} catch {
 			errorMessage = 'Tegevuse tüübi kustutamine ebaõnnestus.';
 		} finally {
@@ -304,7 +227,6 @@
 			<thead>
 				<tr>
 					<th class="px-4 py-3 text-left font-semibold text-slate-700">Nimi</th>
-					<th class="px-4 py-3 text-left font-semibold text-slate-700">Tegevuste arv</th>
 					<th class="px-4 py-3 text-left font-semibold text-slate-700">Toimingud</th>
 				</tr>
 			</thead>
@@ -319,7 +241,6 @@
 									class="w-full rounded-lg border border-slate-300 px-2 py-1.5 transition outline-none focus:border-emerald-500"
 								/>
 							</td>
-							<td class="px-4 py-3">{activityTypeDetailsById[item.id]?.activityCount ?? 0}</td>
 							<td class="px-4 py-3">
 								<div class="flex gap-2">
 									<button
@@ -341,9 +262,6 @@
 							</td>
 						{:else}
 							<td class="px-4 py-3 text-slate-900">{item.activityTypeName}</td>
-							<td class="px-4 py-3 text-slate-700"
-								>{activityTypeDetailsById[item.id]?.activityCount ?? 0}</td
-							>
 							<td class="px-4 py-3">
 								<div class="flex gap-2">
 									<button

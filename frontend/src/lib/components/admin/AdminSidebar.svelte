@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
-	import { page } from '$app/stores';
-	import type { CompanyListDto } from '$lib/dtos/company/company.dto';
-	import { onMount } from 'svelte';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { authService } from '$lib/services/auth';
+import { resolve } from '$app/paths';
+import { goto } from '$app/navigation';
+import { page } from '$app/stores';
+import type { CompanyListDto } from '$lib/dtos/company/company.dto';
+import { onMount } from 'svelte';
+import { PUBLIC_API_URL } from '$env/static/public';
+import { authService } from '$lib/services/auth';
 
 	type MenuItem = {
 		label: string;
@@ -74,9 +75,14 @@
 
 		return pathname === href || pathname.startsWith(`${href}/`);
 	}
+
+	async function handleSignOut() {
+		await authService.logout();
+		goto(resolve('/sign-in'));
+	}
 </script>
 
-<aside class="admin-sidebar sticky top-4 h-[calc(100vh-2rem)] w-64 shrink-0 p-4">
+<aside class="admin-sidebar sticky top-4 h-[calc(100vh-2rem)] w-64 shrink-0 p-4 flex flex-col">
 	<div class="mb-6">
 		<p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">Adminpaneel</p>
 		<p class="mt-1 text-sm text-slate-700">
@@ -88,7 +94,7 @@
 		</p>
 	</div>
 
-	<nav class="space-y-1">
+	<nav class="space-y-1 flex-1 overflow-auto">
 		<a
 			href={resolve('/admin')}
 			class={`home-link nav-item mb-3 block rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
@@ -113,4 +119,19 @@
 			</a>
 		{/each}
 	</nav>
+
+	<div class="pt-3 border-t border-slate-200">
+		<button
+			type="button"
+			onclick={handleSignOut}
+			class="admin-signout w-full"
+		>
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+				<polyline points="16 17 21 12 16 7"/>
+				<line x1="21" y1="12" x2="9" y2="12"/>
+			</svg>
+			<span>Logi välja</span>
+		</button>
+	</div>
 </aside>

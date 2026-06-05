@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
+	import { onDestroy } from 'svelte';
 
 	type ToastVariant = 'success' | 'error';
 
@@ -7,9 +8,54 @@
 		message: string;
 		variant?: ToastVariant;
 		visible: boolean;
+		closeable?: boolean;
+		autoDismissMs?: number | null;
+		onclose?: () => void;
 	};
 
-	let { message, variant = 'success', visible }: Props = $props();
+	let {
+		message,
+		variant = 'success',
+		visible,
+		closeable = true,
+		autoDismissMs = null,
+		onclose
+	}: Props = $props();
+
+	let dismissTimer: ReturnType<typeof setTimeout> | null = null;
+
+	function startAutoDismiss() {
+		clearAutoDismiss();
+		if (autoDismissMs != null && autoDismissMs > 0) {
+			dismissTimer = setTimeout(() => {
+				onclose?.();
+			}, autoDismissMs);
+		}
+	}
+
+	function clearAutoDismiss() {
+		if (dismissTimer != null) {
+			clearTimeout(dismissTimer);
+			dismissTimer = null;
+		}
+	}
+
+	function handleClose() {
+		clearAutoDismiss();
+		onclose?.();
+	}
+
+	$effect(() => {
+		if (visible && message) {
+			startAutoDismiss();
+		} else {
+			clearAutoDismiss();
+		}
+	});
+
+	onDestroy(() => {
+		clearAutoDismiss();
+	});
 </script>
 
 {#if visible && message}
@@ -22,6 +68,28 @@
 			role="status"
 		>
 			<p>{message}</p>
+			{#if closeable}
+				<button
+					type="button"
+					class="close-btn"
+					aria-label="Sulge"
+					onclick={handleClose}
+				>
+					<svg
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2.5"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						width="16"
+						height="16"
+						aria-hidden="true"
+					>
+						<path d="M18 6L6 18M6 6l12 12" />
+					</svg>
+				</button>
+			{/if}
 		</div>
 	</div>
 {/if}
@@ -43,6 +111,9 @@
 		color: #114229;
 		padding: 0.72rem 0.9rem;
 		box-shadow: 0 8px 20px rgba(15, 40, 27, 0.2);
+		display: flex;
+		align-items: flex-start;
+		gap: 0.5rem;
 	}
 
 	.toast p {
@@ -50,6 +121,24 @@
 		font-size: 0.94rem;
 		font-weight: 700;
 		line-height: 1.35;
+		flex: 1;
+	}
+
+	.close-btn {
+		flex-shrink: 0;
+		border: none;
+		background: transparent;
+		padding: 0.2rem;
+		cursor: pointer;
+		color: inherit;
+		opacity: 0.65;
+		border-radius: 0.35rem;
+		line-height: 1;
+	}
+
+	.close-btn:hover {
+		opacity: 1;
+		background: rgba(0, 0, 0, 0.06);
 	}
 
 	.toast.is-error {

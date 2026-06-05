@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { activityService } from '$lib/services/activity';
 	import type {
@@ -23,6 +24,8 @@
 	let isLoading = $derived(!activity);
 	let isSaving = $state(false);
 	let isEditMode = $state(false);
+	let isDeleting = $state(false);
+	let isDeleteSubmitting = $state(false);
 	let errorMessage = $state('');
 	let successMessage = $state('');
 	const companyId = $derived($page.params.CompanyId ?? '');
@@ -111,6 +114,34 @@
 			isSaving = false;
 		}
 	}
+
+	function startDelete() {
+		isDeleting = true;
+		errorMessage = '';
+		successMessage = '';
+	}
+
+	function cancelDelete() {
+		isDeleting = false;
+	}
+
+	async function confirmDelete() {
+		if (!activity) return;
+
+		isDeleteSubmitting = true;
+		errorMessage = '';
+		successMessage = '';
+
+		try {
+			await activityService.delete(activity.id);
+			await goto(`${resolve('/admin/[CompanyId]/activity', { CompanyId: companyId })}?deleted=1`);
+		} catch {
+			errorMessage = 'Tegevuse kustutamine ebaõnnestus.';
+			isDeleting = false;
+		} finally {
+			isDeleteSubmitting = false;
+		}
+	}
 </script>
 
 {#if isLoading}
@@ -131,14 +162,24 @@
 					Vaata ja uuenda tegevuse metaandmeid, väärtusi ja staatust ühes töölauas.
 				</p>
 			</div>
-			<button
-				type="button"
-				class="mode-btn"
-				onclick={() => (isEditMode = !isEditMode)}
-				disabled={isSaving}
-			>
-				{isEditMode ? 'Tühista muutmine' : 'Luba muutmine'}
-			</button>
+			<div class="header-actions">
+				<button
+					type="button"
+					class="delete-btn"
+					onclick={startDelete}
+					disabled={isSaving || isDeleteSubmitting}
+				>
+					Kustuta tegevus
+				</button>
+				<button
+					type="button"
+					class="mode-btn"
+					onclick={() => (isEditMode = !isEditMode)}
+					disabled={isSaving}
+				>
+					{isEditMode ? 'Tühista muutmine' : 'Luba muutmine'}
+				</button>
+			</div>
 		</header>
 
 		<section class="meta-grid">
@@ -250,6 +291,35 @@
 			</div>
 		</form>
 
+		{#if isDeleting}
+			<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+				<div class="w-full max-w-md rounded-xl border-2 border-red-500 bg-red-50 p-6 shadow-xl">
+					<h2 class="mb-4 text-xl font-semibold text-red-800">Kustuta tegevus</h2>
+					<p class="mb-6 text-base text-red-700">
+						Kas olete kindel, et soovite kustutada tegevuse "{activity.activityTypeName}"? Seda
+						toimingut ei saa tagasi võtta.
+					</p>
+					<div class="flex gap-3">
+						<button
+							type="button"
+							onclick={confirmDelete}
+							disabled={isDeleteSubmitting}
+							class="!cursor-pointer !rounded-lg !border !border-red-600 !bg-red-600 !px-4 !py-2 !text-sm !font-semibold !text-white hover:!bg-red-700 disabled:!opacity-60"
+						>
+							{isDeleteSubmitting ? 'Kustutamisel...' : 'Kustuta'}
+						</button>
+						<button
+							type="button"
+							onclick={cancelDelete}
+							class="!cursor-pointer !rounded-lg !border !border-[#174834] !bg-[#174834] !px-4 !py-2 !text-sm !font-semibold !text-white hover:!bg-[#235c44]"
+						>
+							Tühista
+						</button>
+					</div>
+				</div>
+			</div>
+		{/if}
+
 		{#if errorMessage}
 			<p class="message error">{errorMessage}</p>
 		{/if}
@@ -301,10 +371,27 @@
 		border-radius: 0.65rem;
 		box-shadow: 0 6px 14px rgba(29, 61, 46, 0.2);
 	}
-
 	.mode-btn:hover {
 		background: #274f3d;
 		cursor: pointer;
+	}
+	.delete-btn {
+		white-space: nowrap;
+		padding: 0.58rem 1rem;
+		background: #c53030 !important;
+		color: #f6fbf8 !important;
+		border: 1px solid #9b2c2c !important;
+		border-radius: 0.65rem;
+		box-shadow: 0 6px 14px rgba(160, 40, 40, 0.2);
+	}
+	.delete-btn:hover {
+		background: #9b2c2c !important;
+		cursor: pointer;
+	}
+	.header-actions {
+		display: flex;
+		gap: 0.5rem;
+		flex-shrink: 0;
 	}
 	.meta-grid {
 		display: grid;

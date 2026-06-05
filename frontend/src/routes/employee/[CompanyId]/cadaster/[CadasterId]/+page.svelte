@@ -26,6 +26,8 @@
 
 	let companyId = $derived($page.params.CompanyId ?? '');
 	let showMap = $state(false);
+	let showingLocation = $state(false);
+	let locateError = $state<string | null>(null);
 	let wazeUrl = $state<string | null>(null);
 	let wazeLoading = $state(true);
 
@@ -83,6 +85,13 @@
 		fetchCoordinates();
 
 		return () => { cancelled = true; };
+	});
+
+	$effect(() => {
+		if (locateError) {
+			const timeout = setTimeout(() => { locateError = null; }, 5000);
+			return () => clearTimeout(timeout);
+		}
 	});
 
 	function formatDate(value: string | null): string {
@@ -240,12 +249,43 @@
 	<section class="employee-card">
 		<div class="section-head">
 			<h2>Katastriüksus kaardil</h2>
-			<button type="button" class="map-toggle-btn" onclick={() => (showMap = !showMap)}>
+			<button
+				type="button"
+				class="map-toggle-btn"
+				onclick={() => {
+					showMap = !showMap;
+					if (!showMap) showingLocation = false;
+				}}
+			>
 				{showMap ? 'Peida kaart' : 'Näita kaarti'}
 			</button>
+			{#if showMap}
+				<button
+					type="button"
+					class="location-btn"
+					class:is-active={showingLocation}
+					onclick={() => { showingLocation = !showingLocation; locateError = null; }}
+				>
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+						<line x1="12" y1="2" x2="12" y2="6" />
+						<line x1="12" y1="18" x2="12" y2="22" />
+						<line x1="2" y1="12" x2="6" y2="12" />
+						<line x1="18" y1="12" x2="22" y2="12" />
+						<circle cx="12" cy="12" r="4" />
+					</svg>
+					<span>{showingLocation ? 'Peida asukoht' : 'Minu asukoht'}</span>
+				</button>
+			{/if}
 		</div>
+		{#if locateError}
+			<div class="location-error">{locateError}</div>
+		{/if}
 		{#if showMap}
-			<CadastralMap tunnus={cadaster.cadastralNumber} />
+			<CadastralMap
+				tunnus={cadaster.cadastralNumber}
+				showUserLocation={showingLocation}
+				onLocationError={(msg: string) => { locateError = msg; }}
+			/>
 		{/if}
 	</section>
 {/if}
@@ -362,6 +402,53 @@
 	.map-toggle-btn:active {
 		transform: translateY(1px);
 		box-shadow: 0 3px 10px rgba(15, 42, 31, 0.2);
+	}
+
+	.location-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		min-height: 2.6rem;
+		padding: 0.45rem 0.85rem;
+		border: 1px solid #1a73e8;
+		border-radius: 0.82rem;
+		background: #ffffff;
+		color: #1a73e8;
+		font-size: 0.88rem;
+		font-weight: 700;
+		cursor: pointer;
+		box-shadow: 0 2px 8px rgba(26, 115, 232, 0.12);
+	}
+
+	.location-btn:hover {
+		background: #e8f1ff;
+		border-color: #1557b0;
+	}
+
+	.location-btn:active {
+		transform: translateY(1px);
+		box-shadow: 0 1px 4px rgba(26, 115, 232, 0.15);
+	}
+
+	.location-btn.is-active {
+		background: #1a73e8;
+		color: #ffffff;
+	}
+
+	.location-btn.is-active:hover {
+		background: #1557b0;
+		border-color: #0e4da4;
+	}
+
+	.location-error {
+		margin-bottom: 0.5rem;
+		padding: 0.5rem 0.75rem;
+		border-radius: 0.62rem;
+		background: #fef2f2;
+		border: 1px solid #fecaca;
+		color: #991b1b;
+		font-size: 0.85rem;
+		font-weight: 500;
 	}
 
 	.summary-head {

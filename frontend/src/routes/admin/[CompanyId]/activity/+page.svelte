@@ -4,6 +4,7 @@
 	import { goto } from '$app/navigation';
 	import type { ActivityDto } from '$lib/dtos/activity/activity.dto';
 	import DatePicker from '$lib/components/DatePicker.svelte';
+	import ToastMessage from '$lib/components/shared/ToastMessage.svelte';
 	import { activityService } from '$lib/services/activity';
 
 	let { data }: { data: { activities: ActivityDto[]; total: number; skip: number; take: number; activityTypes: { id: string; activityTypeName: string }[]; users: { id: string; firstName?: string; lastName?: string }[] } } = $props();
@@ -85,6 +86,17 @@
 		return String(status);
 	}
 
+	let showDeletedToast = $state($page.url.searchParams.get('deleted') === '1');
+
+	function dismissDeletedToast() {
+		showDeletedToast = false;
+		const url = new URL($page.url);
+		url.searchParams.delete('deleted');
+		if (typeof window !== 'undefined') {
+			window.history.replaceState(window.history.state, '', url.toString());
+		}
+	}
+
 	function goToPage(p: number) {
 		const url = new URL($page.url);
 		url.searchParams.set('skip', String((p - 1) * take));
@@ -163,6 +175,15 @@
 </script>
 
 <h1>Tegevused</h1>
+
+<ToastMessage
+	message="Tegevus kustutati edukalt."
+	variant="success"
+	visible={showDeletedToast}
+	autoDismissMs={5000}
+	closeable={true}
+	onclose={dismissDeletedToast}
+/>
 
 <div class="date-range-filter">
 	<DatePicker

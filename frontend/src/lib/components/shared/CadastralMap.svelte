@@ -1,9 +1,11 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import type { Map, GeoJSON, TileLayer, Marker } from 'leaflet';
+  import type { Map, GeoJSON, TileLayer, Marker, Circle } from 'leaflet';
   import 'leaflet/dist/leaflet.css';
 
   export let tunnus: string = '12301:001:0012';
+  export let showUserLocation = false;
+  export let onLocationError: ((message: string) => void) | null = null;
 
   const RETRY_DELAY_MS = 5000;
 
@@ -14,6 +16,13 @@
   let forestStandLabels: Marker[] = [];
   let retryTimeout: ReturnType<typeof setTimeout> | null = null;
   let retryScheduled = false;
+  let userMarker: Marker | null = null;
+  let accuracyCircle: Circle | null = null;
+  let isFirstLocate = true;
+  let lastUserLocation: import('leaflet').LatLng | null = null;
+  let recenterControl: import('leaflet').Control | null = null;
+  let recenterAdded = false;
+  let isLocating = false;
 
   function clearRetry(): void {
     if (retryTimeout) {
@@ -28,6 +37,17 @@
       label.remove();
     }
     forestStandLabels = [];
+  }
+
+  function clearUserLocation(): void {
+    if (userMarker) {
+      userMarker.remove();
+      userMarker = null;
+    }
+    if (accuracyCircle) {
+      accuracyCircle.remove();
+      accuracyCircle = null;
+    }
   }
 
   function getPolygonCentroid(feature: GeoJSON.Feature): [number, number] | null {
@@ -176,6 +196,31 @@
     }, RETRY_DELAY_MS);
   }
 
+  $: if (showUserLocation && map) {
+    clearUserLocation();
+    isFirstLocate = true;
+    isLocating = true;
+    map.locate({ watch: true, enableHighAccuracy: true });
+    if (recenterControl && !recenterAdded) {
+      recenterControl.addTo(map);
+      recenterAdded = true;
+    }
+  } else if (!showUserLocation && map) {
+    if (isLocating) {
+      map.stopLocate();
+      isLocating = false;
+    }
+    clearUserLocation();
+    lastUserLocation = null;
+    if (recenterControl && recenterAdded) {
+      map.removeControl(recenterControl);
+      recenterAdded = false;
+    }
+    if (cadastralLayer) {
+      map.fitBounds(cadastralLayer.getBounds(), { padding: [40, 40] });
+    }
+  }
+
   onMount(async () => {
     const L = (await import('leaflet')).default;
 
@@ -195,6 +240,67 @@
       }
     });
 
+    map.on('locationfound', (e: any) => {
+      clearUserLocation();
+
+      if (isFirstLocate) {
+        isFirstLocate = false;
+        map!.setView(e.latlng, 16);
+      }
+
+      lastUserLocation = e.latlng;
+
+      const icon = L.divIcon({
+        className: 'user-location-icon',
+        html: '<div class="user-location-pulse"></div><div class="user-location-dot"></div>',
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
+      });
+
+      userMarker = L.marker(e.latlng, { icon })
+        .bindPopup('Sinu asukoht')
+        .addTo(map!);
+
+      accuracyCircle = L.circle(e.latlng, {
+        radius: e.accuracy,
+        color: '#1a73e8',
+        fillColor: '#1a73e8',
+        fillOpacity: 0.1,
+        weight: 1
+      }).addTo(map!);
+    });
+
+    map.on('locationerror', (e: any) => {
+      const messages: Record<number, string> = {
+        1: 'Asukoha luba on keelatud',
+        2: 'Asukohta ei leitud',
+        3: 'Asukoha määramine aegus'
+      };
+      onLocationError?.(messages[e.code] ?? e.message);
+    });
+
+    const RecenterControl = L.Control.extend({
+      onAdd: function() {
+        const btn = L.DomUtil.create('button', 'recenter-control');
+        btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="2" x2="12" y2="6" />
+          <line x1="12" y1="18" x2="12" y2="22" />
+          <line x1="2" y1="12" x2="6" y2="12" />
+          <line x1="18" y1="12" x2="22" y2="12" />
+          <circle cx="12" cy="12" r="4" />
+        </svg>`;
+        btn.title = 'Keskendu asukohale';
+        L.DomEvent.disableClickPropagation(btn);
+        L.DomEvent.on(btn, 'click', () => {
+          if (lastUserLocation && map) {
+            map.setView(lastUserLocation, map.getZoom());
+          }
+        });
+        return btn;
+      }
+    });
+    recenterControl = new RecenterControl({ position: 'bottomright' });
+
     setTimeout(() => map?.invalidateSize(), 0);
 
     if (tunnus) {
@@ -210,6 +316,11 @@
   onDestroy(() => {
     clearRetry();
     clearForestStandLabels();
+    if (isLocating) {
+      map?.stopLocate();
+      isLocating = false;
+    }
+    clearUserLocation();
     map?.remove();
     map = null;
   });
@@ -241,5 +352,74 @@
        1px -1px 0 #fff,
       -1px  1px 0 #fff,
        1px  1px 0 #fff;
+  }
+
+  :global(.user-location-icon) {
+    background: none;
+    border: none;
+    box-shadow: none;
+  }
+
+  :global(.user-location-pulse) {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 28px;
+    height: 28px;
+    margin-left: -14px;
+    margin-top: -14px;
+    border-radius: 50%;
+    background: rgba(26, 115, 232, 0.3);
+    animation: location-pulse 2s ease-out infinite;
+  }
+
+  :global(.user-location-dot) {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 14px;
+    height: 14px;
+    margin-left: -7px;
+    margin-top: -7px;
+    border-radius: 50%;
+    background: #1a73e8;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
+    z-index: 2;
+  }
+
+  @keyframes location-pulse {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(2.5);
+      opacity: 0;
+    }
+  }
+
+  :global(.recenter-control) {
+    width: 36px;
+    height: 36px;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    background: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    padding: 0;
+    font: inherit;
+    line-height: 1;
+  }
+
+  :global(.recenter-control:hover) {
+    background: #f4f4f4;
+  }
+
+  :global(.recenter-control svg) {
+    display: block;
   }
 </style>

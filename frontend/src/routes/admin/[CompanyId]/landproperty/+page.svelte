@@ -111,7 +111,7 @@
 
 <h1>Kinnistud</h1>
 
-{#if data.properties.length === 0 && total === 0}
+{#if data.properties.length === 0 && total === 0 && !searchQuery.trim() && !selectedCounty && !showFscOnly}
 	<p>Selle ettevõtte jaoks kinnistuid ei leitud.</p>
 {:else}
 	<div class="search-row">
@@ -593,14 +593,14 @@
 	}
 
 	.pagination-btn.active {
-		background: #1f5a42;
-		color: #fff;
-		border-color: #1f5a42;
+		background: #1f5a42 !important;
+		color: #fff !important;
+		border-color: #1f5a42 !important;
 		font-weight: 700;
 	}
 
 	.pagination-btn.active:hover {
-		background: #174834;
+		background: #174834 !important;
 	}
 
 	.pagination-info {
