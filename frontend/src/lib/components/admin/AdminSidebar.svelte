@@ -4,15 +4,12 @@ import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import type { CompanyListDto } from '$lib/dtos/company/company.dto';
 import { onMount } from 'svelte';
-import { PUBLIC_API_URL } from '$env/static/public';
 import { authService } from '$lib/services/auth';
 
 	type MenuItem = {
 		label: string;
 		href: string;
 	};
-
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
 	const adminRootItems: MenuItem[] = [
 		{ label: 'Ettevõtte valik', href: '/admin' },
@@ -44,7 +41,7 @@ import { authService } from '$lib/services/auth';
 	onMount(async () => {
 		try {
 			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/companies`, {
+			const response = await fetch(`/api/companies`, {
 				headers: {
 					Authorization: `Bearer ${token}`
 				}

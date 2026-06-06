@@ -1,11 +1,9 @@
 <script lang="ts">
-	import { PUBLIC_API_URL } from '$env/static/public';
 	import { invalidateAll } from '$app/navigation';
 	import { authService } from '$lib/services/auth';
 	import type { ActivityTypeListDto } from '$lib/dtos/activity-type/activity-type.dto';
 
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
-	const endpoint = `${apiBaseUrl}/api/activitytypes`;
+	const endpoint = `/api/activitytypes`;
 
 	let { data }: { data: { activityTypes: ActivityTypeListDto[] } } = $props();
 

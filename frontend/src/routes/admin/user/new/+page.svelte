@@ -1,9 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
-
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
 	let username = $state('');
 	let email = $state('');
@@ -25,7 +22,7 @@
 		try {
 			const token = await authService.ensureValidToken();
 
-			const response = await fetch(`${apiBaseUrl}/api/users`, {
+			const response = await fetch(`/api/users`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',

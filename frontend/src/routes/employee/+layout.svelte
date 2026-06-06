@@ -5,7 +5,6 @@
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
-	import { PUBLIC_API_URL } from '$env/static/public';
 	import { authService } from '$lib/services/auth';
 	import { user } from '$lib/stores/auth.store';
 	import { getDefaultRouteForRole } from '$lib/services/auth';
@@ -19,7 +18,6 @@
 	let { children } = $props();
 	let pathname = $derived($page.url.pathname);
 	let employeeDisplayName = $state('Metsandus');
-	const apiBaseUrl = PUBLIC_API_URL || 'http://localhost:5255';
 
 
 	let currentCompanyId = $derived.by(() => {
@@ -105,7 +103,7 @@
 
 		try {
 			const token = await authService.ensureValidToken();
-			const response = await fetch(`${apiBaseUrl}/api/users/profile`, {
+			const response = await fetch(`/api/users/profile`, {
 				headers: { Authorization: `Bearer ${token}` }
 			});
 
