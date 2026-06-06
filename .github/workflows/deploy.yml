@@ -160,13 +160,7 @@ jobs:
 
             # Write nginx.conf
             cat > /opt/forest-management/nginx.conf << 'NGINXFILE'
-            upstream backend {
-                server backend:5255;
-            }
-
-            upstream frontend {
-                server frontend:3000;
-            }
+            resolver 127.0.0.11 valid=10s;
 
             server {
                 listen 80;
@@ -175,7 +169,8 @@ jobs:
                 gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
 
                 location /api/map-tiles {
-                    proxy_pass http://frontend;
+                    set $frontend_upstream http://frontend:3000;
+                    proxy_pass $frontend_upstream;
                     proxy_http_version 1.1;
                     proxy_set_header Host $host;
                     proxy_set_header X-Real-IP $remote_addr;
@@ -184,7 +179,8 @@ jobs:
                 }
 
                 location /api/forest-stands {
-                    proxy_pass http://frontend;
+                    set $frontend_upstream http://frontend:3000;
+                    proxy_pass $frontend_upstream;
                     proxy_http_version 1.1;
                     proxy_set_header Host $host;
                     proxy_set_header X-Real-IP $remote_addr;
@@ -193,7 +189,8 @@ jobs:
                 }
 
                 location /api/cadastral-unit {
-                    proxy_pass http://frontend;
+                    set $frontend_upstream http://frontend:3000;
+                    proxy_pass $frontend_upstream;
                     proxy_http_version 1.1;
                     proxy_set_header Host $host;
                     proxy_set_header X-Real-IP $remote_addr;
@@ -202,7 +199,8 @@ jobs:
                 }
 
                 location /api/ {
-                    proxy_pass http://backend;
+                    set $backend_upstream http://backend:5255;
+                    proxy_pass $backend_upstream;
                     proxy_http_version 1.1;
                     proxy_set_header Host $host;
                     proxy_set_header X-Real-IP $remote_addr;
@@ -211,7 +209,8 @@ jobs:
                 }
 
                 location / {
-                    proxy_pass http://frontend;
+                    set $frontend_upstream http://frontend:3000;
+                    proxy_pass $frontend_upstream;
                     proxy_http_version 1.1;
                     proxy_set_header Host $host;
                     proxy_set_header X-Real-IP $remote_addr;
@@ -320,13 +319,7 @@ jobs:
             COMPOSEFILE
 
             cat > /opt/forest-management/nginx.conf << 'NGINXFILE'
-            upstream backend {
-                server backend:5255;
-            }
-
-            upstream frontend {
-                server frontend:3000;
-            }
+            resolver 127.0.0.11 valid=10s;
 
             server {
                 listen 80;
@@ -335,7 +328,8 @@ jobs:
                 gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
 
                 location /api/map-tiles {
-                    proxy_pass http://frontend;
+                    set $frontend_upstream http://frontend:3000;
+                    proxy_pass $frontend_upstream;
                     proxy_http_version 1.1;
                     proxy_set_header Host $host;
                     proxy_set_header X-Real-IP $remote_addr;
@@ -344,7 +338,8 @@ jobs:
                 }
 
                 location /api/forest-stands {
-                    proxy_pass http://frontend;
+                    set $frontend_upstream http://frontend:3000;
+                    proxy_pass $frontend_upstream;
                     proxy_http_version 1.1;
                     proxy_set_header Host $host;
                     proxy_set_header X-Real-IP $remote_addr;
@@ -353,7 +348,8 @@ jobs:
                 }
 
                 location /api/cadastral-unit {
-                    proxy_pass http://frontend;
+                    set $frontend_upstream http://frontend:3000;
+                    proxy_pass $frontend_upstream;
                     proxy_http_version 1.1;
                     proxy_set_header Host $host;
                     proxy_set_header X-Real-IP $remote_addr;
@@ -362,7 +358,8 @@ jobs:
                 }
 
                 location /api/ {
-                    proxy_pass http://backend;
+                    set $backend_upstream http://backend:5255;
+                    proxy_pass $backend_upstream;
                     proxy_http_version 1.1;
                     proxy_set_header Host $host;
                     proxy_set_header X-Real-IP $remote_addr;
@@ -371,7 +368,8 @@ jobs:
                 }
 
                 location / {
-                    proxy_pass http://frontend;
+                    set $frontend_upstream http://frontend:3000;
+                    proxy_pass $frontend_upstream;
                     proxy_http_version 1.1;
                     proxy_set_header Host $host;
                     proxy_set_header X-Real-IP $remote_addr;
