@@ -468,3 +468,6 @@ Desktop.ini
 plans/
 docs/
 specs/
+tsconfig.tsbuildinfo
+.idea/
+.env.example
