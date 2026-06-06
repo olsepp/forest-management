@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.HttpOverrides;
 
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -74,16 +75,24 @@ builder.Services
 // -----------------------------------------------------------------------
 // CORS - Allow SvelteKit dev server and production frontend
 // -----------------------------------------------------------------------
+var frontendUrl = builder.Configuration["FrontendUrl"] ?? "";
+var origins = new List<string>
+{
+    "http://localhost:5173",
+    "http://localhost:4173",
+    "http://localhost:3000"
+};
+if (!string.IsNullOrWhiteSpace(frontendUrl))
+{
+    origins.Add(frontendUrl);
+}
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendPolicy", policy =>
     {
         policy
-            .WithOrigins(
-                "http://localhost:5173",  // SvelteKit default dev port
-                "http://localhost:4173",  // SvelteKit preview port
-                "http://localhost:3000"   // Alternative dev port
-            )
+            .WithOrigins(origins.ToArray())
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -151,30 +160,44 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // -----------------------------------------------------------------------
+// Forwarded headers (trust nginx reverse proxy in Docker)
+// -----------------------------------------------------------------------
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
+// -----------------------------------------------------------------------
 // Build
 // -----------------------------------------------------------------------
 var app = builder.Build();
 
 // -----------------------------------------------------------------------
-// Seed database (roles + admin user)
+// Apply pending EF Core migrations, then seed
 // -----------------------------------------------------------------------
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
+        var dbContext = services.GetRequiredService<AppDbContext>();
+        await dbContext.Database.MigrateAsync();
         await DataSeeder.SeedAsync(services);
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred seeding the database.");
+        logger.LogError(ex, "An error occurred applying migrations or seeding the database.");
     }
 }
 
 // -----------------------------------------------------------------------
 // Middleware pipeline
 // -----------------------------------------------------------------------
+app.UseForwardedHeaders();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
@@ -184,14 +207,21 @@ if (app.Environment.IsDevelopment())
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "Forest Management API v1");
         options.RoutePrefix = "swagger";
     });
+    app.UseHttpsRedirection();
 }
 else
 {
-    app.UseExceptionHandler("/Error");
+    app.UseExceptionHandler(errorApp =>
+    {
+        errorApp.Run(async context =>
+        {
+            context.Response.StatusCode = 500;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync("{\"error\":\"Internal server error.\"}");
+        });
+    });
     app.UseHsts();
 }
-
-app.UseHttpsRedirection();
 app.UseRouting();
 
 // CORS must be after UseRouting and before UseAuthentication/UseAuthorization
