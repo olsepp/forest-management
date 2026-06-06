@@ -1,8 +1,9 @@
-import { PUBLIC_API_URL } from '$env/static/public';
 import { getAccessToken, getRefreshToken, setAuth, updateTokens, clearAuth, isAuthenticated, needsTokenRefresh } from '$lib/stores/auth.store';
 import type { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, RefreshTokenResponse } from '$lib/types/auth';
 
-const API_BASE_URL = PUBLIC_API_URL;
+// API calls use relative paths so they are routed through nginx in production
+// and through the Vite dev proxy (configured in vite.config.ts) in development.
+const API_BASE_URL = '';
 
 /**
  * Resolve the default post-auth route for a user role.

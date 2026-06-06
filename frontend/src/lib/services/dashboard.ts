@@ -1,7 +1,8 @@
-import { PUBLIC_API_URL } from '$env/static/public';
 import { authService } from './auth';
 
-const API_BASE_URL = PUBLIC_API_URL;
+// API calls use relative paths so they are routed through nginx in production
+// and through the Vite dev proxy (configured in vite.config.ts) in development.
+const API_BASE_URL = '';
 
 type FetchFn = typeof window.fetch;
 

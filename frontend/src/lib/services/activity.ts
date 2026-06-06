@@ -1,4 +1,3 @@
-import { PUBLIC_API_URL } from '$env/static/public';
 import { apiFetch } from '$lib/utils/api-fetch';
 import type { ActivityDto, ActivityUpdateDto } from '$lib/dtos/activity/activity.dto';
 
@@ -104,8 +103,8 @@ class ActivityService {
 		if (userId) params.append('userId', userId);
 		const qs = params.toString();
 		const url = qs
-			? `${PUBLIC_API_URL}/api/activities/by-company/${companyId}/export?${qs}`
-			: `${PUBLIC_API_URL}/api/activities/by-company/${companyId}/export`;
+			? `/api/activities/by-company/${companyId}/export?${qs}`
+			: `/api/activities/by-company/${companyId}/export`;
 		const { authService } = await import('./auth');
 		const token = await authService.ensureValidToken();
 		const response = await fetch(url, {

@@ -64,8 +64,6 @@ jobs:
           file: Dockerfile.frontend
           push: true
           tags: ${{ env.FRONTEND_IMAGE }}:latest,${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
-          build-args: |
-            PUBLIC_API_URL=
 
   deploy-staging:
     needs: [build-backend, build-frontend]
