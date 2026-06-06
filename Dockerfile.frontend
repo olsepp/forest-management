@@ -3,8 +3,10 @@ WORKDIR /app
 COPY frontend/package.json frontend/package-lock.json* ./
 RUN npm ci
 COPY frontend/ ./
-RUN rm -f .env
-ENV PUBLIC_API_URL=
+ARG PUBLIC_API_URL=""
+# Remove all .env* variants (including .env.local which has higher priority than .env.production)
+# then write a single clean .env so no local dev values can leak into the bundle
+RUN find . -maxdepth 1 -name '.env*' -delete && echo "PUBLIC_API_URL=${PUBLIC_API_URL}" > .env
 RUN npm run build
 
 FROM node:22-alpine
