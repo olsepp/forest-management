@@ -72,18 +72,6 @@ jobs:
     environment:
       name: staging
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Copy config files
-        uses: appleboy/scp-action@v0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          source: "docker-compose.yml,nginx.conf"
-          target: /opt/forest-management/
-          overwrite: true
-
       - name: Deploy to staging
         uses: appleboy/ssh-action@v1
         with:
@@ -91,6 +79,148 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
+            # Write docker-compose.yml
+            cat > /opt/forest-management/docker-compose.yml << 'COMPOSEFILE'
+            services:
+              postgres:
+                image: postgres:17-alpine
+                restart: unless-stopped
+                environment:
+                  POSTGRES_USER: ${DB_USER}
+                  POSTGRES_PASSWORD: ${DB_PASSWORD}
+                  POSTGRES_DB: ${DB_NAME}
+                volumes:
+                  - pgdata:/var/lib/postgresql/data
+                healthcheck:
+                  test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+                  interval: 10s
+                  timeout: 5s
+                  retries: 5
+                networks:
+                  - app-network
+
+              backend:
+                image: ghcr.io/${GITHUB_USER}/forest-management-backend:latest
+                restart: unless-stopped
+                depends_on:
+                  postgres:
+                    condition: service_healthy
+                environment:
+                  ASPNETCORE_ENVIRONMENT: Production
+                  ConnectionStrings__DefaultConnection: Host=postgres;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}
+                  JWT__Key: ${JWT_SECRET}
+                  JWT__Issuer: ForestManagement
+                  JWT__Audience: ForestManagementUsers
+                  JWT__ExpiresInMinutes: "60"
+                  JWT__RefreshTokenExpiresInDays: "7"
+                  FrontendUrl: ${FRONTEND_URL}
+                  SeedAdmin__Email: ${SEED_ADMIN_EMAIL}
+                  SeedAdmin__Password: ${SEED_ADMIN_PASSWORD}
+                  SeedAdmin__Username: ${SEED_ADMIN_USERNAME:-admin}
+                networks:
+                  - app-network
+
+              frontend:
+                image: ghcr.io/${GITHUB_USER}/forest-management-frontend:latest
+                restart: unless-stopped
+                environment:
+                  PORT: "3000"
+                networks:
+                  - app-network
+
+              nginx:
+                image: nginx:alpine
+                restart: unless-stopped
+                ports:
+                  - "80:80"
+                volumes:
+                  - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+                depends_on:
+                  - frontend
+                  - backend
+                networks:
+                  - app-network
+
+              watchtower:
+                image: containrrr/watchtower
+                restart: unless-stopped
+                volumes:
+                  - /var/run/docker.sock:/var/run/docker.sock
+                command: --interval 300 --cleanup backend frontend nginx
+                networks:
+                  - app-network
+
+            volumes:
+              pgdata:
+
+            networks:
+              app-network:
+                driver: bridge
+            COMPOSEFILE
+
+            # Write nginx.conf
+            cat > /opt/forest-management/nginx.conf << 'NGINXFILE'
+            upstream backend {
+                server backend:5255;
+            }
+
+            upstream frontend {
+                server frontend:3000;
+            }
+
+            server {
+                listen 80;
+
+                gzip on;
+                gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
+
+                location /api/map-tiles {
+                    proxy_pass http://frontend;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+
+                location /api/forest-stands {
+                    proxy_pass http://frontend;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+
+                location /api/cadastral-unit {
+                    proxy_pass http://frontend;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+
+                location /api/ {
+                    proxy_pass http://backend;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+
+                location / {
+                    proxy_pass http://frontend;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+            }
+            NGINXFILE
+
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             cd /opt/forest-management
             docker compose pull
@@ -104,18 +234,6 @@ jobs:
     environment:
       name: production
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Copy config files
-        uses: appleboy/scp-action@v0
-        with:
-          host: ${{ secrets.PROD_VPS_HOST }}
-          username: ${{ secrets.PROD_VPS_USER }}
-          key: ${{ secrets.PROD_VPS_SSH_KEY }}
-          source: "docker-compose.yml,nginx.conf"
-          target: /opt/forest-management/
-          overwrite: true
-
       - name: Deploy to production
         uses: appleboy/ssh-action@v1
         with:
@@ -123,6 +241,146 @@ jobs:
           username: ${{ secrets.PROD_VPS_USER }}
           key: ${{ secrets.PROD_VPS_SSH_KEY }}
           script: |
+            cat > /opt/forest-management/docker-compose.yml << 'COMPOSEFILE'
+            services:
+              postgres:
+                image: postgres:17-alpine
+                restart: unless-stopped
+                environment:
+                  POSTGRES_USER: ${DB_USER}
+                  POSTGRES_PASSWORD: ${DB_PASSWORD}
+                  POSTGRES_DB: ${DB_NAME}
+                volumes:
+                  - pgdata:/var/lib/postgresql/data
+                healthcheck:
+                  test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+                  interval: 10s
+                  timeout: 5s
+                  retries: 5
+                networks:
+                  - app-network
+
+              backend:
+                image: ghcr.io/${GITHUB_USER}/forest-management-backend:latest
+                restart: unless-stopped
+                depends_on:
+                  postgres:
+                    condition: service_healthy
+                environment:
+                  ASPNETCORE_ENVIRONMENT: Production
+                  ConnectionStrings__DefaultConnection: Host=postgres;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}
+                  JWT__Key: ${JWT_SECRET}
+                  JWT__Issuer: ForestManagement
+                  JWT__Audience: ForestManagementUsers
+                  JWT__ExpiresInMinutes: "60"
+                  JWT__RefreshTokenExpiresInDays: "7"
+                  FrontendUrl: ${FRONTEND_URL}
+                  SeedAdmin__Email: ${SEED_ADMIN_EMAIL}
+                  SeedAdmin__Password: ${SEED_ADMIN_PASSWORD}
+                  SeedAdmin__Username: ${SEED_ADMIN_USERNAME:-admin}
+                networks:
+                  - app-network
+
+              frontend:
+                image: ghcr.io/${GITHUB_USER}/forest-management-frontend:latest
+                restart: unless-stopped
+                environment:
+                  PORT: "3000"
+                networks:
+                  - app-network
+
+              nginx:
+                image: nginx:alpine
+                restart: unless-stopped
+                ports:
+                  - "80:80"
+                volumes:
+                  - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+                depends_on:
+                  - frontend
+                  - backend
+                networks:
+                  - app-network
+
+              watchtower:
+                image: containrrr/watchtower
+                restart: unless-stopped
+                volumes:
+                  - /var/run/docker.sock:/var/run/docker.sock
+                command: --interval 300 --cleanup backend frontend nginx
+                networks:
+                  - app-network
+
+            volumes:
+              pgdata:
+
+            networks:
+              app-network:
+                driver: bridge
+            COMPOSEFILE
+
+            cat > /opt/forest-management/nginx.conf << 'NGINXFILE'
+            upstream backend {
+                server backend:5255;
+            }
+
+            upstream frontend {
+                server frontend:3000;
+            }
+
+            server {
+                listen 80;
+
+                gzip on;
+                gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
+
+                location /api/map-tiles {
+                    proxy_pass http://frontend;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+
+                location /api/forest-stands {
+                    proxy_pass http://frontend;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+
+                location /api/cadastral-unit {
+                    proxy_pass http://frontend;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+
+                location /api/ {
+                    proxy_pass http://backend;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+
+                location / {
+                    proxy_pass http://frontend;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+            }
+            NGINXFILE
+
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             cd /opt/forest-management
             docker compose pull
