@@ -103,7 +103,7 @@ public class LandPropertyRepository : Repository<LandProperty>, ILandPropertyRep
 
         var county = string.IsNullOrWhiteSpace(searchParams.County)
             ? null
-            : searchParams.County.ToUpperInvariant();
+            : searchParams.County;
 
         if (county is not null)
         {
