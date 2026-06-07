@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
-	import { goto } from '$app/navigation';
 	import { landPropertyService } from '$lib/services/land-property';
 	import FscBadge from '$lib/components/shared/FscBadge.svelte';
 	import type {
@@ -189,7 +188,7 @@
 {:else}
 	<div class="detail-page">
 		<p class="breadcrumb">
-			<button type="button" class="back-button" onclick={() => goto(-1)}>
+			<button type="button" class="back-button" onclick={() => window.history.back()}>
 				← Tagasi kinnistute juurde
 			</button>
 		</p>
@@ -372,7 +371,7 @@
 	}
 
 	.back-button {
-		background: none;
+		background: transparent !important;
 		border: none;
 		padding: 0;
 		cursor: pointer;
