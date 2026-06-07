@@ -89,17 +89,25 @@ public class LandPropertyRepository : Repository<LandProperty>, ILandPropertyRep
 
         query = query.Where(l => l.Status != EPropertyStatus.Sold);
 
-        if (!string.IsNullOrWhiteSpace(searchParams.SearchText))
+        var searchText = string.IsNullOrWhiteSpace(searchParams.SearchText)
+            ? null
+            : searchParams.SearchText.ToUpperInvariant();
+
+        if (searchText is not null)
         {
             query = query.Where(l =>
-                l.Name.Contains(searchParams.SearchText) ||
-                l.RegistrationNumber.ToString().Contains(searchParams.SearchText) ||
-                l.Cadasters.Any(c => c.CadastralNumber.Contains(searchParams.SearchText)));
+                l.Name.Contains(searchText) ||
+                l.RegistrationNumber.ToString().Contains(searchText) ||
+                l.Cadasters.Any(c => c.CadastralNumber.Contains(searchText)));
         }
 
-        if (!string.IsNullOrWhiteSpace(searchParams.County))
+        var county = string.IsNullOrWhiteSpace(searchParams.County)
+            ? null
+            : searchParams.County.ToUpperInvariant();
+
+        if (county is not null)
         {
-            query = query.Where(l => l.County.Contains(searchParams.County));
+            query = query.Where(l => l.County.Contains(county));
         }
 
         if (searchParams.CompanyId.HasValue)

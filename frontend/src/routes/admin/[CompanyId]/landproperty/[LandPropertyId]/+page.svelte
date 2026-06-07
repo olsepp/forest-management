@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
+	import { goto } from '$app/navigation';
 	import { landPropertyService } from '$lib/services/land-property';
 	import FscBadge from '$lib/components/shared/FscBadge.svelte';
 	import type {
@@ -188,9 +189,9 @@
 {:else}
 	<div class="detail-page">
 		<p class="breadcrumb">
-			<a href={resolve('/admin/[CompanyId]/landproperty', { CompanyId: companyId })}
-				>← Tagasi kinnistute juurde</a
-			>
+			<button type="button" class="back-button" onclick={() => goto(-1)}>
+				← Tagasi kinnistute juurde
+			</button>
 		</p>
 
 		<header class="page-head">
@@ -368,6 +369,20 @@
 
 	.breadcrumb {
 		margin: 0;
+	}
+
+	.back-button {
+		background: none;
+		border: none;
+		padding: 0;
+		cursor: pointer;
+		font-size: inherit;
+		color: #2f5f49;
+		text-decoration: underline;
+	}
+
+	.back-button:hover {
+		color: #1f5a42;
 	}
 
 	.page-head {
