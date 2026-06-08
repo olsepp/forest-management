@@ -4,9 +4,9 @@
 	import { goto } from '$app/navigation';
 	import type { ActivityDto } from '$lib/dtos/activity/activity.dto';
 
-	let { data }: { data: { activities: ActivityDto[]; total: number; skip: number; take: number } } = $props();
+	let { data }: { data: { activities: ActivityDto[] | null; total: number; skip: number; take: number } } = $props();
+	let isLoading = $derived(data.activities === null);
 	let activities = $derived(data.activities ?? []);
-	let isLoading = $derived(activities.length === 0);
 
 	let companyId = $derived($page.params.CompanyId ?? '');
 	let total = $derived(data.total ?? 0);

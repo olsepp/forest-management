@@ -11,6 +11,6 @@ export const load: PageLoad = async ({ params, fetch: fetchFn }) => {
 	);
 
 	return {
-		properties: properties ?? []
+		properties
 	};
 };

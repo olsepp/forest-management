@@ -11,9 +11,11 @@ export const load: PageLoad = async ({ params, fetch: fetchFn, url }) => {
 		`/api/activities/by-company/${params.CompanyId}/my?skip=${skip}&take=${take}`,
 		fetchFn
 	);
-	const activities = (raw?.items ?? [])
-		.filter((item) => Boolean(item?.id))
-		.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+	const activities = raw
+		? raw.items
+			.filter((item) => Boolean(item?.id))
+			.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+		: null;
 
 	return { activities, total: raw?.total ?? 0, skip, take };
 };

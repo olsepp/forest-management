@@ -7,9 +7,9 @@
 		PropertyCadasterLinkDto
 	} from '$lib/dtos/land-property/land-property-list.dto';
 
-	let { data }: { data: { properties: LandPropertyListDto[] } } = $props();
+	let { data }: { data: { properties: LandPropertyListDto[] | null } } = $props();
+	let isLoading = $derived(data.properties === null);
 	let properties = $derived(data.properties ?? []);
-	let isLoading = $derived(properties.length === 0);
 	let searchQuery = $state('');
 
 	let companyId = $derived($page.params.CompanyId ?? '');
