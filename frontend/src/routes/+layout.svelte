@@ -1,6 +1,6 @@
 <script lang="ts">
 	import './layout.css';
-	import favicon from '$lib/assets/favicon.svg';
+	import favicon from '$lib/assets/icon.svg';
 	import { isAuthenticated } from '$lib/stores/auth.store';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
