@@ -167,6 +167,15 @@ jobs:
             server {
                 listen 80;
                 server_name app.metsakohin.ee;
+                return 301 https://$host$request_uri;
+            }
+
+            server {
+                listen 443 ssl;
+                server_name app.metsakohin.ee;
+
+                ssl_certificate /etc/letsencrypt/live/app.metsakohin.ee/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/app.metsakohin.ee/privkey.pem;
 
                 gzip on;
                 gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
@@ -329,6 +338,15 @@ jobs:
             server {
                 listen 80;
                 server_name app.metsakohin.ee;
+                return 301 https://$host$request_uri;
+            }
+
+            server {
+                listen 443 ssl;
+                server_name app.metsakohin.ee;
+
+                ssl_certificate /etc/letsencrypt/live/app.metsakohin.ee/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/app.metsakohin.ee/privkey.pem;
 
                 gzip on;
                 gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
