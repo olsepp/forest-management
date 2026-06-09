@@ -164,6 +164,7 @@ jobs:
 
             server {
                 listen 80;
+                server_name app.metsakohin.ee;
 
                 gzip on;
                 gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
@@ -323,6 +324,7 @@ jobs:
 
             server {
                 listen 80;
+                server_name app.metsakohin.ee;
 
                 gzip on;
                 gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
