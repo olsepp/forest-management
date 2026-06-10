@@ -8,15 +8,44 @@
 	let lastName = $state('');
 	let role = $state('Employee');
 	let password = $state('');
+	let showPassword = $state(false);
 
 	let isSubmitting = $state(false);
 	let errorMessage = $state('');
 	let successMessage = $state('');
 
+	function validatePassword(pw: string): string | null {
+		if (pw.length < 6) return 'Parool peab olema vähemalt 6 märki pikk.';
+		if (!/[A-Z]/.test(pw)) return 'Parool peab sisaldama vähemalt 1 suurtähte.';
+		if (!/[0-9]/.test(pw)) return 'Parool peab sisaldama vähemalt 1 numbrit.';
+		if (!/[^A-Za-z0-9]/.test(pw)) return 'Parool peab sisaldama vähemalt 1 sümbolit.';
+		return null;
+	}
+
+	function validateUsername(uname: string): string | null {
+		if (!uname.trim()) return 'Kasutajanimi on kohustuslik.';
+		if (uname.trim().length < 6) return 'Kasutajanimi peab olema vähemalt 6 märki pikk.';
+		if (!/^[A-Za-z0-9]+$/.test(uname.trim())) return 'Kasutajanimi võib sisaldada ainult tähti ja numbreid. Ei tohi sisaldada täpitähti ega sümboleid.';
+		return null;
+	}
+
 	async function createUser(event: SubmitEvent) {
 		event.preventDefault();
 		errorMessage = '';
 		successMessage = '';
+
+		const usernameError = validateUsername(username);
+		if (usernameError) {
+			errorMessage = usernameError;
+			return;
+		}
+
+		const passwordError = validatePassword(password);
+		if (passwordError) {
+			errorMessage = passwordError;
+			return;
+		}
+
 		isSubmitting = true;
 
 		try {
@@ -124,13 +153,35 @@
 
 		<label class="flex flex-col gap-1 text-sm">
 			<span class="font-medium text-slate-700">Parool</span>
-			<input
-				bind:value={password}
-				type="password"
-				minlength="6"
-				required
-				class="rounded-lg border border-slate-300 px-3 py-2"
-			/>
+			<div class="relative">
+				<input
+					bind:value={password}
+					type={showPassword ? 'text' : 'password'}
+					minlength="6"
+					required
+					class="w-full rounded-lg border border-slate-300 px-3 py-2 pr-10"
+				/>
+				<button
+					type="button"
+					onclick={() => (showPassword = !showPassword)}
+					class="absolute right-0 top-0 flex h-full w-10 items-center justify-center text-slate-500 hover:text-slate-700"
+					aria-label={showPassword ? 'Peida parool' : 'Näita parooli'}
+				>
+					{#if showPassword}
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
+							<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/>
+							<path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/>
+							<path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/>
+							<path d="M2 2l20 20"/>
+						</svg>
+					{:else}
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
+							<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+							<circle cx="12" cy="12" r="3"/>
+						</svg>
+					{/if}
+				</button>
+			</div>
 			<span class="text-xs text-slate-500">Parool peab sisaldama vähemalt 1 sümbolit, 1 suurtähte ja 1 numbrit.</span>
 		</label>
 	</div>
