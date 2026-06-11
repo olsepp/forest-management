@@ -32,7 +32,7 @@ public class AccountController : ApiControllerBase
     {
         var result = await _authService.LoginAsync(dto);
         if (result == null)
-            return Unauthorized(new { message = "Invalid username or password." });
+            return Unauthorized(new { message = "Vale kasutajanimi või parool." });
 
         return Ok(result);
     }

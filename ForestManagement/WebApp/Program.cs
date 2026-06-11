@@ -12,6 +12,7 @@ using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.HttpOverrides;
+using System.Collections.Concurrent;
 
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -98,6 +99,32 @@ builder.Services.AddCors(options =>
             .AllowCredentials();
     });
 });
+
+// -----------------------------------------------------------------------
+// Rate Limiting — in-memory login attempt tracker per IP
+// Custom middleware because the built-in ASP.NET Core rate limiters
+// (FixedWindow/TokenBucket) have a known bug (dotnet/runtime#92557)
+// where RetryAfter metadata always returns the full window duration,
+// not the remaining time. This approach gives exact countdown.
+// -----------------------------------------------------------------------
+var loginAttempts = new ConcurrentDictionary<string, ConcurrentQueue<DateTime>>();
+
+_ = new Timer(state =>
+{
+    var now = DateTime.UtcNow;
+    var window = TimeSpan.FromMinutes(15);
+    foreach (var kvp in loginAttempts)
+    {
+        while (kvp.Value.TryPeek(out DateTime oldest) && (now - oldest) > window)
+        {
+            kvp.Value.TryDequeue(out _);
+        }
+        if (kvp.Value.IsEmpty)
+        {
+            loginAttempts.TryRemove(kvp.Key, out _);
+        }
+    }
+}, null, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
 
 // -----------------------------------------------------------------------
 // DI — UnitOfWork & BLL Services
@@ -226,6 +253,55 @@ app.UseRouting();
 
 // CORS must be after UseRouting and before UseAuthentication/UseAuthorization
 app.UseCors("FrontendPolicy");
+
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path == "/api/account/login" && context.Request.Method == "POST")
+    {
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var attempts = loginAttempts.GetOrAdd(ip, _ => new ConcurrentQueue<DateTime>());
+        var now = DateTime.UtcNow;
+        var window = TimeSpan.FromMinutes(15);
+
+        while (attempts.TryPeek(out var oldest) && (now - oldest) > window)
+        {
+            attempts.TryDequeue(out _);
+        }
+
+        if (attempts.Count >= 5)
+        {
+            attempts.TryPeek(out var first);
+            var remaining = (first + window) - now;
+            var totalSeconds = Math.Max((int)remaining.TotalSeconds, 1);
+
+            context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+            context.Response.ContentType = "application/json";
+            context.Response.Headers["Retry-After"] = totalSeconds.ToString();
+
+            string message;
+            if (totalSeconds >= 60)
+            {
+                int minutes = totalSeconds / 60;
+                int seconds = totalSeconds % 60;
+                message = seconds > 0
+                    ? $"Liiga palju katseid. Proovige uuesti {minutes} minuti ja {seconds} sekundi pärast."
+                    : $"Liiga palju katseid. Proovige uuesti {minutes} minuti pärast.";
+            }
+            else
+            {
+                message = $"Liiga palju katseid. Proovige uuesti {totalSeconds} sekundi pärast.";
+            }
+
+            await context.Response.WriteAsync(
+                System.Text.Json.JsonSerializer.Serialize(new { message }));
+            return;
+        }
+
+        attempts.Enqueue(now);
+    }
+
+    await next();
+});
 
 app.UseAuthentication();
 app.UseAuthorization();
