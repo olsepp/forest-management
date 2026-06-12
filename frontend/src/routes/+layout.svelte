@@ -1,6 +1,6 @@
 <script lang="ts">
 	import './layout.css';
-	import favicon from '$lib/assets/icon.svg';
+	import favicon from '$lib/assets/METSALO.png';
 	import { isAuthenticated } from '$lib/stores/auth.store';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
