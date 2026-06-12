@@ -32,14 +32,14 @@
 </script>
 
 <svelte:head>
-	<title>Logi sisse - Metsandusüsteem</title>
+	<title>Metsalo</title>
 </svelte:head>
 
 <div class="min-h-screen flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
 	<div class="w-full max-w-md space-y-8 rounded-2xl border border-[#d8e1dc] bg-white/95 p-8 shadow-[0_14px_36px_rgba(20,41,31,0.12)] backdrop-blur-sm">
 		<div class="text-center">
 			<h1 class="text-2xl font-bold tracking-tight text-[#1f2a24] sm:text-3xl">Logi sisse</h1>
-			<p class="mt-2 text-sm text-[#56645d]">Metsandusüsteem</p>
+			<p class="mt-2 text-sm text-[#56645d]">Metsalo</p>
 		</div>
 
 		<form
