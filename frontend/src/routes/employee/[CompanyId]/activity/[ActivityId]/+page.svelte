@@ -229,7 +229,13 @@
 
 				<label>
 					<span>Ühik</span>
-					<input type="text" bind:value={form.unit} readonly={!isEditMode} />
+					<select bind:value={form.unit} disabled={!isEditMode}>
+						<option value="">Vali ühik</option>
+						<option value="m3">m3</option>
+						<option value="ha">ha</option>
+						<option value="tk">tk</option>
+						<option value="h">h</option>
+					</select>
 				</label>
 
 				<label class="full-width">

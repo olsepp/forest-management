@@ -175,7 +175,13 @@
 
 		<label>
 			<span>Ühik</span>
-			<input type="text" bind:value={unit} placeholder="m3, ha, ..." />
+			<select bind:value={unit}>
+				<option value="">Vali ühik</option>
+				<option value="m3">m3</option>
+				<option value="ha">ha</option>
+				<option value="tk">tk</option>
+				<option value="h">h</option>
+			</select>
 		</label>
 
 		<label class="full-width">
