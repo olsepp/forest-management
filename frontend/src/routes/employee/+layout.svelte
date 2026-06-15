@@ -307,7 +307,7 @@
 						<span>{item.label}</span>
 					</a>
 				{:else}
-					<a href={resolve('/employee')} class="employee-tab-link" class:is-active={item.isActive} data-sveltekit-preload-data="tap">
+					<a href={resolve('/employee')} class="employee-tab-link employee-floating-action" class:is-active={item.isActive} data-sveltekit-preload-data="tap">
 						<span class="employee-tab-icon" aria-hidden="true">
 							<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
 								<path
@@ -315,7 +315,6 @@
 								/>
 							</svg>
 						</span>
-						<span>{item.label}</span>
 					</a>
 				{/if}
 			{/each}
@@ -596,6 +595,56 @@
 		stroke-width: 0;
 	}
 
+	/* ── Floating Action Circle (mobile) ── */
+
+	.employee-floating-action {
+		position: absolute;
+		left: 50%;
+		transform: translateX(-50%);
+		bottom: calc(100% - 1.55rem);
+		width: 3.1rem;
+		height: 3.1rem;
+		border-radius: 50%;
+		flex: none;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--employee-accent);
+		box-shadow: 0 4px 18px rgba(15, 34, 25, 0.28);
+		text-decoration: none;
+		font-size: 0;
+		color: #ffffff;
+		transition:
+			background-color 0.18s ease,
+			border-color 0.18s ease,
+			box-shadow 0.18s ease,
+			transform 0.12s ease;
+		z-index: 1210;
+	}
+
+	.employee-floating-action .employee-tab-icon {
+		width: 1.35rem;
+		height: 1.35rem;
+	}
+
+	.employee-floating-action .employee-tab-icon :global(svg) {
+		width: 1.35rem;
+		height: 1.35rem;
+	}
+
+	.employee-floating-action.is-active {
+		background: var(--employee-accent-strong);
+	}
+
+	.employee-floating-action:active {
+		transform: translateX(-50%) translateY(1px);
+	}
+
+	.employee-floating-action:focus-visible {
+		outline: none;
+		box-shadow: 0 0 0 3px var(--employee-focus-ring), 0 4px 18px rgba(15, 34, 25, 0.22);
+	}
+
 	:global(.employee-stack-cards) {
 		display: grid;
 		gap: 0.9rem;
@@ -795,6 +844,20 @@
 
 		.employee-bottom-nav {
 			display: none;
+		}
+
+		.employee-floating-action {
+			position: static;
+			width: auto;
+			height: auto;
+			border-radius: var(--employee-radius-md);
+			border: 1px solid transparent;
+			box-shadow: none;
+			bottom: auto;
+			left: auto;
+			transform: none;
+			z-index: auto;
+			font-size: inherit;
 		}
 
 		.employee-content {
