@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { forestStandService } from '$lib/services/forest-stand';
 	import FscBadge from '$lib/components/shared/FscBadge.svelte';
+	import WorkOrderModal from '$lib/components/admin/WorkOrderModal.svelte';
 	import type {
 		ActivityListDto,
 		ForestStandDto,
@@ -32,6 +33,7 @@
 	let isLoading = $derived(!forestStand);
 	let isSaving = $state(false);
 	let isEditMode = $state(false);
+	let showWorkOrderModal = $state(false);
 	let errorMessage = $state('');
 	let successMessage = $state('');
 	const companyId = $derived($page.params.CompanyId ?? '');
@@ -152,6 +154,14 @@
 						ForestStandId: forestStand.id
 					})}>Logi tegevus</a
 				>
+				<button
+					type="button"
+					class="btn-log-activity"
+					onclick={() => (showWorkOrderModal = true)}
+					disabled={isLoading}
+				>
+					Saada töökäsk
+				</button>
 				<button
 					type="button"
 					class="mode-btn"
@@ -465,3 +475,10 @@
 		white-space: nowrap;
 	}
 </style>
+<WorkOrderModal
+	open={showWorkOrderModal}
+	cadasterId={cadaster?.id ?? ''}
+	forestStandId={forestStand?.id ?? null}
+	onclose={() => (showWorkOrderModal = false)}
+	oncreated={() => {}}
+/>

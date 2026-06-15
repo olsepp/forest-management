@@ -20,6 +20,7 @@ import { authService } from '$lib/services/auth';
 	function getCompanyItems(companyId: string): MenuItem[] {
 		return [
 			{ label: 'Tegevused', href: `/admin/${companyId}/activity` },
+			{ label: 'Töökäsud', href: `/admin/${companyId}/workorder` },
 			{ label: 'Töölaud', href: `/admin/${companyId}/dashboard` },
 			{ label: 'Kinnistud', href: `/admin/${companyId}/landproperty` },
 			{ label: 'Müüdud kinnistud', href: `/admin/${companyId}/landproperty-sold` }

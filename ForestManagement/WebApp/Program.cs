@@ -141,6 +141,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IActivityExportService, ActivityExportService>();
+builder.Services.AddScoped<IWorkOrderService, WorkOrderService>();
 
 // -----------------------------------------------------------------------
 // API Controllers Only

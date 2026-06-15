@@ -11,6 +11,7 @@ public interface IUnitOfWork : IDisposable
     IActivityRepository Activities { get; }
     IActivityTypeRepository ActivityTypes { get; }
     IRefreshTokenRepository RefreshTokens { get; }
+    IWorkOrderRepository WorkOrders { get; }
 
     /// <summary>
     /// Save all changes

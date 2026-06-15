@@ -33,14 +33,15 @@
 
 	let navCompanyId = $derived(currentCompanyId ?? '');
 
-	type NavIcon = 'overview' | 'property' | 'activity' | 'companies';
+	type NavIcon = 'overview' | 'property' | 'activity' | 'workorder' | 'companies';
 	type NavItem = {
-		key: 'overview' | 'landproperty' | 'activity' | 'companies';
+		key: 'overview' | 'landproperty' | 'activity' | 'workorder' | 'companies';
 		label: string;
 		route:
 			| '/employee/[CompanyId]'
 			| '/employee/[CompanyId]/landproperty'
 			| '/employee/[CompanyId]/activity'
+			| '/employee/[CompanyId]/workorder'
 			| '/employee';
 		isCompanyRoute: boolean;
 		icon: NavIcon;
@@ -76,6 +77,14 @@
 				isCompanyRoute: true,
 				icon: 'activity',
 				isActive: pathname.includes(`/employee/${navCompanyId}/activity`)
+			},
+			{
+				key: 'workorder',
+				label: 'Töökäsud',
+				route: '/employee/[CompanyId]/workorder',
+				isCompanyRoute: true,
+				icon: 'workorder',
+				isActive: pathname.includes(`/employee/${navCompanyId}/workorder`)
 			},
 			{
 				key: 'companies',
@@ -186,6 +195,16 @@
 									<path d="M4 12.5h3.5l2-4 3.5 8 2.5-5H20" />
 									<path d="M4 5h16v14H4z" fill="none" stroke-width="1.8" />
 								</svg>
+							{:else if item.icon === 'workorder'}
+								<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+									<path
+										d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 5h6"
+										fill="none"
+										stroke-width="1.8"
+									/>
+									<path d="M9 12h2l1 6h-2l-1-6Z" />
+									<path d="M10 12l1-2h2l1 2" />
+								</svg>
 							{:else}
 								<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
 									<path
@@ -241,7 +260,8 @@
 							item.route as
 								| '/employee/[CompanyId]'
 								| '/employee/[CompanyId]/landproperty'
-								| '/employee/[CompanyId]/activity',
+								| '/employee/[CompanyId]/activity'
+								| '/employee/[CompanyId]/workorder',
 							{ CompanyId: navCompanyId }
 						)}
 						class="employee-tab-link"
@@ -265,6 +285,16 @@
 								<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
 									<path d="M4 12.5h3.5l2-4 3.5 8 2.5-5H20" />
 									<path d="M4 5h16v14H4z" fill="none" stroke-width="1.8" />
+								</svg>
+							{:else if item.icon === 'workorder'}
+								<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+									<path
+										d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 5h6"
+										fill="none"
+										stroke-width="1.8"
+									/>
+									<path d="M9 12h2l1 6h-2l-1-6Z" />
+									<path d="M10 12l1-2h2l1 2" />
 								</svg>
 							{:else}
 								<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">

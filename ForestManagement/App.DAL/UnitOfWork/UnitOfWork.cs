@@ -17,6 +17,7 @@ public class UnitOfWork : IUnitOfWork
     private IActivityRepository? _activities;
     private IActivityTypeRepository? _activityTypes;
     private IRefreshTokenRepository? _refreshTokens;
+    private IWorkOrderRepository? _workOrders;
 
     public UnitOfWork(AppDbContext context)
     {
@@ -43,6 +44,9 @@ public class UnitOfWork : IUnitOfWork
 
     public IRefreshTokenRepository RefreshTokens =>
         _refreshTokens ??= new RefreshTokenRepository(_context);
+
+    public IWorkOrderRepository WorkOrders =>
+        _workOrders ??= new WorkOrderRepository(_context);
 
     public async Task SaveChangesAsync()
     {

@@ -26,4 +26,5 @@ public class ForestStand : BaseEntity
     public Cadaster Cadaster { get; set; } = null!;
 
     public ICollection<Activity> Activities { get; set; } = new List<Activity>();
+    public ICollection<WorkOrder> WorkOrders { get; set; } = new List<WorkOrder>();
 }
