@@ -306,19 +306,22 @@
 						</span>
 						<span>{item.label}</span>
 					</a>
-				{:else}
-					<a href={resolve('/employee')} class="employee-tab-link employee-floating-action" class:is-active={item.isActive} data-sveltekit-preload-data="tap">
-						<span class="employee-tab-icon" aria-hidden="true">
-							<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-								<path
-									d="M3 7h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7Zm4-3h10v2H7V4Zm2 6h2v2H9v-2Zm0 4h2v2H9v-2Zm4-4h6v2h-6v-2Zm0 4h6v2h-6v-2Z"
-								/>
-							</svg>
-						</span>
-					</a>
 				{/if}
 			{/each}
 		</nav>
+		{#each navItems as item (item.key)}
+			{#if !item.isCompanyRoute}
+				<a href={resolve('/employee')} class="employee-floating-action" class:is-active={item.isActive} data-sveltekit-preload-data="tap">
+					<span class="employee-tab-icon" aria-hidden="true">
+						<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+							<path
+								d="M3 7h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7Zm4-3h10v2H7V4Zm2 6h2v2H9v-2Zm0 4h2v2H9v-2Zm4-4h6v2h-6v-2Zm0 4h6v2h-6v-2Z"
+							/>
+						</svg>
+					</span>
+				</a>
+			{/if}
+		{/each}
 	{/if}
 </div>
 
@@ -542,10 +545,11 @@
 
 	.employee-tab-link {
 		flex: 1;
-		display: inline-flex;
+		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
+		min-width: 0;
 		gap: 0.2rem;
 		text-align: center;
 		text-decoration: none;
@@ -598,14 +602,13 @@
 	/* ── Floating Action Circle (mobile) ── */
 
 	.employee-floating-action {
-		position: absolute;
+		position: fixed;
 		left: 50%;
 		transform: translateX(-50%);
-		bottom: calc(100% - 1.55rem);
+		bottom: calc(2.85rem + var(--employee-safe-bottom));
 		width: 3.1rem;
 		height: 3.1rem;
 		border-radius: 50%;
-		flex: none;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -847,17 +850,7 @@
 		}
 
 		.employee-floating-action {
-			position: static;
-			width: auto;
-			height: auto;
-			border-radius: var(--employee-radius-md);
-			border: 1px solid transparent;
-			box-shadow: none;
-			bottom: auto;
-			left: auto;
-			transform: none;
-			z-index: auto;
-			font-size: inherit;
+			display: none;
 		}
 
 		.employee-content {
