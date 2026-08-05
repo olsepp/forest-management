@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { userService } from '$lib/services/user';
-	import { activityTypeService } from '$lib/services/activity-type';
+	import ActivityTypeSelect from '$lib/components/admin/ActivityTypeSelect.svelte';
+	import Dropdown from '$lib/components/shared/Dropdown.svelte';
 	import { workOrderService } from '$lib/services/workorder.service';
 	import type { UserListDto } from '$lib/dtos/user/user.dto';
 	import type { WorkOrderDto } from '$lib/dtos/workorder/workorder.dto';
@@ -24,12 +25,10 @@
 	}: Props = $props();
 
 	let isSubmitting = $state(false);
-	let isLoadingActivityTypes = $state(true);
 	let isLoadingUsers = $state(true);
 	let errorMessage = $state('');
 	let successMessage = $state('');
 
-	let activityTypes = $state<{ id: string; activityTypeName: string }[]>([]);
 	let users = $state<UserListDto[]>([]);
 
 	let assignedToId = $state('');
@@ -37,6 +36,20 @@
 	let quantity = $state('');
 	let unit = $state('');
 	let notes = $state('');
+
+	let userOptions = $derived(
+		users.map((u) => ({
+			value: u.id,
+			label: `${u.firstName} ${u.lastName}${u.username ? ` (${u.username})` : ''}`
+		}))
+	);
+
+	const unitOptions = [
+		{ value: 'm3', label: 'm³' },
+		{ value: 'ha', label: 'ha' },
+		{ value: 'tk', label: 'tk' },
+		{ value: 'h', label: 'h' }
+	];
 
 	$effect(() => {
 		if (open) {
@@ -47,15 +60,10 @@
 	async function loadDropdowns() {
 		errorMessage = '';
 		successMessage = '';
-		isLoadingActivityTypes = true;
 		isLoadingUsers = true;
 
 		try {
-			const [types, userList] = await Promise.all([
-				activityTypeService.getAll(),
-				userService.getAll()
-			]);
-			activityTypes = Array.isArray(types) ? types : [];
+			const userList = await userService.getAll();
 			users = userList.filter((u) => u.role !== 'Admin');
 
 			if (workOrder) {
@@ -64,13 +72,10 @@
 				quantity = workOrder.quantity ? String(workOrder.quantity) : '';
 				unit = workOrder.unit ?? '';
 				notes = workOrder.notes ?? '';
-			} else if (!activityTypeId) {
-				activityTypeId = activityTypes[0]?.id ?? '';
 			}
 		} catch {
 			errorMessage = 'Andmete laadimine ebaõnnestus.';
 		} finally {
-			isLoadingActivityTypes = false;
 			isLoadingUsers = false;
 		}
 	}
@@ -129,7 +134,7 @@
 				onclose();
 			} else {
 				assignedToId = '';
-				activityTypeId = activityTypes[0]?.id ?? '';
+				activityTypeId = '';
 				quantity = '';
 				unit = '';
 				notes = '';
@@ -175,39 +180,20 @@
 				<div class="form-grid">
 					<label>
 						<span>Töötaja</span>
-						<select
+						<Dropdown
 							bind:value={assignedToId}
+							options={userOptions}
 							disabled={isLoadingUsers || isSubmitting}
-							required
-						>
-							<option value="" disabled
-								>{isLoadingUsers ? 'Laadimine...' : 'Vali töötaja'}</option
-							>
-							{#each users as user (user.id)}
-								<option value={user.id}>
-									{user.firstName} {user.lastName}
-									{#if user.username}
-										({user.username})
-									{/if}
-								</option>
-							{/each}
-						</select>
+							placeholder={isLoadingUsers ? 'Laadimine...' : 'Vali töötaja'}
+						/>
 					</label>
 
 					<label>
 						<span>Tegevuse tüüp</span>
-						<select
+						<ActivityTypeSelect
 							bind:value={activityTypeId}
-							disabled={isLoadingActivityTypes || isSubmitting}
-							required
-						>
-							<option value="" disabled
-								>{isLoadingActivityTypes ? 'Laadimine...' : 'Vali tüüp'}</option
-							>
-							{#each activityTypes as type (type.id)}
-								<option value={type.id}>{type.activityTypeName}</option>
-							{/each}
-						</select>
+							disabled={isLoadingUsers || isSubmitting}
+						/>
 					</label>
 
 					<label>
@@ -217,13 +203,12 @@
 
 					<label>
 						<span>Ühik</span>
-						<select bind:value={unit} disabled={isSubmitting}>
-							<option value="">Vali ühik</option>
-							<option value="m3">m³</option>
-							<option value="ha">ha</option>
-							<option value="tk">tk</option>
-							<option value="h">h</option>
-						</select>
+						<Dropdown
+							bind:value={unit}
+							options={unitOptions}
+							disabled={isSubmitting}
+							placeholder="Vali ühik"
+						/>
 					</label>
 
 					<label class="full-width">
@@ -248,7 +233,7 @@
 						type="submit"
 						class="btn-save"
 						style="background:#174834;color:#ffffff;border:1px solid #174834;border-radius:0.65rem;"
-						disabled={isSubmitting || isLoadingActivityTypes || isLoadingUsers}
+						disabled={isSubmitting || isLoadingUsers}
 					>
 						{isSubmitting ? (workOrder ? 'Salvestamine...' : 'Saatmine...') : (workOrder ? 'Salvesta' : 'Saada')}
 					</button>
@@ -325,7 +310,6 @@
 	label span {
 		font-weight: 600;
 	}
-	select,
 	input,
 	textarea {
 		padding: 0.45rem 0.6rem;
@@ -335,7 +319,6 @@
 		font-family: inherit;
 		background: #f9fcfa;
 	}
-	select:disabled,
 	input:disabled,
 	textarea:disabled {
 		opacity: 0.6;

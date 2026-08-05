@@ -2,6 +2,8 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import ActivityTypeSelect from '$lib/components/admin/ActivityTypeSelect.svelte';
+	import Dropdown from '$lib/components/shared/Dropdown.svelte';
 	import { activityService } from '$lib/services/activity';
 	import type {
 		ActivityStatus,
@@ -19,8 +21,7 @@
 		};
 	} = $props();
 
-	let activity = $derived(data.activity);
-	let activityTypes = $derived(data.activityTypes ?? []);
+	let activity = $state<ActivityDto | null>(data.activity);
 	let isLoading = $derived(!activity);
 	let isSaving = $state(false);
 	let isEditMode = $state(false);
@@ -40,6 +41,19 @@
 		applicationStatus: '' as '' | ActivityStatus
 	});
 
+	const unitOptions = [
+		{ value: 'm3', label: 'm3' },
+		{ value: 'ha', label: 'ha' },
+		{ value: 'tk', label: 'tk' },
+		{ value: 'h', label: 'h' }
+	];
+
+	const statusOptions = [
+		{ value: 'Pending', label: 'Ootel' },
+		{ value: 'Approved', label: 'Kinnitatud' },
+		{ value: 'Rejected', label: 'Tagasi lükatud' }
+	];
+
 	function toDateInputValue(value: string): string {
 		const date = new Date(value);
 		if (Number.isNaN(date.getTime())) return '';
@@ -57,6 +71,12 @@
 			applicationStatus: detail.applicationStatus ?? ''
 		};
 	}
+
+	$effect(() => {
+		if (data.activity) {
+			activity = data.activity;
+		}
+	});
 
 	$effect(() => {
 		if (activity) {
@@ -238,14 +258,10 @@
 			<section class="form-section">
 				<h2>Tegevuse põhiandmed</h2>
 				<div class="form-grid">
-					<label>
-						<span>Tegevuse tüüp</span>
-						<select bind:value={form.activityTypeId} disabled={!isEditMode}>
-							{#each activityTypes as type (type.id)}
-								<option value={type.id}>{type.activityTypeName}</option>
-							{/each}
-						</select>
-					</label>
+				<label>
+					<span>Tegevuse tüüp</span>
+					<ActivityTypeSelect bind:value={form.activityTypeId} disabled={!isEditMode} />
+				</label>
 					<label>
 						<span>Kuupäev</span>
 						<input type="datetime-local" bind:value={form.date} readonly={!isEditMode} />
@@ -256,22 +272,21 @@
 					</label>
 					<label>
 						<span>Ühik</span>
-						<select bind:value={form.unit} disabled={!isEditMode}>
-							<option value="">Vali ühik</option>
-							<option value="m3">m3</option>
-							<option value="ha">ha</option>
-							<option value="tk">tk</option>
-							<option value="h">h</option>
-						</select>
+						<Dropdown
+							bind:value={form.unit}
+							options={unitOptions}
+							disabled={!isEditMode}
+							placeholder="Vali ühik"
+						/>
 					</label>
 					<label>
 						<span>Taotluse staatus</span>
-						<select bind:value={form.applicationStatus} disabled={!isEditMode}>
-							<option value=""></option>
-							<option value="Pending">Ootel</option>
-							<option value="Approved">Kinnitatud</option>
-							<option value="Rejected">Tagasi lükatud</option>
-						</select>
+						<Dropdown
+							bind:value={form.applicationStatus}
+							options={statusOptions}
+							disabled={!isEditMode}
+							placeholder="—"
+						/>
 					</label>
 				</div>
 			</section>

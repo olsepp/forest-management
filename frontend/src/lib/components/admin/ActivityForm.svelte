@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { onMount } from 'svelte';
-	import { activityTypeService } from '$lib/services/activity-type';
+	import ActivityTypeSelect from '$lib/components/admin/ActivityTypeSelect.svelte';
+	import Dropdown from '$lib/components/shared/Dropdown.svelte';
+	import DatePicker from '$lib/components/DatePicker.svelte';
 	import { activityService } from '$lib/services/activity';
 
 	type Props = {
@@ -24,20 +25,30 @@
 	}: Props = $props();
 
 	let isSubmitting = $state(false);
-	let isLoadingActivityTypes = $state(true);
 	let errorMessage = $state('');
 	let successMessage = $state('');
-
-	let activityTypes = $state<{ id: string; activityTypeName: string }[]>([]);
 
 	let description = $state('');
 	let quantity = $state('');
 	let unit = $state('');
 	let notes = $state('');
-	let date = $state(new Date().toISOString().slice(0, 16));
+	let date = $state(new Date().toISOString().slice(0, 10));
 	let activityTypeId = $state('');
 	let selectedCadasterId = $state('');
 	let applicationStatus = $state('');
+
+	const unitOptions = [
+		{ value: 'm3', label: 'm3' },
+		{ value: 'ha', label: 'ha' },
+		{ value: 'tk', label: 'tk' },
+		{ value: 'h', label: 'h' }
+	];
+
+	const statusOptions = [
+		{ value: 'Pending', label: 'Ootel' },
+		{ value: 'Approved', label: 'Kinnitatud' },
+		{ value: 'Rejected', label: 'Tagasi lükatud' }
+	];
 
 	$effect(() => {
 		if (lockCadaster && cadasterId) {
@@ -49,21 +60,6 @@
 			selectedCadasterId = cadasterId;
 		}
 	});
-
-	async function loadActivityTypes() {
-		try {
-			errorMessage = '';
-			isLoadingActivityTypes = true;
-			const types = await activityTypeService.getAll();
-			activityTypes = Array.isArray(types) ? types : [];
-			activityTypeId = activityTypes[0]?.id ?? '';
-		} catch {
-			errorMessage = 'Tegevuse tüüpe ei õnnestunud laadida.';
-			activityTypes = [];
-		} finally {
-			isLoadingActivityTypes = false;
-		}
-	}
 
 	async function submit(event: SubmitEvent) {
 		event.preventDefault();
@@ -121,7 +117,6 @@
 		}
 	}
 
-	onMount(loadActivityTypes);
 </script>
 
 <form id="activity-form" class="detail-form" onsubmit={submit}>
@@ -130,19 +125,11 @@
 		<div class="form-grid">
 			<label>
 				<span>Tegevuse tüüp</span>
-				<select bind:value={activityTypeId} disabled={isLoadingActivityTypes} required>
-					<option value="" disabled
-						>{isLoadingActivityTypes ? 'Laadimine...' : 'Vali tegevuse tüüp'}</option
-					>
-					{#each activityTypes as type (type.id)}
-						<option value={type.id}>{type.activityTypeName}</option>
-					{/each}
-				</select>
+				<ActivityTypeSelect bind:value={activityTypeId} />
 			</label>
 
 			<label>
-				<span>Kuupäev</span>
-				<input type="datetime-local" bind:value={date} required />
+				<DatePicker label="Kuupäev" bind:value={date} placeholder="Vali kuupäev" />
 			</label>
 
 			<label>
@@ -150,26 +137,15 @@
 				<input type="number" step="any" bind:value={quantity} />
 			</label>
 
-			<label>
-				<span>Ühik</span>
-				<select bind:value={unit}>
-					<option value="">Vali ühik</option>
-					<option value="m3">m3</option>
-					<option value="ha">ha</option>
-					<option value="tk">tk</option>
-					<option value="h">h</option>
-				</select>
-			</label>
+		<label>
+			<span>Ühik</span>
+			<Dropdown bind:value={unit} options={unitOptions} placeholder="Vali ühik" />
+		</label>
 
-			<label>
-				<span>Taotluse staatus</span>
-				<select bind:value={applicationStatus}>
-					<option value=""></option>
-					<option value="Pending">Ootel</option>
-					<option value="Approved">Kinnitatud</option>
-					<option value="Rejected">Tagasi lükatud</option>
-				</select>
-			</label>
+		<label>
+			<span>Taotluse staatus</span>
+			<Dropdown bind:value={applicationStatus} options={statusOptions} placeholder="—" />
+		</label>
 		</div>
 	</section>
 
@@ -188,7 +164,7 @@
 	</section>
 
 	<div class="form-actions">
-		<button class="btn-save" type="submit" disabled={isSubmitting || isLoadingActivityTypes}>
+		<button class="btn-save" type="submit" disabled={isSubmitting}>
 			{isSubmitting ? 'Salvestamine...' : submitLabel}
 		</button>
 	</div>

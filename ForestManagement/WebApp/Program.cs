@@ -13,6 +13,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.HttpOverrides;
 using System.Collections.Concurrent;
+using System.Text.Json.Serialization;
 
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -143,10 +144,15 @@ builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IActivityExportService, ActivityExportService>();
 builder.Services.AddScoped<IWorkOrderService, WorkOrderService>();
 
-// -----------------------------------------------------------------------
-// API Controllers Only
-// -----------------------------------------------------------------------
-builder.Services.AddControllers();
+	// -----------------------------------------------------------------------
+	// API Controllers Only
+	// -----------------------------------------------------------------------
+	builder.Services
+		.AddControllers()
+		.AddJsonOptions(options =>
+		{
+			options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+		});
 
 // -----------------------------------------------------------------------
 // Swagger / OpenAPI

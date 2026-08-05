@@ -4,6 +4,7 @@
 	import { goto } from '$app/navigation';
 	import type { ActivityDto } from '$lib/dtos/activity/activity.dto';
 	import DatePicker from '$lib/components/DatePicker.svelte';
+	import Dropdown from '$lib/components/shared/Dropdown.svelte';
 	import ToastMessage from '$lib/components/shared/ToastMessage.svelte';
 	import { activityService } from '$lib/services/activity';
 
@@ -16,6 +17,19 @@
 	let formActivityTypeId = $state('');
 	let formUserId = $state('');
 	let isExporting = $state(false);
+
+	let activityTypeOptions = $derived([
+		{ value: '', label: 'Kõik tegevuse tüübid' },
+		...data.activityTypes.map((t) => ({ value: t.id, label: t.activityTypeName }))
+	]);
+
+	let userOptions = $derived([
+		{ value: '', label: 'Kõik kasutajad' },
+		...data.users.map((u) => ({
+			value: u.id,
+			label: `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || '—'
+		}))
+	]);
 
 	let total = $derived(data.total ?? 0);
 	let skip = $derived(data.skip ?? 0);
@@ -196,22 +210,24 @@
 		bind:value={formEndDate}
 		placeholder="Vali lõppkuupäev"
 	/>
-	<select bind:value={formActivityTypeId} class="filter-select">
-		<option value="">Kõik tegevuse tüübid</option>
-		{#each data.activityTypes as type}
-			<option value={type.id}>{type.activityTypeName}</option>
-		{/each}
-	</select>
-	<select bind:value={formUserId} class="filter-select">
-		<option value="">Kõik kasutajad</option>
-		{#each data.users as user}
-			<option value={user.id}>{user.firstName} {user.lastName}</option>
-		{/each}
-	</select>
+	<div class="filter-dropdown">
+		<Dropdown
+			bind:value={formActivityTypeId}
+			options={activityTypeOptions}
+			placeholder="Kõik tegevuse tüübid"
+		/>
+	</div>
+	<div class="filter-dropdown">
+		<Dropdown
+			bind:value={formUserId}
+			options={userOptions}
+			placeholder="Kõik kasutajad"
+		/>
+	</div>
 	<button class="filter-btn" onclick={handleSubmit}>Filtreeri</button>
 	<button class="reset-btn" onclick={handleReset}>Lähtesta</button>
 	<button class="export-btn" disabled={isExporting} onclick={handleExport}>
-		{isExporting ? 'Oota...' : 'Lae alla'}
+		{isExporting ? 'Töötlemisel...' : 'Lae alla'}
 	</button>
 </div>
 
@@ -483,12 +499,7 @@
 		min-width: 200px;
 	}
 
-	.filter-select {
-		padding: 0.75rem;
-		border: 1px solid #e2e8f0;
-		border-radius: 0.5rem;
-		font-size: 1rem;
-		background: #fff;
+	.filter-dropdown {
 		min-width: 200px;
 	}
 
