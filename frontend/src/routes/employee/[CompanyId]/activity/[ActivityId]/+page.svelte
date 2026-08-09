@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { user } from '$lib/stores/auth.store';
 	import { activityService } from '$lib/services/activity';
+	import { formatUserName } from '$lib/utils/format-user';
 	import type {
 		ActivityDto,
 		ActivityTypeListDto,
@@ -171,7 +172,7 @@
 		</div>
 
 		<div class="meta-grid">
-			<p><strong>Sisestas:</strong> {activity.userName || '—'}</p>
+			<p><strong>Sisestas:</strong> {formatUserName(activity) || '—'}</p>
 			<p><strong>Kuupäev:</strong> {formatDate(activity.date)}</p>
 			<p><strong>Kogus:</strong> {formatQuantity(activity.quantity, activity.unit)}</p>
 			{#if activity.landPropertyId}

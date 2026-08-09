@@ -1,4 +1,4 @@
-export type WorkOrderStatus = 0 | 1; // 0 = Sent, 1 = Completed
+export type WorkOrderStatus = 'Sent' | 'Completed';
 
 export type WorkOrderCreateDto = {
 	assignedToId: string;
@@ -25,8 +25,12 @@ export type WorkOrderDto = {
 	id: string;
 	assignedToId: string;
 	assignedToUserName: string;
+	assignedToUserFirstName: string | null;
+	assignedToUserLastName: string | null;
 	assignedById: string;
 	assignedByUserName: string;
+	assignedByUserFirstName: string | null;
+	assignedByUserLastName: string | null;
 	activityTypeId: string;
 	activityTypeName: string;
 	forestStandId: string | null;
@@ -43,6 +47,8 @@ export type WorkOrderDto = {
 export type WorkOrderListDto = {
 	id: string;
 	assignedToUserName: string;
+	assignedToUserFirstName: string | null;
+	assignedToUserLastName: string | null;
 	activityTypeName: string;
 	cadasterCadastralNumber: string;
 	cadasterId: string;

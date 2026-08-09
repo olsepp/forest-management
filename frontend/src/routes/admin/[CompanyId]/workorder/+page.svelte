@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { workOrderService } from '$lib/services/workorder.service';
+	import { formatUserName } from '$lib/utils/format-user';
 	import type { WorkOrderDto } from '$lib/dtos/workorder/workorder.dto';
 	import WorkOrderModal from '$lib/components/admin/WorkOrderModal.svelte';
 
@@ -41,12 +42,12 @@
 		return unit ? `${q} ${unit}` : String(q);
 	}
 
-	function statusLabel(status: number): string {
-		return status === 0 ? 'Saadetud' : 'Tehtud';
+	function statusLabel(status: string): string {
+		return status === 'Sent' ? 'Saadetud' : 'Tehtud';
 	}
 
-	function statusClass(status: number): string {
-		return status === 0 ? 'status-sent' : 'status-completed';
+	function statusClass(status: string): string {
+		return status === 'Sent' ? 'status-sent' : 'status-completed';
 	}
 
 	function forestStandLabel(item: WorkOrderDto): string {
@@ -103,8 +104,8 @@
 <div class="filter-bar">
 	<select bind:value={statusFilter}>
 		<option value="">Kõik staatused</option>
-		<option value="0">Saadetud</option>
-		<option value="1">Tehtud</option>
+		<option value="Sent">Saadetud</option>
+		<option value="Completed">Tehtud</option>
 	</select>
 </div>
 
@@ -130,7 +131,7 @@
 			<tbody>
 				{#each filteredOrders as item (item.id)}
 					<tr>
-						<td>{item.assignedToUserName}</td>
+						<td>{formatUserName({ userFirstName: item.assignedToUserFirstName, userLastName: item.assignedToUserLastName, userName: item.assignedToUserName })}</td>
 						<td>{item.activityTypeName}</td>
 						<td>{item.cadasterCadastralNumber}</td>
 						<td>{forestStandLabel(item)}</td>

@@ -9,6 +9,8 @@ export type ActivityDto = {
 	date: string;
 	userId: string;
 	userName: string;
+	userFirstName: string | null;
+	userLastName: string | null;
 	activityTypeId: string;
 	activityTypeName: string;
 	cadasterId: string | null;

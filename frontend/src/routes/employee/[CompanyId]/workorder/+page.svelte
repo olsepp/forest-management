@@ -40,12 +40,12 @@
 		return unit ? `${q} ${unit}` : String(q);
 	}
 
-	function statusLabel(status: number): string {
-		return status === 0 ? 'Saadetud' : 'Tehtud';
+	function statusLabel(status: string): string {
+		return status === 'Sent' ? 'Saadetud' : 'Tehtud';
 	}
 
-	function statusClass(status: number): string {
-		return status === 0 ? 'status-sent' : 'status-completed';
+	function statusClass(status: string): string {
+		return status === 'Sent' ? 'status-sent' : 'status-completed';
 	}
 
 	function detailLink(item: WorkOrderListDto): string {
@@ -78,7 +78,7 @@
 		try {
 			await workOrderService.complete(id);
 			workOrders = workOrders.map((w) =>
-				w.id === id ? { ...w, status: 1 as const } : w
+				w.id === id ? { ...w, status: 'Completed' as const } : w
 			);
 			successMessage = 'Töökäsk märgiti tehtuks.';
 			setTimeout(() => (successMessage = ''), 3000);
@@ -96,7 +96,7 @@
 		try {
 			await workOrderService.revert(id);
 			workOrders = workOrders.map((w) =>
-				w.id === id ? { ...w, status: 0 as const } : w
+				w.id === id ? { ...w, status: 'Sent' as const } : w
 			);
 			successMessage = 'Töökäsk võeti tagasi.';
 			setTimeout(() => (successMessage = ''), 3000);
@@ -134,8 +134,8 @@
 <div class="filter-bar">
 	<select bind:value={statusFilter}>
 		<option value="">Kõik staatused</option>
-		<option value="0">Saadetud</option>
-		<option value="1">Tehtud</option>
+		<option value="Sent">Saadetud</option>
+		<option value="Completed">Tehtud</option>
 	</select>
 </div>
 
@@ -156,7 +156,7 @@
 					<p><strong>Eraldis:</strong> {forestStandLabel(item)}</p>
 					<p><strong>Kogus:</strong> {formatQuantity(item.quantity, item.unit)}</p>
 					<p class="activity-date">{formatDate(item.createdAt)}</p>
-					{#if item.status === 0}
+					{#if item.status === 'Sent'}
 						<div class="card-actions">
 							<button
 								class="activity-link"
@@ -169,7 +169,7 @@
 								Logi tegevus
 							</a>
 						</div>
-					{:else if item.status === 1}
+					{:else if item.status === 'Completed'}
 						<div class="card-actions">
 							<button
 								class="activity-link revert"
@@ -207,7 +207,7 @@
 							<td><span class={statusClass(item.status)}>{statusLabel(item.status)}</span></td>
 							<td>{formatDate(item.createdAt)}</td>
 							<td class="actions-cell">
-								{#if item.status === 0}
+								{#if item.status === 'Sent'}
 									<a class="btn-log-table" href={detailLink(item)} data-sveltekit-preload-data="tap">
 										Logi tegevus
 									</a>
@@ -218,7 +218,7 @@
 									>
 										{completingId === item.id ? '...' : 'Märgi tehtuks'}
 									</button>
-								{:else if item.status === 1}
+								{:else if item.status === 'Completed'}
 									<button
 										class="btn-revert"
 										onclick={() => handleRevert(item.id)}

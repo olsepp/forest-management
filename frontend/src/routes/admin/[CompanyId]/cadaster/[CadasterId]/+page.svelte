@@ -11,6 +11,7 @@ import type {
 		CadasterUpdateDto,
 		ActivityListDto
 	} from '$lib/dtos/cadaster/cadaster.dto';
+	import { formatUserName } from '$lib/utils/format-user';
 
 	let {
 		data
@@ -358,7 +359,7 @@ import type {
 									<td>{formatDateTime(activity.date)}</td>
 									<td>{activity.activityTypeName || '—'}</td>
 									<td>{forestStandLabel(activity)}</td>
-									<td>{activity.userName || '—'}</td>
+									<td>{formatUserName(activity) || '—'}</td>
 									<td>{formatActivityQuantity(activity)}</td>
 									<td>{activity.description || '—'}</td>
 								</tr>

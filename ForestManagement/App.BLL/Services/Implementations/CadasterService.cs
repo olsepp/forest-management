@@ -127,6 +127,8 @@ public class CadasterService : ICadasterService
                 Date = a.Date,
                 ActivityTypeName = a.ActivityType?.ActivityTypeName ?? string.Empty,
                 UserName = a.User?.UserName ?? string.Empty,
+            UserFirstName = a.User?.FirstName,
+            UserLastName = a.User?.LastName,
                 CadasterCadastralNumber = c.CadastralNumber
             }).ToList() ?? new List<RecentActivityDto>()
     };

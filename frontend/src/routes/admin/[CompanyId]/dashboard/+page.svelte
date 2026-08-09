@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import type { CompanyDto } from '$lib/dtos/company/company.dto';
 	import type { ActivityDto } from '$lib/dtos/activity/activity.dto';
+	import { formatUserName } from '$lib/utils/format-user';
 
 	interface ActivityCountByDay {
 		date: string;
@@ -230,7 +231,7 @@
 								<td class="px-3 py-2.5">{formatDateTime(activity.date)}</td>
 								<td class="px-3 py-2.5">{activity.activityTypeName ?? '—'}</td>
 								<td class="px-3 py-2.5">{activity.description ?? '—'}</td>
-								<td class="px-3 py-2.5">{activity.userName ?? '—'}</td>
+								<td class="px-3 py-2.5">{formatUserName(activity) ?? '—'}</td>
 								<td class="px-3 py-2.5 text-right">
 									<a
 										class="group inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#cad6cf] bg-white text-[#1f5a42] shadow-sm transition-all hover:border-[#1f5a42] hover:bg-[#174834]"

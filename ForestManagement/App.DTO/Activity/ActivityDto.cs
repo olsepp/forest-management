@@ -16,6 +16,8 @@ public class ActivityDto
     public DateTime Date { get; set; }
     public Guid UserId { get; set; }
     public string UserName { get; set; } = string.Empty;
+    public string? UserFirstName { get; set; }
+    public string? UserLastName { get; set; }
     public Guid ActivityTypeId { get; set; }
     public string ActivityTypeName { get; set; } = string.Empty;
     

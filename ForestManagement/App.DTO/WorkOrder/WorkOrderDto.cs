@@ -8,9 +8,13 @@ public class WorkOrderDto
 
     public Guid AssignedToId { get; set; }
     public string AssignedToUserName { get; set; } = string.Empty;
+    public string? AssignedToUserFirstName { get; set; }
+    public string? AssignedToUserLastName { get; set; }
 
     public Guid AssignedById { get; set; }
     public string AssignedByUserName { get; set; } = string.Empty;
+    public string? AssignedByUserFirstName { get; set; }
+    public string? AssignedByUserLastName { get; set; }
 
     public Guid ActivityTypeId { get; set; }
     public string ActivityTypeName { get; set; } = string.Empty;

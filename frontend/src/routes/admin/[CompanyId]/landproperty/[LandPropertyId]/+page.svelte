@@ -10,6 +10,7 @@
 		CadasterLinkDto,
 		ActivityDto
 	} from '$lib/dtos/land-property/land-property.dto';
+	import { formatUserName } from '$lib/utils/format-user';
 
 	let {
 		data
@@ -335,7 +336,7 @@
 									<td>{activity.activityTypeName || '—'}</td>
 									<td>{activity.cadasterCadastralNumber || '—'}</td>
 									<td>{forestStandLabel(activity)}</td>
-									<td>{activity.userName || '—'}</td>
+									<td>{formatUserName(activity) || '—'}</td>
 									<td>{formatActivityQuantity(activity)}</td>
 									<td>{applicationStatusLabel(activity.applicationStatus)}</td>
 								</tr>

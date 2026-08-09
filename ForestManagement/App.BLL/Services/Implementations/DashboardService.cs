@@ -51,6 +51,8 @@ public class DashboardService : IDashboardService
                 Date = a.Date,
                 ActivityTypeName = a.ActivityType?.ActivityTypeName ?? string.Empty,
                 UserName = a.User?.UserName ?? string.Empty,
+                UserFirstName = a.User?.FirstName,
+                UserLastName = a.User?.LastName,
                 CadasterCadastralNumber = a.Cadaster?.CadastralNumber,
                 ForestStandNumber = a.ForestStand?.Number,
                 LocationDescription = a.Cadaster?.LandProperty != null 

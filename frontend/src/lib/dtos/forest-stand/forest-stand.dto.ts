@@ -6,6 +6,8 @@ export type RecentActivityDto = {
 	date: string;
 	activityTypeName: string;
 	userName: string;
+	userFirstName: string | null;
+	userLastName: string | null;
 	cadasterCadastralNumber: string | null;
 	forestStandNumber: number;
 };
@@ -18,6 +20,8 @@ export type ActivityListDto = {
 	date: string;
 	activityTypeName: string;
 	userName: string;
+	userFirstName: string | null;
+	userLastName: string | null;
 	cadasterCadastralNumber: string | null;
 	forestStandNumber: number;
 	locationDescription: string | null;

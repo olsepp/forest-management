@@ -249,6 +249,8 @@ public class ActivityService : IActivityService
         ActivityTypeId = a.ActivityTypeId,
         UserId = a.UserId,
         UserName = a.User?.UserName ?? string.Empty,
+        UserFirstName = a.User?.FirstName,
+        UserLastName = a.User?.LastName,
         ForestStandId = a.ForestStandId,
         ForestStandNumber = a.ForestStand?.Number,
         CadasterId = a.CadasterId,
@@ -268,6 +270,8 @@ public class ActivityService : IActivityService
         Date = a.Date,
         ActivityTypeName = a.ActivityType?.ActivityTypeName ?? string.Empty,
         UserName = a.User?.UserName ?? string.Empty,
+        UserFirstName = a.User?.FirstName,
+        UserLastName = a.User?.LastName,
         ForestStandNumber = a.ForestStand?.Number,
         CadasterCadastralNumber = a.Cadaster?.CadastralNumber ?? a.ForestStand?.Cadaster?.CadastralNumber,
         ApplicationStatus = a.ApplicationStatus
@@ -282,16 +286,18 @@ public class ActivityService : IActivityService
         Date = a.Date,
         ActivityTypeName = a.ActivityType?.ActivityTypeName ?? string.Empty,
         UserName = a.User?.UserName ?? string.Empty,
-        
+        UserFirstName = a.User?.FirstName,
+        UserLastName = a.User?.LastName,
+
         // IDs
         CadasterId = a.CadasterId ?? a.ForestStand?.CadasterId,
         ForestStandId = a.ForestStandId,
-        
+
         // If activity on ForestStand → return ForestStandNumber + CadasterCadastralNumber (from ForestStand.Cadaster)
         // If activity on Cadaster directly → return CadasterCadastralNumber (from Cadaster)
         ForestStandNumber = a.ForestStandId.HasValue ? a.ForestStand?.Number : null,
-        CadasterCadastralNumber = a.CadasterId.HasValue 
-            ? a.Cadaster?.CadastralNumber 
+        CadasterCadastralNumber = a.CadasterId.HasValue
+            ? a.Cadaster?.CadastralNumber
             : a.ForestStand?.Cadaster?.CadastralNumber
     };
 }

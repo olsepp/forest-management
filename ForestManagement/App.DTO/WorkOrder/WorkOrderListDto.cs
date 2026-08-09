@@ -7,6 +7,8 @@ public class WorkOrderListDto
     public Guid Id { get; set; }
 
     public string AssignedToUserName { get; set; } = string.Empty;
+    public string? AssignedToUserFirstName { get; set; }
+    public string? AssignedToUserLastName { get; set; }
 
     public string ActivityTypeName { get; set; } = string.Empty;
 

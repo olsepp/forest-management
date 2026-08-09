@@ -14,6 +14,8 @@ public class ActivityListDto
     public DateTime Date { get; set; }
     public string ActivityTypeName { get; set; } = string.Empty;
     public string UserName { get; set; } = string.Empty;
+    public string? UserFirstName { get; set; }
+    public string? UserLastName { get; set; }
     
     // Context for where the activity was logged
     public string? CadasterCadastralNumber { get; set; }

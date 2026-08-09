@@ -106,7 +106,9 @@ public class ForestStandService : IForestStandService
             Date = a.Date,
             ForestStandNumber = fs.Number,
             ActivityTypeName = a.ActivityType?.ActivityTypeName ?? string.Empty,
-            UserName = a.User?.UserName ?? string.Empty
+            UserName = a.User?.UserName ?? string.Empty,
+            UserFirstName = a.User?.FirstName,
+            UserLastName = a.User?.LastName
         }).ToList() ?? new List<RecentActivityDto>()
     };
 

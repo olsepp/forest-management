@@ -40,7 +40,7 @@
 	let userOptions = $derived(
 		users.map((u) => ({
 			value: u.id,
-			label: `${u.firstName} ${u.lastName}${u.username ? ` (${u.username})` : ''}`
+			label: `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || u.username || u.email
 		}))
 	);
 

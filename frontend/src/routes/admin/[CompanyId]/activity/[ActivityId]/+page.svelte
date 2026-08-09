@@ -8,6 +8,7 @@
 	import { activityService } from '$lib/services/activity';
 	import { userService } from '$lib/services/user';
 	import { user } from '$lib/stores/auth.store';
+	import { formatUserName } from '$lib/utils/format-user';
 	import type {
 		ActivityStatus,
 		ActivityDto,
@@ -246,7 +247,7 @@
 			</article>
 			<article class="meta-card">
 				<p class="meta-label">Logis</p>
-				<p class="meta-value">{activity.userName}</p>
+				<p class="meta-value">{formatUserName(activity)}</p>
 			</article>
 			<article class="meta-card">
 				<p class="meta-label">Sihtobjekt</p>

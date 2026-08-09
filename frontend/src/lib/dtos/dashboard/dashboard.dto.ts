@@ -18,6 +18,8 @@ export type ActivityListDto = {
 	description?: string;
 	activityTypeName?: string;
 	userName?: string;
+	userFirstName?: string | null;
+	userLastName?: string | null;
 };
 
 export type ActivityChartPoint = {

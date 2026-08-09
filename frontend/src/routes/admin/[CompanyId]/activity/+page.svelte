@@ -7,6 +7,7 @@
 	import Dropdown from '$lib/components/shared/Dropdown.svelte';
 	import ToastMessage from '$lib/components/shared/ToastMessage.svelte';
 	import { activityService } from '$lib/services/activity';
+	import { formatUserName } from '$lib/utils/format-user';
 
 	let { data }: { data: { activities: ActivityDto[]; total: number; skip: number; take: number; activityTypes: { id: string; activityTypeName: string }[]; users: { id: string; firstName?: string; lastName?: string }[] } } = $props();
 
@@ -255,7 +256,7 @@
 						<td>{item.landPropertyName}</td>
 						<td>{cadasterLabel(item)}</td>
 						<td>{forestStandLabel(item)}</td>
-						<td>{item.userName}</td>
+						<td>{formatUserName(item)}</td>
 						<td class="actions">
 							<button
 								type="button"
@@ -323,7 +324,7 @@
 										</div>
 										<div class="detail-item">
 											<span class="detail-label">Kasutaja</span>
-											<span class="detail-value">{item.userName}</span>
+											<span class="detail-value">{formatUserName(item)}</span>
 										</div>
 										<div class="detail-item">
 											<span class="detail-label">Kirjeldus</span>

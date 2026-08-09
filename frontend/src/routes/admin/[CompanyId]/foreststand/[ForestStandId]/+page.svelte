@@ -10,6 +10,7 @@
 		ForestStandUpdateDto,
 		CadasterSummaryDto
 	} from '$lib/dtos/forest-stand/forest-stand.dto';
+	import { formatUserName } from '$lib/utils/format-user';
 
 	let {
 		data
@@ -286,7 +287,7 @@
 									<td>{activity.activityTypeName}</td>
 									<td>{activity.description}</td>
 									<td>{activity.quantity}{activity.unit ? ` ${activity.unit}` : ''}</td>
-									<td>{activity.userName}</td>
+									<td>{formatUserName(activity)}</td>
 									<td class="actions">
 										<a
 											href={resolve('/admin/[CompanyId]/activity/[ActivityId]', {
