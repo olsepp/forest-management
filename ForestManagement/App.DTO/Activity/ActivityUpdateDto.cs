@@ -25,6 +25,10 @@ public class ActivityUpdateDto
     [Required]
     public Guid ActivityTypeId { get; set; }
 
+    // Admins may set this to reassign the activity to another user;
+    // the service ignores any value supplied by a non-admin caller.
+    public Guid? UserId { get; set; }
+
     // One or the other - mutually exclusive
     public Guid? ForestStandId { get; set; }
     public Guid? CadasterId { get; set; }

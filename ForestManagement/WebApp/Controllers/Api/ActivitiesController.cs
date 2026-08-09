@@ -142,7 +142,8 @@ public class ActivitiesController : ApiControllerBase
 
         try
         {
-            var created = await _service.CreateAsync(dto, userId);
+            var created = await _service.CreateAsync(dto, userId, User.IsInRole("Admin"));
+            if (created == null) return NotFound(new { message = "Target user not found." });
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
         catch (ArgumentException ex)

@@ -32,8 +32,22 @@ export type ActivityUpdateDto = {
 	unit: string | null;
 	notes: string | null;
 	date: string;
+	userId?: string;
 	activityTypeId: string;
 	forestStandId: string | null;
 	cadasterId: string | null;
+	applicationStatus: ActivityStatus | null;
+};
+
+export type ActivityCreateDto = {
+	description: string;
+	quantity: number;
+	unit: string | null;
+	notes: string | null;
+	date: string;
+	userId?: string;
+	activityTypeId: string;
+	cadasterId: string | null;
+	forestStandId: string | null;
 	applicationStatus: ActivityStatus | null;
 };

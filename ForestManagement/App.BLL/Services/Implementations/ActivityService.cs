@@ -10,8 +10,13 @@ namespace App.BLL.Services.Implementations;
 public class ActivityService : IActivityService
 {
     private readonly IUnitOfWork _uow;
+    private readonly IUserService _userService;
 
-    public ActivityService(IUnitOfWork uow) => _uow = uow;
+    public ActivityService(IUnitOfWork uow, IUserService userService)
+    {
+        _uow = uow;
+        _userService = userService;
+    }
 
     public async Task<IEnumerable<ActivityListDto>> GetAllAsync()
     {
@@ -85,7 +90,7 @@ public class ActivityService : IActivityService
         return activities.Select(MapToRecentDto);
     }
 
-    public async Task<ActivityDto> CreateAsync(ActivityCreateDto dto, Guid userId)
+    public async Task<ActivityDto?> CreateAsync(ActivityCreateDto dto, Guid userId, bool isAdmin)
     {
         // Validate ApplicationStatus if provided
         if (dto.ApplicationStatus.HasValue)
@@ -101,6 +106,15 @@ public class ActivityService : IActivityService
             }
         }
 
+        // Admins may set UserId to log the activity on behalf of another user.
+        // Non-admins have any supplied UserId ignored (falls back to the JWT user).
+        var targetUserId = isAdmin && dto.UserId.HasValue ? dto.UserId.Value : userId;
+        if (targetUserId != userId)
+        {
+            var targetUser = await _userService.GetByIdAsync(targetUserId);
+            if (targetUser == null) return null;
+        }
+
         var entity = new Activity
         {
             Description = dto.Description,
@@ -109,7 +123,7 @@ public class ActivityService : IActivityService
             Notes = dto.Notes,
             Date = dto.Date,
             ActivityTypeId = dto.ActivityTypeId,
-            UserId = userId,
+            UserId = targetUserId,
             ForestStandId = dto.ForestStandId,
             CadasterId = dto.CadasterId,
             ApplicationStatus = dto.ApplicationStatus
@@ -128,6 +142,15 @@ public class ActivityService : IActivityService
 
         if (!isAdmin && entity.UserId != currentUserId)
             return null;
+
+        // Admins may reassign the activity to another user. Non-admins have any
+        // supplied UserId ignored (the current assignment is kept).
+        if (isAdmin && dto.UserId.HasValue && dto.UserId.Value != entity.UserId)
+        {
+            var targetUser = await _userService.GetByIdAsync(dto.UserId.Value);
+            if (targetUser == null) return null;
+            entity.UserId = dto.UserId.Value;
+        }
 
         // Validate ApplicationStatus if provided
         if (dto.ApplicationStatus.HasValue)

@@ -1,10 +1,14 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import ActivityTypeSelect from '$lib/components/admin/ActivityTypeSelect.svelte';
 	import Dropdown from '$lib/components/shared/Dropdown.svelte';
 	import DatePicker from '$lib/components/DatePicker.svelte';
 	import { activityService } from '$lib/services/activity';
+	import { userService } from '$lib/services/user';
+	import { user } from '$lib/stores/auth.store';
+	import type { ActivityStatus } from '$lib/dtos/activity/activity.dto';
 
 	type Props = {
 		companyId?: string;
@@ -36,6 +40,37 @@
 	let activityTypeId = $state('');
 	let selectedCadasterId = $state('');
 	let applicationStatus = $state('');
+
+	let userId = $state('');
+	let userOptions = $state<{ value: string; label: string }[]>([]);
+	let isLoadingUsers = $state(false);
+
+	let isAdmin = $derived(($user?.role ?? '').toLowerCase() === 'admin');
+
+	onMount(async () => {
+		if (!isAdmin) return;
+		isLoadingUsers = true;
+		try {
+			const users = await userService.getAll();
+			userOptions = users.map((u) => ({
+				value: u.id,
+				label:
+					`${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() ||
+					u.username ||
+					u.email
+			}));
+		} catch {
+			// leave userOptions empty; dropdown shows placeholder
+		} finally {
+			isLoadingUsers = false;
+		}
+	});
+
+	$effect(() => {
+		if (isAdmin && $user && !userId) {
+			userId = $user.userId;
+		}
+	});
 
 	const unitOptions = [
 		{ value: 'm3', label: 'm3' },
@@ -94,7 +129,8 @@
 			activityTypeId,
 			cadasterId: selectedCadasterId,
 			forestStandId: forestStandId ?? null,
-			applicationStatus: applicationStatus || null
+			applicationStatus: (applicationStatus || null) as ActivityStatus | null,
+			...(isAdmin && userId ? { userId } : {})
 		};
 
 		try {
@@ -148,6 +184,22 @@
 		</label>
 		</div>
 	</section>
+
+	{#if isAdmin}
+		<section class="form-section">
+			<h2>Logija</h2>
+			<div class="form-grid">
+				<label>
+					<span>Logis kasutaja</span>
+					<Dropdown
+						bind:value={userId}
+						options={userOptions}
+						placeholder={isLoadingUsers ? 'Laadimine...' : 'Vali kasutaja'}
+					/>
+				</label>
+			</div>
+		</section>
+	{/if}
 
 	<section class="form-section">
 		<h2>Kirjeldus ja märkused</h2>

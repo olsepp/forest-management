@@ -1,5 +1,5 @@
 import { apiFetch } from '$lib/utils/api-fetch';
-import type { ActivityDto, ActivityUpdateDto } from '$lib/dtos/activity/activity.dto';
+import type { ActivityCreateDto, ActivityDto, ActivityUpdateDto } from '$lib/dtos/activity/activity.dto';
 
 type FetchFn = typeof window.fetch;
 
@@ -75,7 +75,7 @@ class ActivityService {
 		return apiFetch(`/api/activities/by-user/${userId}/recent?${params.toString()}`, fetchFn);
 	}
 
-	async create(activity: unknown): Promise<ActivityDto> {
+	async create(activity: ActivityCreateDto): Promise<ActivityDto> {
 		return apiFetch('/api/activities', undefined, {
 			method: 'POST',
 			body: JSON.stringify(activity)
